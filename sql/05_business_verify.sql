@@ -14,11 +14,24 @@ GO
 SET XACT_ABORT OFF;
 BEGIN TRY
     DECLARE @tag varchar(12) = LEFT(REPLACE(CONVERT(varchar(36),NEWID()),'-',''),12);
-    DECLARE @category bigint, @supplier bigint, @employee bigint, @product bigint, @product2 bigint;
+    DECLARE @category bigint, @categoryChild bigint, @supplier bigint, @employee bigint, @product bigint, @product2 bigint;
     DECLARE @purchase bigint, @sale bigint, @saleTooLarge bigint;
+    DECLARE @productUpdatedAt datetime2(0);
 
     INSERT dbo.Category(CategoryCode,CategoryName) VALUES ('TC'+@tag,N'测试分类');
     SET @category = SCOPE_IDENTITY();
+    INSERT dbo.Category(CategoryCode,CategoryName,ParentID)
+    VALUES ('TU'+@tag,N'测试子分类',@category);
+    SET @categoryChild = SCOPE_IDENTITY();
+    BEGIN TRY
+        UPDATE dbo.Category SET ParentID=@categoryChild WHERE CategoryID=@category;
+        THROW 51116, N'分类循环未拒绝', 1;
+    END TRY
+    BEGIN CATCH
+        IF ERROR_NUMBER()<>51010 THROW;
+    END CATCH;
+    IF (SELECT ParentID FROM dbo.Category WHERE CategoryID=@category) IS NOT NULL
+        THROW 51117, N'分类循环失败后父分类被修改', 1;
     INSERT dbo.Supplier(SupplierCode,SupplierName) VALUES ('TS'+@tag,N'测试供应商');
     SET @supplier = SCOPE_IDENTITY();
     INSERT dbo.Employee(EmployeeNo,EmployeeName,RoleName) VALUES ('TE'+@tag,N'测试员工','ADMIN');
@@ -41,6 +54,15 @@ BEGIN TRY
         THROW 51101, N'采购金额或状态错误', 1;
     IF (SELECT Quantity FROM dbo.Inventory WHERE ProductID=@product) <> 10
         THROW 51102, N'采购后库存错误', 1;
+    BEGIN TRY
+        UPDATE dbo.Inventory SET Quantity=9 WHERE ProductID=@product;
+        THROW 51118, N'直接修改库存数量未拒绝', 1;
+    END TRY
+    BEGIN CATCH
+        IF ERROR_NUMBER()<>51011 THROW;
+    END CATCH;
+    IF (SELECT Quantity FROM dbo.Inventory WHERE ProductID=@product) <> 10
+        THROW 51119, N'直接修改库存失败后数量被改变', 1;
     IF NOT EXISTS (SELECT 1 FROM dbo.InventoryLog WHERE ProductID=@product
                    AND BusinessNo='PO'+@tag AND ChangeQuantity=10 AND BeforeQuantity=0 AND AfterQuantity=10)
         THROW 51103, N'采购流水错误', 1;
@@ -80,7 +102,11 @@ BEGIN TRY
     IF NOT EXISTS (SELECT 1 FROM dbo.InventoryLog WHERE ProductID=@product
                    AND BusinessNo='SO'+@tag AND ChangeQuantity=-3 AND BeforeQuantity=10 AND AfterQuantity=7)
         THROW 51107, N'销售流水错误', 1;
+    SELECT @productUpdatedAt=UpdatedAt FROM dbo.Product WHERE ProductID=@product;
+    WAITFOR DELAY '00:00:01';
     UPDATE dbo.Product SET SalePrice=4.00 WHERE ProductID=@product;
+    IF (SELECT UpdatedAt FROM dbo.Product WHERE ProductID=@product) <= @productUpdatedAt
+        THROW 51120, N'商品更新时间未自动刷新', 1;
     IF NOT EXISTS (SELECT 1 FROM dbo.v_sale_detail
                    WHERE SaleNo='SO'+@tag AND UnitPrice=3.50 AND LineAmount=10.50)
         THROW 51111, N'商品改价后历史销售价格发生变化', 1;

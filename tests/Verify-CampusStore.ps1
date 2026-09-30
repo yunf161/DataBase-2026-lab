@@ -16,7 +16,16 @@ try {
         '02_business_procedures.sql',
         '04_verify.sql',
         '05_business_verify.sql',
-        '03_sample_data.sql'
+        '03_sample_data.sql',
+        'view.sql',
+        'view_verify.sql',
+        'constraint.sql',
+        'crud.sql',
+        'crud.sql',
+        'role.sql',
+        '06_week4_verify.sql',
+        'role_demo.sql',
+        'query.sql'
     )
     foreach ($name in $scripts) {
         $source = Join-Path $scriptRoot "sql\$name"

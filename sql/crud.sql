@@ -16,6 +16,11 @@ BEGIN TRY
     DECLARE @categoryID bigint,@productID bigint;
     DECLARE @categoryCode varchar(20)='CR'+@tag,@sku varchar(30)='CP'+@tag;
 
+    -- INSERT 前查询：随机业务编号尚不存在，商品数和分类数都应为 0。
+    SELECT N'插入前' AS DemoStep,
+           (SELECT COUNT(*) FROM dbo.Product WHERE SKU=@sku) AS ProductCount,
+           (SELECT COUNT(*) FROM dbo.Category WHERE CategoryCode=@categoryCode) AS CategoryCount;
+
     -- CREATE：商品插入后，触发器会同时建立数量为 0 的库存行。
     INSERT dbo.Category(CategoryCode,CategoryName) VALUES (@categoryCode,N'课堂测试分类');
     SET @categoryID=SCOPE_IDENTITY();
@@ -23,8 +28,10 @@ BEGIN TRY
     VALUES (@sku,N'课堂测试商品',@categoryID,N'件',4.00);
     SET @productID=SCOPE_IDENTITY();
 
-    -- READ：连接商品、分类和库存，现场能看到新记录。
-    SELECT p.SKU,p.ProductName,c.CategoryName,p.SalePrice,i.Quantity
+    -- INSERT 后查询：连接商品、分类和库存，展示新商品和自动生成的零库存行。
+    SELECT N'插入后' AS DemoStep,
+           p.SKU,p.ProductName,c.CategoryName,p.SalePrice,
+           i.Quantity,p.CreatedAt,p.UpdatedAt
     FROM dbo.Product AS p
     JOIN dbo.Category AS c ON c.CategoryID=p.CategoryID
     JOIN dbo.Inventory AS i ON i.ProductID=p.ProductID
@@ -35,7 +42,12 @@ BEGIN TRY
     -- UPDATE：修改现价；商品触发器会自动维护 UpdatedAt。
     UPDATE dbo.Product SET SalePrice=4.50
     WHERE ProductID=@productID;
-    SELECT SKU,SalePrice FROM dbo.Product WHERE ProductID=@productID;
+
+    -- UPDATE 后查询：应显示售价 4.50 和更新后的 UpdatedAt。
+    SELECT N'修改后' AS DemoStep,
+           SKU,ProductName,SalePrice,CreatedAt,UpdatedAt
+    FROM dbo.Product
+    WHERE ProductID=@productID;
     IF (SELECT SalePrice FROM dbo.Product WHERE ProductID=@productID)<>4.50
         THROW 51601,N'商品改价失败',1;
 
@@ -43,6 +55,12 @@ BEGIN TRY
     DELETE FROM dbo.Inventory WHERE ProductID=@productID;
     DELETE FROM dbo.Product WHERE ProductID=@productID;
     DELETE FROM dbo.Category WHERE CategoryID=@categoryID;
+
+    -- DELETE 后查询：三个计数都应为 0，证明库存、商品和测试分类均已清理。
+    SELECT N'删除后' AS DemoStep,
+           (SELECT COUNT(*) FROM dbo.Inventory WHERE ProductID=@productID) AS InventoryCount,
+           (SELECT COUNT(*) FROM dbo.Product WHERE ProductID=@productID) AS ProductCount,
+           (SELECT COUNT(*) FROM dbo.Category WHERE CategoryID=@categoryID) AS CategoryCount;
     IF EXISTS (SELECT 1 FROM dbo.Product WHERE SKU=@sku)
         OR EXISTS (SELECT 1 FROM dbo.Category WHERE CategoryCode=@categoryCode)
         THROW 51602,N'测试记录未清理',1;

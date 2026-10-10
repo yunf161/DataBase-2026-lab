@@ -1,4 +1,4 @@
-/* 校园小卖部进销存；SQL Server Express；仅在新数据库运行一次。 */
+/* 仅在新数据库运行；会话临时标记阻止错误后的后续 GO 批次。 */
 SET QUOTED_IDENTIFIER ON;
 SET ANSI_NULLS ON;
 SET ANSI_PADDING ON;
@@ -6,16 +6,19 @@ SET ANSI_WARNINGS ON;
 SET ARITHABORT ON;
 SET CONCAT_NULL_YIELDS_NULL ON;
 SET NUMERIC_ROUNDABORT OFF;
-GO
 USE master;
-GO
+-- 清除本会话上一次部署标记，不能沿用一次旧的成功检查。
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
 IF DB_ID(N'CampusStoreDB') IS NOT NULL
     THROW 50000, N'CampusStoreDB 已存在，请勿重复运行建库脚本', 1;
+EXEC(N'CREATE DATABASE CampusStoreDB;');
+CREATE TABLE #CampusStoreCreateGuard (Allowed bit NOT NULL);
+INSERT #CampusStoreCreateGuard VALUES(1);
 GO
-CREATE DATABASE CampusStoreDB;
-GO
-USE CampusStoreDB;
-GO
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
 CREATE TABLE dbo.Category (
  CategoryID bigint IDENTITY(1,1) PRIMARY KEY,
  CategoryCode varchar(20) NOT NULL UNIQUE,
@@ -73,14 +76,32 @@ CREATE TABLE dbo.Inventory (
  CONSTRAINT CK_Inventory_Quantity CHECK (Quantity >= 0),
  CONSTRAINT CK_Inventory_Min CHECK (MinQuantity >= 0)
 );
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
--- 多行插入商品时，也为每一件商品建立零库存记录。
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'-- 多行插入商品时，也为每一件商品建立零库存记录。
 CREATE TRIGGER dbo.tr_Product_CreateInventory ON dbo.Product AFTER INSERT AS
 BEGIN
  SET NOCOUNT ON;
  INSERT dbo.Inventory(ProductID, Quantity) SELECT ProductID, 0 FROM inserted;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
 CREATE TABLE dbo.PurchaseOrder (
  PurchaseID bigint IDENTITY(1,1) PRIMARY KEY,
  PurchaseNo varchar(30) NOT NULL UNIQUE,
@@ -126,7 +147,7 @@ CREATE TABLE dbo.SaleOrder (
  CONSTRAINT CK_SaleOrder_Payment CHECK (PaymentMethod IS NULL OR PaymentMethod IN ('CASH','WECHAT','ALIPAY','BANK_CARD')),
  CONSTRAINT CK_SaleOrder_Amount CHECK
   (TotalAmount >= 0 AND DiscountAmount >= 0
-   AND (Status='DRAFT' OR DiscountAmount <= TotalAmount))
+   AND (Status<>'COMPLETED' OR DiscountAmount <= TotalAmount))
 );
 CREATE INDEX IX_SaleOrder_Time ON dbo.SaleOrder(SaleTime);
 CREATE INDEX IX_SaleOrder_Employee ON dbo.SaleOrder(EmployeeID);
@@ -161,21 +182,30 @@ CREATE TABLE dbo.InventoryLog (
 );
 CREATE INDEX IX_InventoryLog_ProductTime ON dbo.InventoryLog(ProductID,CreatedAt);
 CREATE INDEX IX_InventoryLog_BusinessNo ON dbo.InventoryLog(BusinessNo);
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
--- 防止分类指向自身或形成多级循环。
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'-- 防止分类指向自身或形成多级循环。
 CREATE TRIGGER dbo.tr_Category_PreventCycle ON dbo.Category AFTER INSERT, UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  DECLARE @hasCycle bit=0;
  ;WITH CategoryChain AS (
   SELECT i.CategoryID AS StartCategoryID, i.ParentID AS CurrentCategoryID,
-   CAST('/'+CONVERT(varchar(20),i.CategoryID)+'/' AS varchar(max)) AS CategoryPath,
+   CAST(''/''+CONVERT(varchar(20),i.CategoryID)+''/'' AS varchar(max)) AS CategoryPath,
    CAST(0 AS bit) AS HasCycle
   FROM inserted AS i WHERE i.ParentID IS NOT NULL
   UNION ALL
   SELECT cc.StartCategoryID, parent.ParentID,
-   CAST(cc.CategoryPath+CONVERT(varchar(20),parent.CategoryID)+'/' AS varchar(max)),
-   CAST(CASE WHEN CHARINDEX('/'+CONVERT(varchar(20),parent.CategoryID)+'/',cc.CategoryPath)>0
+   CAST(cc.CategoryPath+CONVERT(varchar(20),parent.CategoryID)+''/'' AS varchar(max)),
+   CAST(CASE WHEN CHARINDEX(''/''+CONVERT(varchar(20),parent.CategoryID)+''/'',cc.CategoryPath)>0
         THEN 1 ELSE 0 END AS bit)
   FROM CategoryChain AS cc
   JOIN dbo.Category AS parent ON parent.CategoryID=cc.CurrentCategoryID
@@ -185,79 +215,167 @@ BEGIN
                        THEN 1 ELSE 0 END
  OPTION (MAXRECURSION 32767);
  IF @hasCycle=1
-  THROW 51010, N'分类不能指向自身或形成循环层级', 1;
-END;
+  THROW 51010, N''分类不能指向自身或形成循环层级'', 1;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
--- 库存数量只能由采购入库和销售结算过程修改；安全库存值仍可直接维护。
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'-- 库存数量只能由采购入库和销售结算过程修改；安全库存值仍可直接维护。
 CREATE TRIGGER dbo.tr_Inventory_QuantityGuard ON dbo.Inventory AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  IF UPDATE(Quantity)
     AND EXISTS (SELECT 1 FROM inserted AS i JOIN deleted AS d ON d.ProductID=i.ProductID
                 WHERE i.Quantity<>d.Quantity)
-    AND ISNULL(TRY_CONVERT(int,SESSION_CONTEXT(N'CampusStoreInventoryWrite')),0)<>1
-  THROW 51011, N'库存数量只能通过采购入库或销售结算过程修改', 1;
-END;
+    AND ISNULL(TRY_CONVERT(int,SESSION_CONTEXT(N''CampusStoreInventoryWrite'')),0)<>1
+  THROW 51011, N''库存数量只能通过采购入库或销售结算过程修改'', 1;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
--- 以下触发器确保已有 UpdatedAt 字段在普通 UPDATE 后自动刷新。
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'-- 以下触发器确保已有 UpdatedAt 字段在普通 UPDATE 后自动刷新。
 CREATE TRIGGER dbo.tr_Category_SetUpdatedAt ON dbo.Category AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  UPDATE c SET UpdatedAt=SYSDATETIME()
  FROM dbo.Category AS c JOIN inserted AS i ON i.CategoryID=c.CategoryID;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE TRIGGER dbo.tr_Supplier_SetUpdatedAt ON dbo.Supplier AFTER UPDATE AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE TRIGGER dbo.tr_Supplier_SetUpdatedAt ON dbo.Supplier AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  UPDATE s SET UpdatedAt=SYSDATETIME()
  FROM dbo.Supplier AS s JOIN inserted AS i ON i.SupplierID=s.SupplierID;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE TRIGGER dbo.tr_Product_SetUpdatedAt ON dbo.Product AFTER UPDATE AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE TRIGGER dbo.tr_Product_SetUpdatedAt ON dbo.Product AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  UPDATE p SET UpdatedAt=SYSDATETIME()
  FROM dbo.Product AS p JOIN inserted AS i ON i.ProductID=p.ProductID;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE TRIGGER dbo.tr_Inventory_SetUpdatedAt ON dbo.Inventory AFTER UPDATE AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE TRIGGER dbo.tr_Inventory_SetUpdatedAt ON dbo.Inventory AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  UPDATE i SET UpdatedAt=SYSDATETIME()
  FROM dbo.Inventory AS i JOIN inserted AS n ON n.ProductID=i.ProductID;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE TRIGGER dbo.tr_PurchaseOrder_SetUpdatedAt ON dbo.PurchaseOrder AFTER UPDATE AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE TRIGGER dbo.tr_PurchaseOrder_SetUpdatedAt ON dbo.PurchaseOrder AFTER UPDATE AS
 BEGIN
  SET NOCOUNT ON;
  UPDATE po SET UpdatedAt=SYSDATETIME()
  FROM dbo.PurchaseOrder AS po JOIN inserted AS i ON i.PurchaseID=po.PurchaseID;
-END;
+END;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE VIEW dbo.v_current_inventory AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE VIEW dbo.v_current_inventory AS
 SELECT p.ProductID, p.SKU, p.Barcode, p.ProductName, c.CategoryName,
  p.Specification, p.Unit, p.SalePrice, i.Quantity, i.MinQuantity,
- CASE WHEN i.Quantity = 0 THEN 'OUT_OF_STOCK'
-      WHEN i.Quantity < i.MinQuantity THEN 'LOW_STOCK' ELSE 'NORMAL' END AS StockStatus,
+ CASE WHEN i.Quantity = 0 THEN ''OUT_OF_STOCK''
+      WHEN i.Quantity < i.MinQuantity THEN ''LOW_STOCK'' ELSE ''NORMAL'' END AS StockStatus,
  i.UpdatedAt
 FROM dbo.Product AS p
 JOIN dbo.Category AS c ON c.CategoryID = p.CategoryID
-JOIN dbo.Inventory AS i ON i.ProductID = p.ProductID;
+JOIN dbo.Inventory AS i ON i.ProductID = p.ProductID;');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE VIEW dbo.v_sale_detail AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE VIEW dbo.v_sale_detail AS
 SELECT so.SaleNo, so.SaleTime, e.EmployeeName, p.SKU, p.ProductName,
  si.Quantity, si.UnitPrice, si.LineAmount, so.PaymentMethod
 FROM dbo.SaleOrder AS so
 JOIN dbo.Employee AS e ON e.EmployeeID = so.EmployeeID
 JOIN dbo.SaleItem AS si ON si.SaleID = so.SaleID
 JOIN dbo.Product AS p ON p.ProductID = si.ProductID
-WHERE so.Status = 'COMPLETED';
+WHERE so.Status = ''COMPLETED'';');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
 GO
-CREATE VIEW dbo.v_daily_sales AS
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NULL
+    THROW 50001, N'建库未获准或前一批次失败，禁止继续部署', 1;
+BEGIN TRY
+    USE CampusStoreDB;
+    EXEC(N'CREATE VIEW dbo.v_daily_sales AS
 SELECT CONVERT(date,SaleTime) AS SaleDate, COUNT(*) AS OrderCount,
  SUM(TotalAmount) AS OriginalAmount, SUM(DiscountAmount) AS DiscountAmount,
  SUM(PayableAmount) AS SalesAmount
-FROM dbo.SaleOrder WHERE Status = 'COMPLETED'
-GROUP BY CONVERT(date,SaleTime);
+FROM dbo.SaleOrder WHERE Status = ''COMPLETED''
+GROUP BY CONVERT(date,SaleTime);');
+END TRY
+BEGIN CATCH
+    IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
+    THROW;
+END CATCH;
+GO
+IF OBJECT_ID(N'tempdb..#CampusStoreCreateGuard') IS NOT NULL DROP TABLE #CampusStoreCreateGuard;
 GO

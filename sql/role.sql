@@ -26,6 +26,8 @@ GRANT SELECT ON OBJECT::dbo.Employee TO CampusPurchaser;
 GRANT INSERT ON OBJECT::dbo.PurchaseOrder TO CampusPurchaser;
 GRANT SELECT,INSERT,UPDATE,DELETE ON OBJECT::dbo.PurchaseItem TO CampusPurchaser;
 GRANT EXECUTE ON OBJECT::dbo.ConfirmPurchase TO CampusPurchaser;
+GRANT EXECUTE ON OBJECT::dbo.QueryPurchaseOrders TO CampusPurchaser;
+GRANT EXECUTE ON OBJECT::dbo.CancelPurchase TO CampusPurchaser;
 DENY UPDATE,DELETE ON OBJECT::dbo.Inventory TO CampusPurchaser;
 
 -- 收银员可建销售草稿、改草稿明细，并执行结算过程。
@@ -35,6 +37,9 @@ GRANT SELECT ON OBJECT::dbo.Employee TO CampusCashier;
 GRANT INSERT ON OBJECT::dbo.SaleOrder TO CampusCashier;
 GRANT SELECT,INSERT,UPDATE,DELETE ON OBJECT::dbo.SaleItem TO CampusCashier;
 GRANT EXECUTE ON OBJECT::dbo.CompleteSale TO CampusCashier;
+GRANT EXECUTE ON OBJECT::dbo.QuerySaleOrders TO CampusCashier;
+GRANT EXECUTE ON OBJECT::dbo.UpdateSaleDraft TO CampusCashier;
+GRANT EXECUTE ON OBJECT::dbo.CancelSale TO CampusCashier;
 DENY UPDATE,DELETE ON OBJECT::dbo.Inventory TO CampusCashier;
 
 -- 管理员维护基础资料并查看全部数据，但不直接改库存或历史流水。

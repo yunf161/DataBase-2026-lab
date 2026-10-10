@@ -16,8 +16,9 @@ IF (SELECT COUNT(*) FROM sys.views WHERE name IN
     THROW 51002, N'业务视图不足 3 个', 1;
 
 IF (SELECT COUNT(*) FROM sys.procedures WHERE name IN
-    (N'ConfirmPurchase', N'CompleteSale')) <> 2
-    THROW 51003, N'业务过程不足 2 个', 1;
+    (N'ConfirmPurchase', N'CompleteSale', N'QueryPurchaseOrders', N'QuerySaleOrders',
+     N'UpdateSaleDraft', N'CancelPurchase', N'CancelSale')) <> 7
+    THROW 51003, N'业务过程不足 7 个', 1;
 
 IF (SELECT COUNT(*) FROM sys.triggers WHERE name IN
     (N'tr_Product_CreateInventory', N'tr_Category_PreventCycle',

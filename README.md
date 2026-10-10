@@ -13,6 +13,10 @@
 
 第 4 周的主键、外键和 `CHECK` 的 **DDL 在建库脚本中**；`constraint.sql` 用于列出并验证这些约束。`role.sql` 建立数据库角色并授权，`role_demo.sql` 使用临时的无登录名用户模拟角色；项目没有创建真实登录账号。`Employee.RoleName` 是员工的经营职责，与 SQL Server 的数据库角色不同。
 
+## 第 5 周 ER 模型
+
+[第五周交付目录](docs/week5-er/README.md)包含可编辑的 [draw.io ER 图](docs/week5-er/week5-er.drawio)、清晰 [SVG 导出图](docs/week5-er/week5-er.svg)、[联系基数与实现清单](docs/week5-er/business-rules.md)、[v0.1 问题清单](docs/week5-er/v0.1-issues.md)和[只读验证方法](docs/week5-er/verification.md)。图覆盖现有 10 张表，会员只作为第六周拟议方案；本周不改变可复现的 v0.1 数据库。可在 SSMS 中打开 [verification.sql](docs/week5-er/verification.sql)，选择 `CampusStoreDB` 后按 F5，对照多商品采购、销售、库存和实际外键。
+
 ## 准备环境
 
 安装 SQL Server Express、SQL Server Management Studio（SSMS）及 `sqlcmd`。用 Windows 身份验证连接有建库权限的 SQL Server 实例。先看 SSMS 左侧“对象资源管理器”顶部的服务器名：如果显示 `(local)\SQLEXPRESS`，下文的 `$ServerInstance` 写 `.\SQLEXPRESS`；如果是默认实例，可能写 `localhost`。**命令行与 SSMS 必须连接同一个实例**，否则会出现脚本运行成功却在 SSMS 看不到数据库的情况。

@@ -1,0 +1,177 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Week5 ER" id="week5-er">
+    <mxGraphModel dx="2350" dy="1390" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2350" pageHeight="1390">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="diagram-title" value="校园小卖部 v0.1 ER 模型" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=27;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="70" y="5" width="600" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="diagram-subtitle" value="实线＝已有外键；虚线＝第六周拟议会员；R 编号对应业务规则表" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="70" y="52" width="1000" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="diagram-legend" value="PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b 按业务规则表左→右读。&lt;br&gt;* 商品→库存业务期望 1..1，现有约束仅保证 0..1；草稿订单明细 0..N，确认或结算时由过程要求 1..N。" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="80" y="1290" width="2180" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="Supplier" value="&lt;b&gt;供应商 Supplier&lt;/b&gt;&lt;br&gt;PK SupplierID&lt;br&gt;AK SupplierCode&lt;br&gt;SupplierName&lt;br&gt;ContactName / Phone" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="80" y="100" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="PurchaseOrder" value="&lt;b&gt;采购单 PurchaseOrder&lt;/b&gt;&lt;br&gt;PK PurchaseID&lt;br&gt;AK PurchaseNo&lt;br&gt;FK SupplierID / EmployeeID&lt;br&gt;Status / TotalAmount" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="510" y="100" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Employee" value="&lt;b&gt;员工 Employee&lt;/b&gt;&lt;br&gt;PK EmployeeID&lt;br&gt;AK EmployeeNo&lt;br&gt;EmployeeName / RoleName&lt;br&gt;Status" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="1000" y="100" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="SaleOrder" value="&lt;b&gt;销售单 SaleOrder&lt;/b&gt;&lt;br&gt;PK SaleID&lt;br&gt;AK SaleNo&lt;br&gt;FK EmployeeID&lt;br&gt;Status / PaymentMethod" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="1490" y="100" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Member" value="&lt;b&gt;会员 Member（拟议）&lt;/b&gt;&lt;br&gt;拟 PK MemberID&lt;br&gt;拟 AK MemberNo&lt;br&gt;MemberName / Phone&lt;br&gt;拟 SaleOrder.MemberID FK" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#eef4ff;strokeColor=#35536b;dashed=1;dashPattern=8 5;">
+          <mxGeometry x="1970" y="100" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Category" value="&lt;b&gt;分类 Category&lt;/b&gt;&lt;br&gt;PK CategoryID&lt;br&gt;AK CategoryCode&lt;br&gt;FK ParentID（可空）&lt;br&gt;CategoryName / Status" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="80" y="550" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Product" value="&lt;b&gt;商品 Product&lt;/b&gt;&lt;br&gt;PK ProductID&lt;br&gt;AK SKU；Barcode 可空 UQ&lt;br&gt;FK CategoryID&lt;br&gt;ProductName / SalePrice" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="650" y="550" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Inventory" value="&lt;b&gt;库存 Inventory&lt;/b&gt;&lt;br&gt;PK+FK ProductID&lt;br&gt;Quantity&lt;br&gt;MinQuantity&lt;br&gt;业务目标：每商品一行" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="1190" y="550" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="PurchaseItem" value="&lt;b&gt;采购明细 PurchaseItem&lt;/b&gt;&lt;br&gt;PK PurchaseItemID&lt;br&gt;复合 AK (PurchaseID, ProductID)&lt;br&gt;FK PurchaseID / ProductID&lt;br&gt;Quantity / UnitCost" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#eaf5ed;strokeColor=#35536b;">
+          <mxGeometry x="510" y="1050" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="SaleItem" value="&lt;b&gt;销售明细 SaleItem&lt;/b&gt;&lt;br&gt;PK SaleItemID&lt;br&gt;复合 AK (SaleID, ProductID)&lt;br&gt;FK SaleID / ProductID&lt;br&gt;Quantity / UnitPrice" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#eaf5ed;strokeColor=#35536b;">
+          <mxGeometry x="1490" y="1050" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="InventoryLog" value="&lt;b&gt;库存流水 InventoryLog&lt;/b&gt;&lt;br&gt;PK LogID&lt;br&gt;FK ProductID&lt;br&gt;FK EmployeeID（可空）&lt;br&gt;ChangeQuantity / BusinessNo" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
+          <mxGeometry x="1970" y="1050" width="280" height="190" as="geometry" />
+        </mxCell>
+        <mxCell id="R01" value="" edge="1" parent="1" source="Category" target="Category" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="30" y="590" />
+              <mxPoint x="30" y="510" />
+              <mxPoint x="170" y="510" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R01" value="R01 上下级 0..N / 0..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="-3" y="463" width="247" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R02" value="" edge="1" parent="1" source="Category" target="Product" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R02" value="R02 归类 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="388" y="598" width="234" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R03" value="" edge="1" parent="1" source="Supplier" target="PurchaseOrder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R03" value="R03 供货 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="318" y="318" width="234" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R04" value="" edge="1" parent="1" source="Employee" target="PurchaseOrder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R04" value="R04 采购经办 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="765" y="318" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R05" value="" edge="1" parent="1" source="PurchaseOrder" target="PurchaseItem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="245" />
+              <mxPoint x="430" y="1145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R05" value="R05 采购包含 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="300" y="798" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R06" value="" edge="1" parent="1" source="Product" target="PurchaseItem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R06" value="R06 被采购 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="587" y="878" width="247" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R07" value="" edge="1" parent="1" source="Employee" target="SaleOrder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R07" value="R07 销售经办 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1255" y="318" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R08" value="" edge="1" parent="1" source="SaleOrder" target="SaleItem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1840" y="245" />
+              <mxPoint x="1840" y="1145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R08" value="R08 销售包含 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1710" y="788" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R09" value="" edge="1" parent="1" source="Product" target="SaleItem" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1090" y="870" />
+              <mxPoint x="1600" y="870" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R09" value="R09 被售出 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1177" y="823" width="247" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R10" value="" edge="1" parent="1" source="Product" target="Inventory" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R10" value="R10 当前库存 业务1..1 / 1..1*" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="911" y="773" width="299" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R11" value="" edge="1" parent="1" source="Product" target="InventoryLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="430" />
+              <mxPoint x="2110" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R11" value="R11 库存变化 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1560" y="383" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R12" value="" edge="1" parent="1" source="Employee" target="InventoryLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1140" y="50" />
+              <mxPoint x="2310" y="50" />
+              <mxPoint x="2310" y="1145" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R12" value="R12 执行变化 0..N / 0..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1940" y="3" width="260" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="R13" value="" edge="1" parent="1" source="Member" target="SaleOrder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;dashed=1;dashPattern=8 5;strokeColor=#2866bc;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="label-R13" value="R13 会员购买 0..N / 0..1（拟）" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1721" y="318" width="299" height="28" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,6 +1,6 @@
 # 校园小卖部进销存数据库
 
-本项目使用 **SQL Server Express / T-SQL**，数据库名为 `CampusStoreDB`。最初的[要求文档](要求.md)以 MySQL 为例；本项目按已选定的 SQL Server 实现，不能在 MySQL 客户端中查找或运行。完整业务链是：建商品 → 建采购草稿并确认入库 → 建销售草稿并结算 → 查询库存和流水。核心数据是 10 张表，另有 5 个视图、2 个业务存储过程和完整性触发器。
+本项目使用 **SQL Server Express / T-SQL**，数据库名为 `CampusStoreDB`。最初的[要求文档](要求.md)以 MySQL 为例；本项目按已选定的 SQL Server 实现，不能在 MySQL 客户端中查找或运行。完整业务链是：建商品 → 建采购草稿并确认入库 → 建销售草稿并结算 → 查询库存和流水。核心数据是 10 张表，另有 5 个 v0.1 业务视图、7 个业务存储过程和完整性触发器。
 
 ## 第 1–4 周完成情况
 
@@ -15,7 +15,17 @@
 
 ## 第 5 周 ER 模型
 
-[第五周交付目录](docs/week5-er/README.md)包含可编辑的 [draw.io ER 图](docs/week5-er/week5-er.drawio)、清晰 [SVG 导出图](docs/week5-er/week5-er.svg)、[联系基数与实现清单](docs/week5-er/business-rules.md)、[v0.1 问题清单](docs/week5-er/v0.1-issues.md)和[只读验证方法](docs/week5-er/verification.md)。图覆盖现有 10 张表，会员只作为第六周拟议方案；本周不改变可复现的 v0.1 数据库。可在 SSMS 中打开 [verification.sql](docs/week5-er/verification.sql)，选择 `CampusStoreDB` 后按 F5，对照多商品采购、销售、库存和实际外键。
+[第五周交付目录](docs/week5-er/README.md)包含可编辑的 [draw.io ER 图](docs/week5-er/week5-er.drawio)、清晰 [SVG 导出图](docs/week5-er/week5-er.svg)、[联系基数与实现清单](docs/week5-er/business-rules.md)、[v0.1 问题清单](docs/week5-er/v0.1-issues.md)和[只读验证方法](docs/week5-er/verification.md)。图覆盖现有 10 张表，会员在第五周图中只是待评估方案；第六周结合校园小卖部“不保存顾客身份”的边界，决定不增加空壳会员表。可在 SSMS 中打开 [verification.sql](docs/week5-er/verification.sql)，选择 `CampusStoreDB` 后按 F5，对照多商品采购、销售、库存和实际外键。
+
+## 第 6 周规范化与迁移
+
+[第六周交付目录](docs/week6-normalization/README.md)给出逐表函数依赖、1NF/2NF/3NF 判断、插入/更新/删除异常、受控反规范化取舍、v1.0 ER 图和数据字典。现有 10 张业务表总体已达到 3NF，本周不机械拆表；实际改造是把库存流水的文本 `BusinessNo` 替换为 `PurchaseID` / `SaleID` 外键，并用来源检查约束阻止类型错配。新视图 `v_inventory_log_detail` 继续提供统一的 BusinessNo 显示，但完整流水涉及采购、销售和员工信息，因此仅允许管理员查询，并显式拒绝其他业务角色读取。
+
+迁移只能在名称为 `CampusStoreDB_W6_*` 的备份副本上执行一次：先在 SSMS 选择该副本，再运行 [baseline.sql](sql/week6/baseline.sql)、[migration.sql](sql/week6/migration.sql)和 [regression.sql](sql/week6/regression.sql)。脚本会拒绝正式库和其他名称，避免固定 `USE` 误切数据库。也可执行下列隔离验证，它会从第一阶段定稿创建随机临时数据库，完成基线、迁移和 21 项回归后自动清理：
+
+```powershell
+& '.\tests\Verify-Week6Migration.ps1' -ServerInstance 'localhost'
+```
 
 ## 准备环境
 

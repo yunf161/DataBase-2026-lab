@@ -209,8 +209,9 @@ BEGIN
         IF @status IS NULL OR @status <> 'DRAFT'
             THROW 51200, N'采购单不存在或不是草稿', 1;
         IF NOT EXISTS (SELECT 1 FROM dbo.Employee WITH (UPDLOCK,HOLDLOCK)
-                       WHERE EmployeeID=@employeeID AND Status=1)
-            THROW 51203, N'采购经办员工已停用', 1;
+                       WHERE EmployeeID=@employeeID AND Status=1
+                         AND RoleName IN ('PURCHASER','ADMIN'))
+            THROW 51203, N'采购经办员工未启用或无采购职责', 1;
         IF NOT EXISTS (SELECT 1 FROM dbo.Supplier WITH (UPDLOCK,HOLDLOCK)
                        WHERE SupplierID=@supplierID AND Status=1)
             THROW 51204, N'采购供应商已停用', 1;
@@ -285,8 +286,9 @@ BEGIN
         IF @status IS NULL OR @status <> 'DRAFT'
             THROW 51300, N'销售单不存在或不是草稿', 1;
         IF NOT EXISTS (SELECT 1 FROM dbo.Employee WITH (UPDLOCK,HOLDLOCK)
-                       WHERE EmployeeID=@employeeID AND Status=1)
-            THROW 51306, N'销售经办员工已停用', 1;
+                       WHERE EmployeeID=@employeeID AND Status=1
+                         AND RoleName IN ('CASHIER','ADMIN'))
+            THROW 51306, N'销售经办员工未启用或无收银职责', 1;
         IF @payment IS NULL THROW 51301, N'结算前需选择支付方式', 1;
         SELECT @total=SUM(LineAmount) FROM dbo.SaleItem WITH (UPDLOCK,HOLDLOCK)
         WHERE SaleID=@SaleID;

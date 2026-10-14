@@ -1,6 +1,6 @@
 /* 在 SSMS 中执行本文件，观察仓库导入的演示业务结果。 */
-USE CampusStoreDB;
-GO
+IF DB_NAME() IN (N'master',N'model',N'msdb',N'tempdb')
+    THROW 51500, N'请先在 SSMS 工具栏选择要观察的业务数据库', 1;
 
 -- 1. 当前库存及低库存状态
 SELECT
@@ -36,14 +36,17 @@ ORDER BY SaleTime;
 GO
 
 -- 4. 每次入库与销售留下的库存流水
-SELECT
-    BusinessNo AS 业务单号,
-    ChangeType AS 变化类型,
-    ProductID AS 商品编号,
-    ChangeQuantity AS 变化数量,
-    BeforeQuantity AS 变化前库存,
-    AfterQuantity AS 变化后库存,
-    CreatedAt AS 发生时间
-FROM dbo.InventoryLog
-ORDER BY LogID;
+-- v0.1 从实体列读取；第六周迁移后从兼容视图还原同名业务单号。
+IF OBJECT_ID(N'dbo.v_inventory_log_detail',N'V') IS NOT NULL
+    EXEC(N'SELECT BusinessNo AS 业务单号,ChangeType AS 变化类型,
+                  ProductID AS 商品编号,ChangeQuantity AS 变化数量,
+                  BeforeQuantity AS 变化前库存,AfterQuantity AS 变化后库存,
+                  CreatedAt AS 发生时间
+           FROM dbo.v_inventory_log_detail ORDER BY LogID;');
+ELSE
+    EXEC(N'SELECT BusinessNo AS 业务单号,ChangeType AS 变化类型,
+                  ProductID AS 商品编号,ChangeQuantity AS 变化数量,
+                  BeforeQuantity AS 变化前库存,AfterQuantity AS 变化后库存,
+                  CreatedAt AS 发生时间
+           FROM dbo.InventoryLog ORDER BY LogID;');
 GO

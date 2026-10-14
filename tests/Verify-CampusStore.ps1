@@ -9,13 +9,13 @@ $testDb = "CampusStoreDB_Verify_$testId"
 $scriptRoot = Split-Path -Parent $PSScriptRoot
 $tempDir = Join-Path ([System.IO.Path]::GetTempPath()) "campus-store-verify-$testId"
 New-Item -ItemType Directory -Path $tempDir | Out-Null
+$runFailed = $false
 
 try {
     $scripts = @(
         '01_create_campus_store_database.sql',
         '02_business_procedures.sql',
         '04_verify.sql',
-        '05_business_verify.sql',
         '03_sample_data.sql',
         'view.sql',
         'view_verify.sql',
@@ -25,7 +25,9 @@ try {
         'role.sql',
         '06_week4_verify.sql',
         'role_demo.sql',
-        'query.sql'
+        'query.sql',
+        # 该脚本保留随机业务数据，应在依赖固定样例行数的验证完成后执行。
+        '05_business_verify.sql'
     )
     foreach ($name in $scripts) {
         $source = Join-Path $scriptRoot "sql\$name"
@@ -39,6 +41,10 @@ try {
     }
     Write-Host "隔离数据库 $testDb 的结构、业务与演示数据验证通过"
 }
+catch {
+    $runFailed = $true
+    throw
+}
 finally {
     # 名称由固定前缀和十六进制随机串生成，避免误删其他数据库。
     $dropFailed = $false
@@ -49,5 +55,8 @@ finally {
     }
     Get-ChildItem -LiteralPath $tempDir -File | Remove-Item
     Remove-Item -LiteralPath $tempDir
-    if ($dropFailed) { throw "测试数据库清理失败：$testDb" }
+    if ($dropFailed) {
+        if ($runFailed) { Write-Warning "测试数据库清理也失败：$testDb；请在连接恢复后手动检查" }
+        else { throw "测试数据库清理失败：$testDb" }
+    }
 }

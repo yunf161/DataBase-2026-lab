@@ -22,7 +22,8 @@ try {
         (Join-Path $repoRoot 'sql\week6\baseline.sql'),
         (Join-Path $repoRoot 'sql\week6\migration.sql'),
         (Join-Path $repoRoot 'sql\06_demo_observation.sql'),
-        (Join-Path $repoRoot 'sql\week6\regression.sql')
+        (Join-Path $repoRoot 'sql\week6\regression.sql'),
+        (Join-Path $repoRoot 'sql\order_status_verify.sql')
     )
 
     foreach ($source in $scripts) {
@@ -31,8 +32,11 @@ try {
         $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $source
         # v0.1 建库脚本使用固定库名，需要替换；week6 脚本依赖当前连接数据库并校验 W6 前缀。
         $isWeek6Script = $source.StartsWith((Join-Path $repoRoot 'sql\week6'), [System.StringComparison]::OrdinalIgnoreCase)
-        $prepared = if ($isWeek6Script) { $content } else { $content.Replace('CampusStoreDB', $testDb) }
+        $prepared = if ($isWeek6Script -or [System.IO.Path]::GetFileName($source) -eq 'order_status_verify.sql') { $content } else { $content.Replace('CampusStoreDB', $testDb) }
         [System.IO.File]::WriteAllText($target,$prepared,[System.Text.UTF8Encoding]::new($false))
+        if ([System.IO.Path]::GetFileName($source) -eq 'migration.sql') {
+            & (Join-Path $PSScriptRoot 'Verify-MigrationBoundary.ps1') -ServerInstance $ServerInstance -DatabaseName $testDb -Phase Before
+        }
         Write-Host "执行 $([System.IO.Path]::GetFileName($source))"
         if ([System.IO.Path]::GetFileName($source) -eq '01_create_campus_store_database.sql') {
             & sqlcmd -S $ServerInstance -E -No -b -f 65001 -i $target
@@ -42,6 +46,8 @@ try {
         }
         if ($LASTEXITCODE -ne 0) { throw "第六周验证失败：$source" }
     }
+    & (Join-Path $PSScriptRoot 'Verify-MigrationBoundary.ps1') -ServerInstance $ServerInstance -DatabaseName $testDb -Phase After
+    & (Join-Path $PSScriptRoot 'Verify-FailureCleanup.ps1') -ServerInstance $ServerInstance -DatabaseName $testDb -Mode Week6
     Write-Host "第六周迁移在隔离数据库 $testDb 中验证通过"
 }
 catch {

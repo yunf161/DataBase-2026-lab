@@ -266,14 +266,18 @@ BEGIN CATCH
 END CATCH;
 INSERT #Result VALUES(N'迁移后采购销售流程',N'两类流水正确引用订单，库存净增 1',@flowActual,@flowOk,N'分别使用采购员和收银员，测试数据随后回滚');
 
-IF DATABASE_PRINCIPAL_ID(N'Week6ViewerProbe') IS NOT NULL DROP USER Week6ViewerProbe;
-IF DATABASE_PRINCIPAL_ID(N'Week6PurchaserProbe') IS NOT NULL DROP USER Week6PurchaserProbe;
-IF DATABASE_PRINCIPAL_ID(N'Week6CashierProbe') IS NOT NULL DROP USER Week6CashierProbe;
-IF DATABASE_PRINCIPAL_ID(N'Week6AdminProbe') IS NOT NULL DROP USER Week6AdminProbe;
+IF DATABASE_PRINCIPAL_ID(N'Week6ViewerProbe') IS NOT NULL OR DATABASE_PRINCIPAL_ID(N'Week6PurchaserProbe') IS NOT NULL OR DATABASE_PRINCIPAL_ID(N'Week6CashierProbe') IS NOT NULL OR DATABASE_PRINCIPAL_ID(N'Week6AdminProbe') IS NOT NULL
+    THROW 51624,N'回归探针用户已存在，拒绝覆盖或删除已有用户',1;
+DECLARE @viewerCreated bit=0,@purchaserCreated bit=0,@cashierCreated bit=0,@adminCreated bit=0;
+BEGIN TRY
 CREATE USER Week6ViewerProbe WITHOUT LOGIN;
+SET @viewerCreated=1;
 CREATE USER Week6PurchaserProbe WITHOUT LOGIN;
+SET @purchaserCreated=1;
 CREATE USER Week6CashierProbe WITHOUT LOGIN;
+SET @cashierCreated=1;
 CREATE USER Week6AdminProbe WITHOUT LOGIN;
+SET @adminCreated=1;
 ALTER ROLE CampusViewer ADD MEMBER Week6ViewerProbe;
 ALTER ROLE CampusPurchaser ADD MEMBER Week6PurchaserProbe;
 ALTER ROLE CampusCashier ADD MEMBER Week6CashierProbe;
@@ -341,9 +345,24 @@ END CATCH;
 INSERT #Result VALUES(N'管理员读取全部库存流水',N'允许',IIF(@caught=0,N'允许',CONCAT(N'错误 ',@caught)),IIF(@caught=0,1,0),N'管理员沿用 dbo 架构查询权限');
 
 DROP USER Week6ViewerProbe;
+SET @viewerCreated=0;
 DROP USER Week6PurchaserProbe;
+SET @purchaserCreated=0;
 DROP USER Week6CashierProbe;
+SET @cashierCreated=0;
 DROP USER Week6AdminProbe;
+SET @adminCreated=0;
+
+END TRY
+BEGIN CATCH
+    IF USER_NAME() IN (N'Week6ViewerProbe',N'Week6PurchaserProbe',N'Week6CashierProbe',N'Week6AdminProbe') REVERT;
+    IF XACT_STATE()<>0 ROLLBACK;
+    IF @viewerCreated=1 AND DATABASE_PRINCIPAL_ID(N'Week6ViewerProbe') IS NOT NULL DROP USER Week6ViewerProbe;
+    IF @purchaserCreated=1 AND DATABASE_PRINCIPAL_ID(N'Week6PurchaserProbe') IS NOT NULL DROP USER Week6PurchaserProbe;
+    IF @cashierCreated=1 AND DATABASE_PRINCIPAL_ID(N'Week6CashierProbe') IS NOT NULL DROP USER Week6CashierProbe;
+    IF @adminCreated=1 AND DATABASE_PRINCIPAL_ID(N'Week6AdminProbe') IS NOT NULL DROP USER Week6AdminProbe;
+    THROW;
+END CATCH;
 
 SELECT TestName AS 测试项,Expected AS 预期,Actual AS 实际,
        IIF(Passed=1,N'通过',N'失败') AS 结论,Explanation AS 说明

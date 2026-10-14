@@ -130,6 +130,7 @@ BEGIN
             d.Status='DRAFT' AND (
                 i.Status='CANCELLED' OR
                 (i.Status='RECEIVED' AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N'CampusStorePurchaseConfirm')) IS NOT NULL AND
                  TRY_CONVERT(bigint,SESSION_CONTEXT(N'CampusStorePurchaseConfirm'))=i.PurchaseID)
             )
         )
@@ -158,6 +159,7 @@ BEGIN
             d.Status='DRAFT' AND (
                 i.Status='CANCELLED' OR
                 (i.Status='COMPLETED' AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N'CampusStoreSaleComplete')) IS NOT NULL AND
                  TRY_CONVERT(bigint,SESSION_CONTEXT(N'CampusStoreSaleComplete'))=i.SaleID)
             )
         )

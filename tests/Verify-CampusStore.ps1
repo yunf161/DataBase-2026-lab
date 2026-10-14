@@ -1,4 +1,4 @@
-﻿# 在独立数据库中运行 SQL 验证；结束时只删除本脚本创建的数据库。
+# 在独立数据库中运行 SQL 验证；结束时只删除本脚本创建的数据库。
 param(
     [string]$ServerInstance = 'localhost'
 )
@@ -26,19 +26,28 @@ try {
         '06_week4_verify.sql',
         'role_demo.sql',
         'query.sql',
+        'week5-er-verification.sql',
         # 该脚本保留随机业务数据，应在依赖固定样例行数的验证完成后执行。
-        '05_business_verify.sql'
+        'negative_cases.sql',
+        'order_status_verify.sql'
     )
     foreach ($name in $scripts) {
-        $source = Join-Path $scriptRoot "sql\$name"
+        $source = if ($name -eq 'week5-er-verification.sql') {
+            Join-Path $scriptRoot 'docs\week5-er\verification.sql'
+        } else { Join-Path $scriptRoot "sql\$name" }
         $target = Join-Path $tempDir $name
         # 建库脚本中的数据库名统一替换，业务测试不能碰正式库。
         $content = Get-Content -Raw -Encoding UTF8 -LiteralPath $source
-        [System.IO.File]::WriteAllText($target, $content.Replace('CampusStoreDB', $testDb),
+        $prepared = if ($name -eq 'order_status_verify.sql') { $content } else { $content.Replace('CampusStoreDB', $testDb) }
+        [System.IO.File]::WriteAllText($target, $prepared,
             [System.Text.UTF8Encoding]::new($false))
-        & sqlcmd -S $ServerInstance -E -No -b -f 65001 -i $target
+        $connectionDb = if ($name -eq '01_create_campus_store_database.sql') { 'master' } else { $testDb }
+        Write-Host "执行 $name"
+        & sqlcmd -S $ServerInstance -E -No -b -f 65001 -d $connectionDb -i $target
         if ($LASTEXITCODE -ne 0) { throw "验证失败：$name" }
     }
+    & (Join-Path $PSScriptRoot 'Verify-FailureCleanup.ps1') -ServerInstance $ServerInstance -DatabaseName $testDb -Mode Negative
+    & (Join-Path $PSScriptRoot 'Verify-DeploymentConcurrency.ps1') -ServerInstance $ServerInstance -DatabaseName $testDb
     Write-Host "隔离数据库 $testDb 的结构、业务与演示数据验证通过"
 }
 catch {

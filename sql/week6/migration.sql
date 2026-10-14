@@ -22,14 +22,17 @@ BEGIN TRY
     BEGIN TRAN;
 
     /* 在事务内锁定来源数据，避免检查通过后又被并发修改。 */
-    IF EXISTS (
+    DECLARE @invalidOrigin bit=0;
+    EXEC sys.sp_executesql N'SELECT @bad=IIF(EXISTS (
         SELECT 1 FROM dbo.InventoryLog AS il WITH (UPDLOCK,HOLDLOCK)
-        WHERE (il.ChangeType IN ('PURCHASE_IN','PURCHASE_RETURN') AND
+        WHERE (il.ChangeType IN (''PURCHASE_IN'',''PURCHASE_RETURN'') AND
                (il.BusinessNo IS NULL OR (SELECT COUNT(*) FROM dbo.PurchaseOrder AS po WITH (HOLDLOCK) WHERE po.PurchaseNo=il.BusinessNo)<>1))
-           OR (il.ChangeType IN ('SALE_OUT','SALE_RETURN') AND
+           OR (il.ChangeType IN (''SALE_OUT'',''SALE_RETURN'') AND
                (il.BusinessNo IS NULL OR (SELECT COUNT(*) FROM dbo.SaleOrder AS so WITH (HOLDLOCK) WHERE so.SaleNo=il.BusinessNo)<>1))
-           OR (il.ChangeType IN ('STOCKTAKE_IN','STOCKTAKE_OUT') AND il.BusinessNo IS NOT NULL)
-    ) THROW 51613, N'迁移前检查失败：流水单号无法唯一映射，或盘点流水含非空业务单号', 1;
+           OR (il.ChangeType IN (''STOCKTAKE_IN'',''STOCKTAKE_OUT'') AND il.BusinessNo IS NOT NULL)
+    ),1,0)',N'@bad bit OUTPUT',@bad=@invalidOrigin OUTPUT;
+    IF @invalidOrigin=1
+        THROW 51613, N'迁移前检查失败：流水单号无法唯一映射，或盘点流水含非空业务单号', 1;
 
     ALTER TABLE dbo.InventoryLog ADD PurchaseID bigint NULL, SaleID bigint NULL;
 
@@ -116,6 +119,65 @@ BEGIN TRY
        OR CHARINDEX(N'RoleName IN (''CASHIER'',''ADMIN'')',@definition)=0
         THROW 51618, N'CompleteSale 定义与预期 v0.1 不一致', 1;
     EXEC sys.sp_executesql @definition;
+
+    /* 同步升级冻结基线的状态保护，显式排除 NULL/不可转换的过程标记。 */
+    EXEC(N'CREATE OR ALTER TRIGGER dbo.tr_PurchaseOrder_StatusGuard ON dbo.PurchaseOrder
+AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    -- 新订单只能以草稿创建；即使显式指定终态，也必须经过确认过程。
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i
+        LEFT JOIN deleted AS d ON d.PurchaseID=i.PurchaseID
+        WHERE d.PurchaseID IS NULL AND i.Status<>''DRAFT''
+    ) THROW 51221, N''新增采购单必须为草稿'', 1;
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i JOIN deleted AS d ON d.PurchaseID=i.PurchaseID
+        WHERE d.Status<>''DRAFT'' AND
+            (i.SupplierID<>d.SupplierID OR i.EmployeeID<>d.EmployeeID
+             OR i.PurchaseNo<>d.PurchaseNo OR i.TotalAmount<>d.TotalAmount)
+    ) THROW 51222, N''非草稿采购单的业务编号、金额和参与方不可修改'', 1;
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i JOIN deleted AS d ON d.PurchaseID=i.PurchaseID
+        WHERE i.Status<>d.Status AND NOT (
+            d.Status=''DRAFT'' AND (
+                i.Status=''CANCELLED'' OR
+                (i.Status=''RECEIVED'' AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N''CampusStorePurchaseConfirm'')) IS NOT NULL AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N''CampusStorePurchaseConfirm''))=i.PurchaseID)
+            )
+        )
+    ) THROW 51220, N''采购单状态不可直接更改或回退'', 1;
+END;');
+
+    EXEC(N'CREATE OR ALTER TRIGGER dbo.tr_SaleOrder_StatusGuard ON dbo.SaleOrder
+AFTER INSERT, UPDATE AS
+BEGIN
+    SET NOCOUNT ON;
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i
+        LEFT JOIN deleted AS d ON d.SaleID=i.SaleID
+        WHERE d.SaleID IS NULL AND i.Status<>''DRAFT''
+    ) THROW 51321, N''新增销售单必须为草稿'', 1;
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i JOIN deleted AS d ON d.SaleID=i.SaleID
+        WHERE d.Status<>''DRAFT'' AND
+            (i.EmployeeID<>d.EmployeeID OR i.SaleNo<>d.SaleNo
+             OR i.TotalAmount<>d.TotalAmount OR i.DiscountAmount<>d.DiscountAmount
+             OR ISNULL(i.PaymentMethod,'''')<>ISNULL(d.PaymentMethod,''''))
+    ) THROW 51322, N''非草稿销售单的业务编号、金额、员工和支付方式不可修改'', 1;
+    IF EXISTS (
+        SELECT 1 FROM inserted AS i JOIN deleted AS d ON d.SaleID=i.SaleID
+        WHERE i.Status<>d.Status AND NOT (
+            d.Status=''DRAFT'' AND (
+                i.Status=''CANCELLED'' OR
+                (i.Status=''COMPLETED'' AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N''CampusStoreSaleComplete'')) IS NOT NULL AND
+                 TRY_CONVERT(bigint,SESSION_CONTEXT(N''CampusStoreSaleComplete''))=i.SaleID)
+            )
+        )
+    ) THROW 51320, N''销售单状态不可直接更改或回退'', 1;
+END;');
 
     DROP INDEX IX_InventoryLog_BusinessNo ON dbo.InventoryLog;
     ALTER TABLE dbo.InventoryLog DROP COLUMN BusinessNo;

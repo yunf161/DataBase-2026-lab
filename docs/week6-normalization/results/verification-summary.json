@@ -1,0 +1,199 @@
+{
+  "date": "2026-10-14",
+  "server": ".\\SQLEXPRESS",
+  "database": "random isolated databases; both removed",
+  "main": {
+    "negative": 30,
+    "status": 8,
+    "cleanup_faults": 3,
+    "deployment_and_concurrency": 2
+  },
+  "week6": {
+    "core": 21,
+    "status": 8,
+    "migration_boundary": 3,
+    "user_cleanup_fault": 1
+  },
+  "baseline": {
+    "Category": 5,
+    "Product": 6,
+    "Employee": 3,
+    "Supplier": 2,
+    "PurchaseOrder": 3,
+    "PurchaseItem": 6,
+    "SaleOrder": 3,
+    "SaleItem": 5,
+    "Inventory": 6,
+    "InventoryLog": 11,
+    "ReceivedPurchaseTotal": "222.00",
+    "CompletedSaleOriginalTotal": "44.50"
+  },
+  "week6_core_results": [
+    [
+      "10张业务表行数等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "包括无明细草稿单和未参与业务的基础资料"
+    ],
+    [
+      "采购明细语义等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "正确计算两个方向的 EXCEPT，避免单向丢失漏报"
+    ],
+    [
+      "采购员读取全部库存流水",
+      "229 拒绝",
+      "错误 229",
+      "通过",
+      "采购角色不能跨域读取销售流水"
+    ],
+    [
+      "采购员作为销售经办人",
+      "51306 拒绝",
+      "错误 51306",
+      "通过",
+      "销售过程要求 CASHIER 或 ADMIN"
+    ],
+    [
+      "当前库存等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "迁移只改变流水来源表示，不改库存快照"
+    ],
+    [
+      "非法采购外键",
+      "被拒绝",
+      "被拒绝",
+      "通过",
+      "FK_InventoryLog_PurchaseOrder 生效"
+    ],
+    [
+      "管理员读取全部库存流水",
+      "允许",
+      "允许",
+      "通过",
+      "管理员沿用 dbo 架构查询权限"
+    ],
+    [
+      "库存流水展示等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "业务单号、员工、备注和数量语义均保持"
+    ],
+    [
+      "浏览者读取全部库存流水",
+      "229 拒绝",
+      "错误 229",
+      "通过",
+      "汇总浏览权限不包含完整业务流水"
+    ],
+    [
+      "流水变化方向错误",
+      "被拒绝",
+      "被拒绝",
+      "通过",
+      "CK_InventoryLog_Direction 生效"
+    ],
+    [
+      "流水类型与来源冲突",
+      "被拒绝",
+      "被拒绝",
+      "通过",
+      "CK_InventoryLog_Source 生效"
+    ],
+    [
+      "迁移后采购销售流程",
+      "两类流水正确引用订单，库存净增 1",
+      "引用正确且库存净增 1",
+      "通过",
+      "分别使用采购员和收银员，测试数据随后回滚"
+    ],
+    [
+      "商品销售统计等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "迁移不改变已完成销售的销量与销售额"
+    ],
+    [
+      "收银员读取全部库存流水",
+      "229 拒绝",
+      "错误 229",
+      "通过",
+      "收银角色不能跨域读取采购流水"
+    ],
+    [
+      "收银员直接修改库存",
+      "229 拒绝",
+      "错误 229",
+      "通过",
+      "原有 DENY UPDATE 继续生效"
+    ],
+    [
+      "收银员作为采购经办人",
+      "51203 拒绝",
+      "错误 51203",
+      "通过",
+      "采购过程要求 PURCHASER 或 ADMIN"
+    ],
+    [
+      "销售明细语义等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "数量、成交价和行金额均未变化"
+    ],
+    [
+      "已收货采购总额等价",
+      "222.00",
+      "222.00",
+      "通过",
+      "汇总结果与逐单比较同时验证"
+    ],
+    [
+      "已完成销售总额等价",
+      "44.50",
+      "44.50",
+      "通过",
+      "汇总结果与逐单比较同时验证"
+    ],
+    [
+      "逐采购单状态及金额等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "逐单号比较状态和总额，不能由订单间金额抵消"
+    ],
+    [
+      "逐销售单状态及金额等价",
+      "差异 0",
+      "差异 0",
+      "通过",
+      "逐单号比较状态、总额、优惠和应付金额"
+    ]
+  ],
+  "limitations": [
+    "AI records deferred",
+    "Application development for weeks 7-9 not included",
+    "formal database not migrated"
+  ],
+  "actual_baseline_metrics": {
+    "CategoryRows": "5.00",
+    "CompletedSaleAmount": "44.50",
+    "EmployeeRows": "3.00",
+    "InventoryLogRows": "11.00",
+    "InventoryRows": "6.00",
+    "ProductRows": "6.00",
+    "PurchaseItemRows": "6.00",
+    "PurchaseOrderRows": "3.00",
+    "ReceivedPurchaseAmount": "222.00",
+    "SaleItemRows": "5.00",
+    "SaleOrderRows": "3.00",
+    "SupplierRows": "2.00"
+  }
+}

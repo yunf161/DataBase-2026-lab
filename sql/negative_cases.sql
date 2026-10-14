@@ -790,7 +790,10 @@ SET NUMERIC_ROUNDABORT OFF;
 SET XACT_ABORT OFF;
 SET NOCOUNT ON;
 CREATE TABLE #EarlierWork(Value int);
+DECLARE @fatalTriggerCreated bit=0;
 BEGIN TRY
+    IF OBJECT_ID(N'dbo.tr_TransactionAuditFatal',N'TR') IS NOT NULL
+        THROW 52212,N'事务测试触发器已经存在，拒绝覆盖已有对象',1;
     DECLARE @case int=1,@expected int;
     WHILE @case<=5
     BEGIN
@@ -886,6 +889,7 @@ BEGIN TRY
           IF EXISTS (SELECT 1 FROM inserted WHERE Remark=N''__TransactionAuditFatal__'')
               THROW 52209,N''隔离测试模拟不可提交事务'',1;
           END;');
+    SET @fatalTriggerCreated=1;
     BEGIN TRAN;
     INSERT #EarlierWork VALUES(13);
     BEGIN TRY
@@ -899,6 +903,7 @@ BEGIN TRY
         THROW 52211,N'过程没有将不可提交外层事务交回调用者',1;
     ROLLBACK;
     DROP TRIGGER dbo.tr_TransactionAuditFatal;
+    SET @fatalTriggerCreated=0;
     PRINT N'不可提交外层事务保留并由调用者整体回滚，未错误回滚保存点';
     DROP TABLE #EarlierWork;
     PRINT N'采购与销售部分库存写入失败回到保存点；成功采购由外层事务决定提交';
@@ -913,6 +918,9 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
     IF XACT_STATE()<>0 ROLLBACK;
+    IF @fatalTriggerCreated=1 AND OBJECT_ID(N'dbo.tr_TransactionAuditFatal',N'TR') IS NOT NULL
+        DROP TRIGGER dbo.tr_TransactionAuditFatal;
+    IF OBJECT_ID(N'tempdb..#EarlierWork',N'U') IS NOT NULL DROP TABLE #EarlierWork;
     THROW;
 END CATCH;
 END TRY

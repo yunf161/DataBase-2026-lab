@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="2350" height="1390" viewBox="0 0 2350 1390">
+<svg xmlns="http://www.w3.org/2000/svg" width="2350" height="1430" viewBox="0 0 2350 1430">
 <style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#183047}.title{font-size:27px;font-weight:700}.subtitle{font-size:15px;fill:#486174}.entity-title{font-size:17px;font-weight:700}.field{font-size:15px}.edge-label{font-size:15px;font-weight:600}</style>
-<rect x="0" y="0" width="2350" height="1390" fill="#f8fbfd"/>
+<rect x="0" y="0" width="2350" height="1430" fill="#f8fbfd"/>
 <text x="70" y="42" class="title">校园小卖部 v1.0 ER 模型（基于第五周）</text>
 <text x="70" y="70" class="subtitle">保留第五周布局与 R01–R12；黄色＝本周修改实体；蓝色虚线＝本周新增外键联系</text>
 <polyline points="80,590 30,590 30,510 170,510 170,550" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
@@ -101,11 +101,12 @@
 <text x="1690" y="405" class="edge-label" text-anchor="middle">R11 库存变化 0..N / 1..1</text>
 <rect x="1940" y="6" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
 <text x="2070" y="25" class="edge-label" text-anchor="middle">R12 执行变化 0..N / 0..1</text>
-<rect x="1374" y="256" width="312" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
-<text x="1530" y="275" class="edge-label" text-anchor="middle">R14 采购来源 0..N / 0..1（新增）</text>
+<rect x="1824" y="316" width="312" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1980" y="335" class="edge-label" text-anchor="middle">R14 采购来源 0..N / 0..1（新增）</text>
 <rect x="1864" y="151" width="312" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
 <text x="2020" y="170" class="edge-label" text-anchor="middle">R15 销售来源 0..N / 0..1（新增）</text>
-<rect x="80" y="1290" width="2180" height="72" rx="8" fill="#e9f1f5"/>
-<text x="98" y="1320" class="subtitle">标记：PK 主码　AK 候选码　FK 外码　UQ 可空唯一。R01–R12 沿用第五周；原 R13（拟议会员）取消。</text>
+<rect x="80" y="1290" width="2180" height="112" rx="8" fill="#e9f1f5"/>
+<text x="98" y="1320" class="subtitle">标记：PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b：每条左端对应 a 条右端，反向为 b；顺序按业务规则表。</text>
 <text x="98" y="1347" class="subtitle">R14/R15 为第六周新增并替代文本 BusinessNo；采购与销售来源互斥，由来源 CHECK 保证。</text>
+<text x="98" y="1374" class="subtitle">* 商品→库存业务目标 1..1，实际 PK+FK 仅保证 0..1；草稿明细 0..N，确认/结算时要求 1..N。原 R13（会员）取消。</text>
 </svg>

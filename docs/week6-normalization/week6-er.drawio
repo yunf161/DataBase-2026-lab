@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mxfile host="app.diagrams.net" type="device">
   <diagram name="Week6 v1.0 ER" id="week6-er">
-    <mxGraphModel dx="2350" dy="1390" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2350" pageHeight="1390">
+    <mxGraphModel dx="2350" dy="1390" grid="1" gridSize="10" page="1" pageScale="1" pageWidth="2350" pageHeight="1430">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -11,8 +11,8 @@
         <mxCell id="diagram-subtitle" value="保留第五周布局与 R01–R12；黄色＝本周修改实体；蓝色虚线＝本周新增外键联系" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontColor=#183047;whiteSpace=wrap;">
           <mxGeometry x="70" y="52" width="1200" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="diagram-legend" value="PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b 按业务规则表左→右读。&lt;br&gt;第五周 R13（拟议会员）因超出范围取消；R14/R15 替代文本 BusinessNo，并由来源 CHECK 保证互斥。" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontColor=#183047;whiteSpace=wrap;">
-          <mxGeometry x="80" y="1290" width="2180" height="75" as="geometry" />
+        <mxCell id="diagram-legend" value="PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b：每条左端对应 a 条右端，反向为 b；顺序见业务规则表。&lt;br&gt;第五周 R13（拟议会员）取消；R14/R15 是本周新增来源 FK，由 CHECK 保证互斥。&lt;br&gt;* 商品→库存业务目标 1..1，实际 PK+FK 仅保证 0..1；草稿明细 0..N，确认/结算时要求 1..N。" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=15;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="80" y="1290" width="2180" height="112" as="geometry" />
         </mxCell>
         <mxCell id="Supplier" value="&lt;b&gt;供应商 Supplier&lt;/b&gt;&lt;br&gt;PK SupplierID&lt;br&gt;AK SupplierCode&lt;br&gt;SupplierName&lt;br&gt;ContactName / Phone" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=14;fontSize=15;fillColor=#ffffff;strokeColor=#35536b;">
           <mxGeometry x="80" y="100" width="280" height="190" as="geometry" />
@@ -169,7 +169,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="label-R14" value="R14 采购来源 0..N / 0..1（新增）" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
-          <mxGeometry x="1374" y="253" width="312" height="28" as="geometry" />
+          <mxGeometry x="1824" y="313" width="312" height="28" as="geometry" />
         </mxCell>
         <mxCell id="R15" value="" edge="1" parent="1" source="SaleOrder" target="InventoryLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;dashed=1;dashPattern=8 5;strokeColor=#2866bc;">
           <mxGeometry relative="1" as="geometry">

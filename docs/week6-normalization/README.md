@@ -1,53 +1,60 @@
 # 第六周：函数依赖、范式分析与迁移
 
-本目录对应第六周“关系规范化、反规范化取舍与迁移验证”。分析基线固定为
-`submissions/v0.1-week4`，该目录保持不变；第六周只在数据库副本上执行
-`sql/week6` 中的脚本。
+对应第六周“关系规范化、冗余取舍与迁移验证”。分析基线为冻结的
+`submissions/v0.1-week4`，迁移只在完整 v0.1 数据库副本上运行。
 
-## 结论
+实体已经分离，基础业务属性关系在所列依赖下达到 3NF；完整物理关系中的 LineAmount、
+PayableAmount 和库存 AfterQuantity 有非码派生依赖，严格判断不满足 3NF。
+本周保留有明确维护措施的物理冗余，不能概括为“全部十表已达 3NF”。
 
-现有 10 张业务表已经按分类、商品、库存、订单头、订单明细和流水拆分，所有属性均为
-原子值，订单明细不存在对组合候选码的部分依赖，主要业务表达到 3NF。第六周不为了
-“表越多越规范”而大拆表，而是修复一个可验证的参照完整性缺口：v0.1 的
-`InventoryLog.BusinessNo` 是无外键文本，可能写入不存在或类型不匹配的订单号。
-
-v1.0 将该字段替换为可空的 `PurchaseID`、`SaleID` 外键，并用
-`CK_InventoryLog_Source` 规定每种流水只能引用正确的一类订单。查询显示仍通过
-`v_inventory_log_detail.BusinessNo` 提供统一业务单号，因而不损失原有可读性。
-`CK_InventoryLog_Direction` 同时保证入库/退货入库为正数、出库/退货出库为负数。
-
-保留的反规范化包括 `Inventory.Quantity` 当前库存快照，以及订单头的 `TotalAmount`。
-两者能显著降低日常查询成本，并且只能由事务过程维护，已有权限、触发器和回归测试
-防止随意修改，因此本周选择保留。`LineAmount`、`PayableAmount` 是持久化计算列，不是
-人工维护的重复数据。
+实际变化是将 InventoryLog.BusinessNo 文本替换为 PurchaseID / SaleID 订单外键，
+用来源 CHECK 保证类型和空值组合，用方向 CHECK 保证入出库正负号。
+`v_inventory_log_detail` 用 LEFT JOIN 与 COALESCE 重构业务单号，仅允许管理员读完整流水。
+迁移同时升级两类订单状态保护，拒绝缺失/不可转换的过程标记。
 
 ## 文件导航
 
-- [函数依赖清单](functional-dependencies.md)
-- [范式与异常分析](normalization-analysis.md)
-- [目标结构与无损性说明](target-schema.md)
+- [逐表函数依赖及候选码](functional-dependencies.md)
+- [逐表范式、三类异常及分解证明](normalization-analysis.md)
+- [目标结构、无损性与依赖保持](target-schema.md)
 - [v1.0 数据字典](data-dictionary.md)
-- [迁移步骤与运行方式](migration-notes.md)
-- [回归结果](regression-results.md)
-- [v1.0 ER 图源文件](week6-er.drawio) / [SVG](week6-er.svg) / [PNG](week6-er.png)：直接沿用第五周图的实体位置、R01–R12 联系和视觉样式；取消未实施的拟议会员 R13，以 R14/R15 标出本周新增的采购/销售流水外键。
-- [本周分析记录](ai-log.md)
+- [迁移步骤、冲突与恢复](migration-notes.md)
+- [实际回归结果及原始输出](regression-results.md)
+- [报告素材：设计、过程、总结](report-material.md)
+- ER 可编辑源 [draw.io](week6-er.drawio)，导出 [SVG](week6-er.svg) / [PNG](week6-er.png)
+- [原有 AI 分析记录](ai-log.md)（本次不调整，按组内安排另行核对）
 
-## 推荐执行顺序
+## 两种执行路径
 
-1. 完整备份数据库，并将副本命名为 `CampusStoreDB_W6_*`，例如 `CampusStoreDB_W6_Group1`。
-2. 在副本中复现 v0.1：依次执行第一阶段的 `01`、`02`、`view.sql`、`role.sql`、`03`。
-3. 执行 `sql/week6/baseline.sql`，保存迁移前明细、统计、库存和流水。
-4. 执行 `sql/week6/migration.sql`，完成外键化迁移。
-5. 每次执行前先在 SSMS 工具栏选择该副本；执行 `sql/week6/regression.sql`，看到 21 项均“通过”。
+**保留结果供 SSMS 展示：**完整备份 v0.1，在 SSMS“还原数据库”建立新副本，
+目标名如 `CampusStoreDB_W6_Group1`，数据库文件也选择新的目标路径。
+确认它已含十张业务表、过程、视图、角色及已有业务数据。
+在工具栏选该副本后依次运行
+[baseline.sql](../../sql/week6/baseline.sql) →
+[migration.sql](../../sql/week6/migration.sql) →
+[regression.sql](../../sql/week6/regression.sql)。
+副本已有结构和数据，**不要再运行固定库名的 01 建库和 03 样例脚本**。
+基线只在迁移前采集，迁移成功后不得覆盖原基线。
 
-迁移完成后不要再次运行 v0.1 的 `02_business_procedures.sql`，因为迁移脚本已经把其中两个
-库存流水写入点升级为外键写法。若需要重新演示完整迁移，应重新建立数据库副本并从基线开始。
-
-自动隔离验证可在仓库根目录运行：
+**自动从冻结提交复现并验证：**在仓库根目录运行：
 
 ```powershell
-& '.\tests\Verify-Week6Migration.ps1' -ServerInstance 'localhost'
+& '.\tests\Verify-Week6Migration.ps1' -ServerInstance '.\SQLEXPRESS'
 ```
 
-脚本会使用随机临时数据库并在结束时删除，不修改正式 `CampusStoreDB`。
+脚本把冻结 01/02 等脚本中的库名改为随机 `CampusStoreDB_W6_*`，
+完成基线、迁移、21 项回归、8 项状态专项、3 项迁移边界与1项用户异常清理验证，
+随后删除自己创建的临时库。它不用于留下展示数据库，也不修改正式库。
+具体实例名以 SSMS 连接为准，执行账号需有建库和模拟角色权限。
+
+迁移后不能重跑 v0.1 的 02 业务过程脚本，否则会恢复已删除 BusinessNo 的写法。
+再次演示迁移须重新还原一份 v0.1 副本；失败恢复方式见[迁移说明](migration-notes.md)。
+
+## 图文件更新
+
+draw.io 源图可直接编辑。使用现有生成器时，在仓库根目录运行
+`python docs/week5-er/generate_diagram.py` 与
+`python docs/week6-normalization/generate_diagram.py` 生成 SVG/draw.io；
+PNG 再由 `node tests/Render-ErDiagrams.cjs` 从 SVG 渲染，需要 Node.js 环境中已安装 sharp，
+可用 NODE_PATH 指向其安装位置。重新导图不需要执行数据库脚本。
 

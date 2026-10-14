@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 
 
 OUT = Path(__file__).resolve().parent
-WIDTH, HEIGHT = 2350, 1390
+WIDTH, HEIGHT = 2350, 1430
 BOX_W, BOX_H = 280, 190
 
 
@@ -86,7 +86,7 @@ RELATIONS = (
     Relation("R12", "Employee", "InventoryLog", "执行变化 0..N / 0..1",
              ((1140, 100), (1140, 50), (2310, 50), (2310, 1145), (2250, 1145)), (2070, 25)),
     Relation("R14", "PurchaseOrder", "InventoryLog", "采购来源 0..N / 0..1（新增）",
-             ((790, 195), (860, 300), (2200, 300), (2200, 1050)), (1530, 275), True),
+             ((790, 195), (860, 300), (2200, 300), (2200, 1050)), (1980, 335), True),
     Relation("R15", "SaleOrder", "InventoryLog", "销售来源 0..N / 0..1（新增）",
              ((1770, 195), (2240, 195), (2240, 1050)), (2020, 170), True),
 )
@@ -120,9 +120,9 @@ def write_drawio() -> None:
     for cell_id, value, x, y, width, height, size in (
         ("diagram-title", "校园小卖部 v1.0 ER 模型（基于第五周）", 70, 5, 850, 50, 27),
         ("diagram-subtitle", "保留第五周布局与 R01–R12；黄色＝本周修改实体；蓝色虚线＝本周新增外键联系", 70, 52, 1200, 35, 15),
-        ("diagram-legend", "PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b 按业务规则表左→右读。<br>"
-         "第五周 R13（拟议会员）因超出范围取消；R14/R15 替代文本 BusinessNo，并由来源 CHECK 保证互斥。",
-         80, 1290, 2180, 75, 15),
+        ("diagram-legend", "PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b：每条左端对应 a 条右端，反向为 b；顺序见业务规则表。<br>"
+         "第五周 R13（拟议会员）取消；R14/R15 是本周新增来源 FK，由 CHECK 保证互斥。<br>* 商品→库存业务目标 1..1，实际 PK+FK 仅保证 0..1；草稿明细 0..N，确认/结算时要求 1..N。",
+         80, 1290, 2180, 112, 15),
     ):
         cell = ET.SubElement(root, "mxCell", {
             "id": cell_id, "value": value, "vertex": "1", "parent": "1",
@@ -204,9 +204,10 @@ def write_svg() -> None:
         parts.append(f'<text x="{x}" y="{y}" class="edge-label" text-anchor="middle">'
                      f'{escape(label)}</text>')
     parts.extend([
-        '<rect x="80" y="1290" width="2180" height="72" rx="8" fill="#e9f1f5"/>',
-        '<text x="98" y="1320" class="subtitle">标记：PK 主码　AK 候选码　FK 外码　UQ 可空唯一。R01–R12 沿用第五周；原 R13（拟议会员）取消。</text>',
+        '<rect x="80" y="1290" width="2180" height="112" rx="8" fill="#e9f1f5"/>',
+        '<text x="98" y="1320" class="subtitle">标记：PK 主码　AK 候选码　FK 外码　UQ 可空唯一。a / b：每条左端对应 a 条右端，反向为 b；顺序按业务规则表。</text>',
         '<text x="98" y="1347" class="subtitle">R14/R15 为第六周新增并替代文本 BusinessNo；采购与销售来源互斥，由来源 CHECK 保证。</text>',
+        '<text x="98" y="1374" class="subtitle">* 商品→库存业务目标 1..1，实际 PK+FK 仅保证 0..1；草稿明细 0..N，确认/结算时要求 1..N。原 R13（会员）取消。</text>',
         '</svg>',
     ])
     (OUT / "week6-er.svg").write_text("\n".join(parts), encoding="utf-8")

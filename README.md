@@ -80,8 +80,35 @@ sqlcmd -S $ServerInstance -E -No -b -f 65001 -i 'sql\03_sample_data.sql'
 
 新建商品会自动生成数量为 0 的库存行。采购和销售先建 `DRAFT` 订单并写入明细，再分别执行 `dbo.ConfirmPurchase` 与 `dbo.CompleteSale`。过程在事务中核对明细、金额和库存，更新订单状态并记录库存流水；库存不足等错误会回滚。已确认订单不能改回草稿，已完成订单的明细不能改动。分类不能形成循环，普通业务角色的库存数量写入只能经业务过程，带 `UpdatedAt` 的相关表由触发器维护更新时间。销售明细保留成交价，商品日后调价不会改写历史销售金额。
 
-本版不含会员、真实支付流水、员工密码、退货、盘点和多门店业务；相关流水类型可预留，但不能把尚未实现的退货或盘点当作已完成功能。原始 SQL Server 建表草稿保存在 [sql/00_original_campus_store_database.sql](sql/00_original_campus_store_database.sql)，实际运行请使用 `01_create_campus_store_database.sql`。
+本版不含会员、真实支付流水、退货、盘点和多门店业务；核心Employee表不保存登录密码，第七周应用凭据单独保存在app.AppUser。相关流水类型可预留，但不能把尚未实现的退货或盘点当作已完成功能。原始 SQL Server 建表草稿保存在 [sql/00_original_campus_store_database.sql](sql/00_original_campus_store_database.sql)，实际运行请使用 `01_create_campus_store_database.sql`。
 
 ## 第二阶段第5—6周提交
 
 独立提交目录为 `submissions/v1.0-week6`，同名 ZIP 可直接解压查看。包含 ER 源图/导出、逐表分析、迁移与回归脚本、实际结果及[报告素材](docs/week6-normalization/report-material.md)。第一阶段冻结目录及 ZIP、旧测试截图保持原样。v1.0 此处表示第二阶段第六周数据库交付，不表示第7—9周应用开发已完成；AI 记录按组内安排另行核对。
+
+## 第7周 Web 应用
+
+[第七周运行说明](docs/week7-application/README.md)包含Flask四层应用、管理员/店员/顾客登录、
+商品CRUD、库存查询与预警、订单查询和草稿明细操作。
+账号和订单归属是独立增量，应用使用CampusStoreDB_W7_Development，正式库不参与应用测试。
+
+首次在项目根目录运行：
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe -m tools.prepare_week7 --server '.\SQLEXPRESS'
+.\.venv\Scripts\python.exe -m app --port 5070
+```
+
+打开http://127.0.0.1:5070。演示账号admin、staff、customer、customer2，密码均为Campus2026!。
+以后使用 `.\tools\Start-Week7.ps1` 启动即可，不必再次初始化。
+本地配置/签名密钥在被忽略的instance目录，账号密码仅为本地演示用途。
+本周完成登录和基础CRUD；草稿尚未结算、不扣库存，采购/销售结算/盘点界面留待后续周次。
+
+[操作手册](docs/week7-application/user-manual.md)、
+[架构与权限](docs/week7-application/architecture.md)、
+[API说明](docs/week7-application/api.md)、
+[真实验证及截图](docs/week7-application/verification.md)、
+[报告素材](docs/week7-application/report-material.md)。
+独立交付为 `submissions/v1.0-week7.zip`；旧第六周包不覆盖，AI记录按组内安排另行整理。

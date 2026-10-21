@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2350" height="1390" viewBox="0 0 2350 1390">
+<style>text{font-family:"Microsoft YaHei","Noto Sans CJK SC",sans-serif;fill:#183047}.title{font-size:27px;font-weight:700}.subtitle{font-size:15px;fill:#486174}.entity-title{font-size:17px;font-weight:700}.field{font-size:15px}.edge-label{font-size:15px;font-weight:600}</style>
+<rect x="0" y="0" width="2350" height="1390" fill="#f8fbfd"/>
+<text x="70" y="42" class="title">校园小卖部 v0.1 ER 模型</text>
+<text x="70" y="70" class="subtitle">实线＝已有外键　虚线＝第六周拟议会员；R 编号与业务规则表对应</text>
+<polyline points="80,590 30,590 30,510 170,510 170,550" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="360,645 650,645" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="360,195 510,195" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1000,195 790,195" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="510,245 430,245 430,1145 510,1145" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="710,740 710,1050" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1280,195 1490,195" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1770,245 1840,245 1840,1145 1770,1145" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="930,710 1090,870 1600,870 1600,1050" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="930,645 1190,645" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="900,550 900,430 2110,430 2110,1050" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1140,100 1140,50 2310,50 2310,1145 2250,1145" fill="none" stroke="#43627a" stroke-width="2.4" stroke-linejoin="round"/>
+<polyline points="1970,195 1770,195" fill="none" stroke="#2866bc" stroke-width="2.4" stroke-linejoin="round" stroke-dasharray="9 6"/>
+<rect x="80" y="100" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="94" y="131" class="entity-title">供应商 Supplier</text>
+<text x="94" y="165" class="field">PK SupplierID</text>
+<text x="94" y="191" class="field">AK SupplierCode</text>
+<text x="94" y="217" class="field">SupplierName</text>
+<text x="94" y="243" class="field">ContactName / Phone</text>
+<rect x="510" y="100" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="524" y="131" class="entity-title">采购单 PurchaseOrder</text>
+<text x="524" y="165" class="field">PK PurchaseID</text>
+<text x="524" y="191" class="field">AK PurchaseNo</text>
+<text x="524" y="217" class="field">FK SupplierID / EmployeeID</text>
+<text x="524" y="243" class="field">Status / TotalAmount</text>
+<rect x="1000" y="100" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="1014" y="131" class="entity-title">员工 Employee</text>
+<text x="1014" y="165" class="field">PK EmployeeID</text>
+<text x="1014" y="191" class="field">AK EmployeeNo</text>
+<text x="1014" y="217" class="field">EmployeeName / RoleName</text>
+<text x="1014" y="243" class="field">Status</text>
+<rect x="1490" y="100" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="1504" y="131" class="entity-title">销售单 SaleOrder</text>
+<text x="1504" y="165" class="field">PK SaleID</text>
+<text x="1504" y="191" class="field">AK SaleNo</text>
+<text x="1504" y="217" class="field">FK EmployeeID</text>
+<text x="1504" y="243" class="field">Status / PaymentMethod</text>
+<rect x="1970" y="100" width="280" height="190" rx="12" fill="#eef4ff" stroke="#35536b" stroke-width="2" stroke-dasharray="9 6"/>
+<text x="1984" y="131" class="entity-title">会员 Member（拟议）</text>
+<text x="1984" y="165" class="field">拟 PK MemberID</text>
+<text x="1984" y="191" class="field">拟 AK MemberNo</text>
+<text x="1984" y="217" class="field">MemberName / Phone</text>
+<text x="1984" y="243" class="field">拟 SaleOrder.MemberID FK</text>
+<rect x="80" y="550" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="94" y="581" class="entity-title">分类 Category</text>
+<text x="94" y="615" class="field">PK CategoryID</text>
+<text x="94" y="641" class="field">AK CategoryCode</text>
+<text x="94" y="667" class="field">FK ParentID（可空）</text>
+<text x="94" y="693" class="field">CategoryName / Status</text>
+<rect x="650" y="550" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="664" y="581" class="entity-title">商品 Product</text>
+<text x="664" y="615" class="field">PK ProductID</text>
+<text x="664" y="641" class="field">AK SKU；Barcode 可空 UQ</text>
+<text x="664" y="667" class="field">FK CategoryID</text>
+<text x="664" y="693" class="field">ProductName / SalePrice</text>
+<rect x="1190" y="550" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="1204" y="581" class="entity-title">库存 Inventory</text>
+<text x="1204" y="615" class="field">PK+FK ProductID</text>
+<text x="1204" y="641" class="field">Quantity</text>
+<text x="1204" y="667" class="field">MinQuantity</text>
+<text x="1204" y="693" class="field">业务目标：每商品一行</text>
+<rect x="510" y="1050" width="280" height="190" rx="12" fill="#eaf5ed" stroke="#35536b" stroke-width="2"/>
+<text x="524" y="1081" class="entity-title">采购明细 PurchaseItem</text>
+<text x="524" y="1115" class="field">PK PurchaseItemID</text>
+<text x="524" y="1141" class="field">复合 AK (PurchaseID, ProductID)</text>
+<text x="524" y="1167" class="field">FK PurchaseID / ProductID</text>
+<text x="524" y="1193" class="field">Quantity / UnitCost</text>
+<rect x="1490" y="1050" width="280" height="190" rx="12" fill="#eaf5ed" stroke="#35536b" stroke-width="2"/>
+<text x="1504" y="1081" class="entity-title">销售明细 SaleItem</text>
+<text x="1504" y="1115" class="field">PK SaleItemID</text>
+<text x="1504" y="1141" class="field">复合 AK (SaleID, ProductID)</text>
+<text x="1504" y="1167" class="field">FK SaleID / ProductID</text>
+<text x="1504" y="1193" class="field">Quantity / UnitPrice</text>
+<rect x="1970" y="1050" width="280" height="190" rx="12" fill="#ffffff" stroke="#35536b" stroke-width="2"/>
+<text x="1984" y="1081" class="entity-title">库存流水 InventoryLog</text>
+<text x="1984" y="1115" class="field">PK LogID</text>
+<text x="1984" y="1141" class="field">FK ProductID</text>
+<text x="1984" y="1167" class="field">FK EmployeeID（可空）</text>
+<text x="1984" y="1193" class="field">ChangeQuantity / BusinessNo</text>
+<rect x="-3" y="466" width="247" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="120" y="485" class="edge-label" text-anchor="middle">R01 上下级 0..N / 0..1</text>
+<rect x="388" y="601" width="234" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="505" y="620" class="edge-label" text-anchor="middle">R02 归类 0..N / 1..1</text>
+<rect x="318" y="321" width="234" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="435" y="340" class="edge-label" text-anchor="middle">R03 供货 0..N / 1..1</text>
+<rect x="765" y="321" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="895" y="340" class="edge-label" text-anchor="middle">R04 采购经办 0..N / 1..1</text>
+<rect x="300" y="801" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="430" y="820" class="edge-label" text-anchor="middle">R05 采购包含 0..N / 1..1</text>
+<rect x="587" y="881" width="247" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="710" y="900" class="edge-label" text-anchor="middle">R06 被采购 0..N / 1..1</text>
+<rect x="1255" y="321" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1385" y="340" class="edge-label" text-anchor="middle">R07 销售经办 0..N / 1..1</text>
+<rect x="1710" y="791" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1840" y="810" class="edge-label" text-anchor="middle">R08 销售包含 0..N / 1..1</text>
+<rect x="1177" y="826" width="247" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1300" y="845" class="edge-label" text-anchor="middle">R09 被售出 0..N / 1..1</text>
+<rect x="911" y="776" width="299" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1060" y="795" class="edge-label" text-anchor="middle">R10 当前库存 业务1..1 / 1..1*</text>
+<rect x="1560" y="386" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1690" y="405" class="edge-label" text-anchor="middle">R11 库存变化 0..N / 1..1</text>
+<rect x="1940" y="6" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="2070" y="25" class="edge-label" text-anchor="middle">R12 执行变化 0..N / 0..1</text>
+<rect x="1721" y="321" width="299" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1870" y="340" class="edge-label" text-anchor="middle">R13 会员购买 0..N / 0..1（拟）</text>
+<rect x="80" y="1290" width="2180" height="72" rx="8" fill="#e9f1f5"/>
+<text x="98" y="1320" class="subtitle">标记：PK 主码　AK 候选码　FK 外码　UQ 可空唯一。联系标签“a / b”按规则表左→右读：每条左端对应 a 条右端，反向为 b。</text>
+<text x="98" y="1347" class="subtitle">* 商品→库存业务期望 1..1，现有 PK+FK 实际只保证 0..1；草稿订单明细 0..N，确认或结算时由过程要求 1..N。</text>
+</svg>

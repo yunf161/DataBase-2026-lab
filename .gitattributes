@@ -1,2 +1,3 @@
 # Keep the validated submission directory byte-for-byte consistent with its ZIP and SHA-256 manifest.
 submissions/v1.0-week6/** -text
+submissions/v1.0-week7/** -text

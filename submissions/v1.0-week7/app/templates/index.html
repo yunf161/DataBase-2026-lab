@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>校园小卖部 · 日常有序</title>
+  <link rel="icon" href="{{ url_for('static', filename='store.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <section id="login-screen" class="login-screen">
+    <div class="login-story">
+      <a class="brand" href="/"><span class="brand-mark">校</span><span>校园小卖部<small>CAMPUS STORE</small></span></a>
+      <div class="story-copy"><span class="eyebrow">校园生活，刚刚好。</span><h1>一间小店，<br>装下校园的日常。</h1><p>课间的一瓶水，晚自习的一支笔。<br>每一份小小的需要，都在这里被认真照顾。</p></div>
+      <div class="shelf-art" aria-hidden="true">
+        <div class="shop-top">CAMPUS&nbsp; / &nbsp;DAILY GOODS</div>
+        <div class="awning"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="shop-body"><div class="shop-window"><span class="bottle">水</span><span class="snack">好<br>食</span><span class="bottle blue">茶</span><span class="paper">纸</span></div><div class="shop-door"><span>OPEN</span></div></div>
+        <div class="shop-base"></div><span class="art-dot dot-one"></span><span class="art-dot dot-two"></span>
+      </div>
+      <span class="story-footer">把日常打理好，让校园生活更轻松。</span>
+    </div>
+    <div class="login-panel">
+      <form id="login-form" class="login-card">
+        <span class="eyebrow">WELCOME BACK</span><h2>欢迎回来</h2><p class="muted">登录你的账号，开始今天的日常。</p>
+        <div id="login-error" class="form-error" role="alert" hidden></div>
+        <label for="username">用户名</label><input id="username" name="username" autocomplete="username" maxlength="40" required placeholder="请输入用户名">
+        <label for="password">密码</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" required placeholder="请输入密码"><button id="toggle-password" class="password-toggle" type="button" aria-label="显示密码">显示</button></div>
+        <button id="login-submit" type="submit" class="primary full">登录工作台 <span>→</span></button>
+        <p class="login-help">店员与顾客使用各自的账号登录。<br>账号问题请联系店铺管理员。</p>
+      </form>
+      <span class="login-copyright">校园小卖部 · 每一份日常，都值得认真对待</span>
+    </div>
+  </section>
+
+  <div id="workspace" class="workspace" hidden>
+    <aside class="sidebar">
+      <a class="brand" href="/"><span class="brand-mark">校</span><span>校园小卖部<small>CAMPUS STORE</small></span></a>
+      <span class="nav-caption">店铺工作台</span>
+      <nav aria-label="主要导航">
+        <button data-view="products" class="nav-item active"><span class="nav-icon">▦</span><span id="products-nav-label">商品管理</span><span class="nav-arrow">›</span></button>
+        <button data-view="inventory" class="nav-item" id="inventory-nav"><span class="nav-icon">▤</span>库存查询<span class="nav-arrow">›</span></button>
+        <button data-view="orders" class="nav-item"><span class="nav-icon">▣</span><span id="orders-nav-label">销售订单</span><span class="nav-arrow">›</span></button>
+      </nav>
+      <div class="sidebar-note"><span class="note-dot"></span><strong>让小店，井然有序。</strong><p>商品、库存和订单，<br>在同一个地方轻松打理。</p></div>
+      <div class="sidebar-user"><span id="avatar" class="user-avatar">管</span><div><strong id="display-name"></strong><small id="role-name"></small></div><button id="logout" class="logout" title="退出登录" aria-label="退出登录">↪</button></div>
+    </aside>
+    <div class="main-shell">
+      <header class="topbar"><span><span class="breadcrumb">工作台</span><span class="slash">/</span><span id="breadcrumb-title">商品管理</span></span><span class="store-status"><i></i> 校园生活 · 日常有序</span></header>
+      <main>
+        <div class="page-heading"><div><span class="eyebrow" id="page-eyebrow">PRODUCTS & SHELVES</span><h1 id="page-title">商品管理</h1><p class="muted" id="page-description">每一件日常好物，都值得被好好打理。</p></div><button id="heading-action" class="primary">＋ 新增商品</button></div>
+        <div id="page-error" class="form-error" role="alert" hidden></div>
+        <section id="summary" class="summary" aria-label="当前列表概览"></section>
+        <section class="content-card">
+          <form id="filter-form" class="toolbar">
+            <div class="search-wrap"><span>⌕</span><input id="search" aria-label="搜索" placeholder="搜索商品名称或编号"></div>
+            <select id="status-filter" aria-label="状态筛选"></select>
+            <button class="secondary" type="submit">查询</button><button id="refresh" class="icon-button" title="刷新列表" aria-label="刷新列表" type="button">↻</button>
+          </form>
+          <div class="table-scroll"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
+          <div class="table-footer"><span id="table-count">正在加载…</span><div class="pagination"><button id="previous-page" class="secondary small">上一页</button><span id="page-number">1</span><button id="next-page" class="secondary small">下一页</button></div></div>
+        </section>
+        <div class="page-footnote"><span>校园小卖部</span><span id="page-tip">及时维护商品信息，让每一次选购都更安心。</span></div>
+      </main>
+    </div>
+  </div>
+  <dialog id="editor"><div class="dialog-heading"><div><span class="eyebrow">CAMPUS STORE</span><h2 id="editor-title">新增商品</h2></div><button id="close-editor" class="icon-button" aria-label="关闭弹窗">×</button></div><div id="editor-error" class="form-error" role="alert" hidden></div><div id="editor-content"></div></dialog>
+  <dialog id="confirmation"><div class="dialog-heading"><h2 id="confirm-title">确认操作</h2></div><p id="confirm-description" class="muted"></p><div class="dialog-actions"><button id="confirm-cancel" class="secondary">返回</button><button id="confirm-accept" class="danger">确认</button></div></dialog>
+</body>
+</html>

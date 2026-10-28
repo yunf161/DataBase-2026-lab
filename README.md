@@ -80,7 +80,7 @@ sqlcmd -S $ServerInstance -E -No -b -f 65001 -i 'sql\03_sample_data.sql'
 
 新建商品会自动生成数量为 0 的库存行。采购和销售先建 `DRAFT` 订单并写入明细，再分别执行 `dbo.ConfirmPurchase` 与 `dbo.CompleteSale`。过程在事务中核对明细、金额和库存，更新订单状态并记录库存流水；库存不足等错误会回滚。已确认订单不能改回草稿，已完成订单的明细不能改动。分类不能形成循环，普通业务角色的库存数量写入只能经业务过程，带 `UpdatedAt` 的相关表由触发器维护更新时间。销售明细保留成交价，商品日后调价不会改写历史销售金额。
 
-本版不含会员、真实支付流水、退货、盘点和多门店业务；核心Employee表不保存登录密码，第七周应用凭据单独保存在app.AppUser。相关流水类型可预留，但不能把尚未实现的退货或盘点当作已完成功能。原始 SQL Server 建表草稿保存在 [sql/00_original_campus_store_database.sql](sql/00_original_campus_store_database.sql)，实际运行请使用 `01_create_campus_store_database.sql`。
+第一阶段及第六周数据库基线不含会员、真实支付流水、退货、盘点操作和多门店业务；核心Employee表不保存登录密码，第七周应用凭据单独保存在app.AppUser。第八周应用增量实现了受控盘点，详见下文。原始 SQL Server 建表草稿保存在 [sql/00_original_campus_store_database.sql](sql/00_original_campus_store_database.sql)，实际运行请使用 `01_create_campus_store_database.sql`。
 
 ## 第二阶段第5—6周提交
 
@@ -104,7 +104,7 @@ python -m venv .venv
 打开http://127.0.0.1:5070。演示账号admin、staff、customer、customer2，密码均为Campus2026!。
 以后使用 `.\tools\Start-Week7.ps1` 启动即可，不必再次初始化。
 本地配置/签名密钥在被忽略的instance目录，账号密码仅为本地演示用途。
-本周完成登录和基础CRUD；草稿尚未结算、不扣库存，采购/销售结算/盘点界面留待后续周次。
+第七周版本完成登录和基础CRUD；当时草稿尚未结算、不扣库存。采购、销售结算和盘点界面已在下述第八周增量实现。
 
 [操作手册](docs/week7-application/user-manual.md)、
 [架构与权限](docs/week7-application/architecture.md)、
@@ -112,3 +112,9 @@ python -m venv .venv
 [真实验证及截图](docs/week7-application/verification.md)、
 [报告素材](docs/week7-application/report-material.md)。
 独立交付为 `submissions/v1.0-week7.zip`；旧第六周包不覆盖，AI记录按组内安排另行整理。
+
+## 第8周角色业务流程
+
+[第八周复现与操作说明](docs/week8-application/README.md)接续第七周应用：管理员可管理采购草稿、确认入库和盘点；店员可结算销售草稿；顾客只操作本人订单。采购入库、销售结算和盘点均同步更新库存与流水，失败回滚。新建应用库时 `tools.prepare_week7` 已包含第八周增量；已有第七周开发库可运行 `.\.venv\Scripts\python.exe -m tools.deploy_week8` 后启动应用。不要再次运行准备工具覆盖已有库。
+
+第八周的[API/权限矩阵](docs/week8-application/api.md)、[操作手册与SSMS查看](docs/week8-application/user-manual.md)、[验证记录](docs/week8-application/verification.md)、[报告素材](docs/week8-application/report-material.md)和[AI使用记录](docs/week8-application/ai-log.md)分别给出了业务路径和复现证据。自动验证使用随机隔离库；正式 `CampusStoreDB` 不参与应用测试。

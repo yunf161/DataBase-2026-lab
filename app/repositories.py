@@ -116,3 +116,41 @@ class StoreRepository:
 
     def cancel_order(self, connection, sale_id):
         connection.execute("EXEC app.CancelSaleDraft @SaleID=?;", sale_id)
+
+    def complete_sale(self, connection, sale_id):
+        connection.execute("EXEC app.CompleteSale @SaleID=?;", sale_id)
+
+    def suppliers(self, connection):
+        return records(connection, "SELECT supplier_id,supplier_code,supplier_name FROM app.v_Suppliers ORDER BY supplier_id;")
+
+    def purchases(self, connection):
+        return records(connection, "SELECT * FROM app.v_PurchaseOrders ORDER BY purchase_id DESC;")
+
+    def purchase(self, connection, purchase_id):
+        order = one(connection, "SELECT * FROM app.v_PurchaseOrders WHERE purchase_id=?;", purchase_id)
+        if order:
+            order["items"] = records(connection,
+                "SELECT * FROM app.v_PurchaseItems WHERE purchase_id=? ORDER BY item_id;", purchase_id)
+        return order
+
+    def create_purchase(self, connection, supplier_id):
+        return one(connection, "EXEC app.CreatePurchaseDraft @SupplierID=?;", supplier_id)["purchase_id"]
+
+    def write_purchase_item(self, connection, purchase_id, product_id, quantity, unit_cost, item_id=None):
+        return one(connection, """
+            EXEC app.WritePurchaseItem @PurchaseID=?,@ProductID=?,@Quantity=?,@UnitCost=?,@PurchaseItemID=?;
+        """, purchase_id, product_id, quantity, unit_cost, item_id)["item_id"]
+
+    def confirm_purchase(self, connection, purchase_id):
+        connection.execute("EXEC app.ConfirmPurchase @PurchaseID=?;", purchase_id)
+
+    def delete_purchase_item(self, connection, purchase_id, item_id):
+        connection.execute("EXEC app.DeletePurchaseItem @PurchaseID=?,@PurchaseItemID=?;", purchase_id, item_id)
+
+    def cancel_purchase(self, connection, purchase_id):
+        connection.execute("EXEC app.CancelPurchaseDraft @PurchaseID=?;", purchase_id)
+
+    def stocktake(self, connection, product_id, delta, reason):
+        connection.execute("EXEC app.Stocktake @ProductID=?,@Delta=?,@Reason=?;",
+                           product_id, delta, reason)
+        return one(connection, "SELECT * FROM app.v_Inventory WHERE product_id=?;", product_id)

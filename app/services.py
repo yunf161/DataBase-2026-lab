@@ -239,18 +239,22 @@ class StoreService:
 
     def update_order(self, user, sale_id, data):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
-        fields(data, {"payment_method", "discount_amount", "remark"})
         with self.repository.transaction(user) as connection:
             order = self.draft(connection, sale_id)
-            payment = data.get("payment_method", order["payment_method"])
-            if not isinstance(payment, str) or payment not in PAYMENTS:
-                raise AppError("INVALID_INPUT", "请选择有效支付方式。")
-            discount = money(data.get("discount_amount", order["discount_amount"]), "优惠金额", "9999999999.99")
-            if user["role"] == "CUSTOMER" and discount != 0:
-                raise AppError("FORBIDDEN", "顾客不能设置订单优惠。", 403)
-            remark = text(data.get("remark", order["remark"]), "备注", 255)
+            payment, discount, remark = self.order_info_data(user, order, data)
             self.repository.update_order(connection, sale_id, payment, discount, remark)
             return self.repository.order(connection, sale_id)
+
+    def order_info_data(self, user, order, data):
+        fields(data, {"payment_method", "discount_amount", "remark"})
+        payment = data.get("payment_method", order["payment_method"])
+        if not isinstance(payment, str) or payment not in PAYMENTS:
+            raise AppError("INVALID_INPUT", "请选择有效支付方式。")
+        discount = money(data.get("discount_amount", order["discount_amount"]), "优惠金额", "9999999999.99")
+        if user["role"] == "CUSTOMER" and discount != 0:
+            raise AppError("FORBIDDEN", "顾客不能设置订单优惠。", 403)
+        remark = text(data.get("remark", order["remark"]), "备注", 255)
+        return payment, discount, remark
 
     def write_item(self, user, sale_id, data, item_id=None):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
@@ -271,3 +275,103 @@ class StoreService:
         with self.repository.transaction(user) as connection:
             self.draft(connection, sale_id)
             self.repository.cancel_order(connection, sale_id)
+
+    def complete_sale(self, user, sale_id, data):
+        require_role(user, "ADMIN", "STAFF")
+        with self.repository.transaction(user) as connection:
+            order = self.draft(connection, sale_id)
+            if data:
+                payment, discount, remark = self.order_info_data(user, order, data)
+                # 草稿信息和结算在同一事务：扣库失败时支付信息也回滚。
+                self.repository.update_order(connection, sale_id, payment, discount, remark)
+            self.repository.complete_sale(connection, sale_id)
+            return self.repository.order(connection, sale_id)
+
+    def suppliers(self, user):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            return self.repository.suppliers(connection)
+
+    def purchases(self, user):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            return self.repository.purchases(connection)
+
+    def purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            order = self.repository.purchase(connection, purchase_id)
+            if not order:
+                raise AppError("NOT_FOUND", "采购单不存在。", 404)
+            return order
+
+    def purchase_item_data(self, data, creating=True):
+        fields(data, {"quantity", "unit_cost"} | ({"product_id"} if creating else set()),
+               {"quantity", "unit_cost"} | ({"product_id"} if creating else set()))
+        return (integer(data["product_id"], "商品") if creating else None,
+                integer(data["quantity"], "采购数量", 1, 1000000),
+                money(data["unit_cost"], "采购进价"))
+
+    def create_purchase(self, user, data):
+        require_role(user, "ADMIN")
+        fields(data, {"supplier_id", "items"}, {"supplier_id"})
+        supplier_id = integer(data["supplier_id"], "供应商")
+        items = data.get("items", [])
+        if not isinstance(items, list) or len(items) > 100:
+            raise AppError("INVALID_INPUT", "采购明细最多100项。")
+        clean_items = [self.purchase_item_data(item) for item in items]
+        with self.repository.transaction(user) as connection:
+            purchase_id = self.repository.create_purchase(connection, supplier_id)
+            for product_id, quantity, unit_cost in clean_items:
+                self.repository.write_purchase_item(connection, purchase_id, product_id, quantity, unit_cost)
+            return self.repository.purchase(connection, purchase_id)
+
+    def confirm_purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            order = self.repository.purchase(connection, purchase_id)
+            if not order:
+                raise AppError("NOT_FOUND", "采购单不存在。", 404)
+            if order["status"] != "DRAFT":
+                raise AppError("BUSINESS_RULE", "只有草稿采购单可以确认入库。", 409)
+            self.repository.confirm_purchase(connection, purchase_id)
+            return self.repository.purchase(connection, purchase_id)
+
+    def stocktake(self, user, product_id, data):
+        require_role(user, "ADMIN")
+        fields(data, {"delta", "reason"}, {"delta", "reason"})
+        delta = integer(data["delta"], "盘点变化量", -1000000, 1000000)
+        if delta == 0:
+            raise AppError("INVALID_INPUT", "盘点变化量不能为零。")
+        reason = text(data["reason"], "盘点原因", 255, True)
+        with self.repository.transaction(user) as connection:
+            return self.repository.stocktake(connection, product_id, delta, reason)
+
+    def purchase_draft(self, connection, purchase_id):
+        order = self.repository.purchase(connection, purchase_id)
+        if not order:
+            raise AppError("NOT_FOUND", "采购单不存在。", 404)
+        if order["status"] != "DRAFT":
+            raise AppError("BUSINESS_RULE", "只有草稿采购单可以修改。", 409)
+        return order
+
+    def write_purchase_item(self, user, purchase_id, data, item_id=None):
+        require_role(user, "ADMIN")
+        product_id, quantity, unit_cost = self.purchase_item_data(data, item_id is None)
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.write_purchase_item(connection, purchase_id, product_id, quantity, unit_cost, item_id)
+            return self.repository.purchase(connection, purchase_id)
+
+    def delete_purchase_item(self, user, purchase_id, item_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.delete_purchase_item(connection, purchase_id, item_id)
+
+    def cancel_purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.cancel_purchase(connection, purchase_id)
+            return self.repository.purchase(connection, purchase_id)

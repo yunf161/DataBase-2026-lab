@@ -23,7 +23,9 @@ def database_error(error):
     if 51804 in native:
         return AppError("NOT_FOUND", "记录不存在或当前账号无法访问。", 404)
     if native & {51801, 51802, 51803, 51805, 51806, 51807, 51808, 51810,
-                 51220, 51221, 51320, 51321, 51400, 51401, 51402, 51411}:
+                 51220, 51221, 51320, 51321, 51400, 51401, 51402, 51411,
+                 51300, 51301, 51302, 51303, 51304, 51305, 51306,
+                 51200, 51201, 51202, 51203, 51204, 51901}:
         return AppError("BUSINESS_RULE", "当前数据或订单状态不允许此操作，请刷新后检查。", 409)
     if isinstance(error, pyodbc.IntegrityError) or native & {547, 8115, 8152, 2628}:
         return AppError("CONSTRAINT_CONFLICT", "数据与现有记录或数量、金额限制冲突，请检查后重试。", 409)

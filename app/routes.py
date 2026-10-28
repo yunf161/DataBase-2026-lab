@@ -111,6 +111,12 @@ def update_minimum(product_id):
     return reply(store().update_minimum(g.user, product_id, body()), "库存预警下限已更新。")
 
 
+@api.post("/inventory/<int:product_id>/adjust")
+@signed_in
+def stocktake(product_id):
+    return reply(store().stocktake(g.user, product_id, body()), "盘点已记录，库存和流水已同步更新。")
+
+
 @api.get("/orders")
 @signed_in
 def orders():
@@ -159,6 +165,67 @@ def delete_item(sale_id, item_id):
 def cancel_order(sale_id):
     store().cancel_order(g.user, sale_id)
     return reply(message="草稿订单已取消。")
+
+
+@api.post("/orders/<int:sale_id>/complete")
+@signed_in
+def complete_sale(sale_id):
+    return reply(store().complete_sale(g.user, sale_id, body()), "销售已结算，库存和流水已同步更新。")
+
+
+@api.get("/suppliers")
+@signed_in
+def suppliers():
+    return reply(store().suppliers(g.user))
+
+
+@api.get("/purchases")
+@signed_in
+def purchases():
+    return reply(store().purchases(g.user))
+
+
+@api.post("/purchases")
+@signed_in
+def create_purchase():
+    return reply(store().create_purchase(g.user, body()), "采购草稿已创建，尚未入库。", 201)
+
+
+@api.get("/purchases/<int:purchase_id>")
+@signed_in
+def purchase(purchase_id):
+    return reply(store().purchase(g.user, purchase_id))
+
+
+@api.post("/purchases/<int:purchase_id>/confirm")
+@signed_in
+def confirm_purchase(purchase_id):
+    return reply(store().confirm_purchase(g.user, purchase_id), "采购已确认，库存和流水已同步更新。")
+
+
+@api.post("/purchases/<int:purchase_id>/items")
+@signed_in
+def add_purchase_item(purchase_id):
+    return reply(store().write_purchase_item(g.user, purchase_id, body()), "采购明细已加入。", 201)
+
+
+@api.patch("/purchases/<int:purchase_id>/items/<int:item_id>")
+@signed_in
+def update_purchase_item(purchase_id, item_id):
+    return reply(store().write_purchase_item(g.user, purchase_id, body(), item_id), "采购明细已更新。")
+
+
+@api.delete("/purchases/<int:purchase_id>/items/<int:item_id>")
+@signed_in
+def delete_purchase_item(purchase_id, item_id):
+    store().delete_purchase_item(g.user, purchase_id, item_id)
+    return reply(message="采购明细已移除。")
+
+
+@api.post("/purchases/<int:purchase_id>/cancel")
+@signed_in
+def cancel_purchase(purchase_id):
+    return reply(store().cancel_purchase(g.user, purchase_id), "采购草稿已取消。")
 
 
 def check_csrf():

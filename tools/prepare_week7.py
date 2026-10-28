@@ -97,8 +97,9 @@ def provision_database(server, target, password=DEMO_PASSWORD):
         renamed = True
         connection = administrative_connection(server, target)
         run_script(connection, ROOT / "sql/week7/application.sql")
+        run_script(connection, ROOT / "sql/week8/application.sql")
         seed_users(connection, password)
-        print("已创建迁移后的第七周独立应用数据库：" + target, flush=True)
+        print("已创建迁移后的第七、八周独立应用数据库：" + target, flush=True)
         return {
             "DB_SERVER": server, "DB_DATABASE": target,
             "SECRET_KEY": secrets.token_urlsafe(48), "DEFAULT_CASHIER_NO": "E003",

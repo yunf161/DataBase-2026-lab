@@ -8,10 +8,10 @@ from app.config import DATABASE_NAME, ROOT
 from tools.prepare_week7 import administrative_connection, run_script
 
 
-def upgrade_database(server, database):
+def upgrade_database(server, database, driver=None):
     if not DATABASE_NAME.fullmatch(database):
         raise ValueError("目标库名必须为 CampusStoreDB_W7_ 加字母、数字或下划线")
-    connection = administrative_connection(server, database)
+    connection = administrative_connection(server, database, driver)
     try:
         run_script(connection, ROOT / "sql/week9/application_v2.sql")
     finally:
@@ -22,8 +22,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server", default=r".\SQLEXPRESS")
     parser.add_argument("--database", required=True)
+    parser.add_argument("--driver", help="ODBC 驱动名称；默认使用已安装的最高版本")
     args = parser.parse_args()
-    upgrade_database(args.server, args.database)
+    upgrade_database(args.server, args.database, args.driver)
     print("已升级第九周应用增量：" + args.database)
 
 

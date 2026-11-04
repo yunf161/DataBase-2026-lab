@@ -24,9 +24,16 @@ ODBC Driver 18、Flask 3.1.3、pyodbc 5.3.0。
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+.\.venv\Scripts\python.exe -m tools.doctor --server '.\SQLEXPRESS'
 .\.venv\Scripts\python.exe -m tools.prepare_week7 --server '.\SQLEXPRESS'
 .\.venv\Scripts\python.exe -m app --port 5070
 ```
+
+`tools.doctor` 只读预检Python、依赖、ODBC驱动、SQL Server连接、建库权限以及开发库和
+`instance/settings.json`，每项给出通过/失败和修复建议，有失败项时退出码非0；它不创建任何数据库。
+默认实例的服务器名写 `"."`，Express通常写 `.\SQLEXPRESS`。
+准备、升级和验收工具默认选用已安装的最高版本“ODBC Driver xx for SQL Server”，
+可用 `--driver` 指定，所选驱动写入 `instance/settings.json` 的 `DB_DRIVER`。
 
 打开 <http://127.0.0.1:5070>。之后启动只需要最后一行，也可运行
 `.\tools\Start-Week7.ps1 -Port 5070`。

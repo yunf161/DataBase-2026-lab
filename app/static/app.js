@@ -8,15 +8,26 @@ const price = (value) => Number(value || 0).toFixed(2);
 const categoryOptions = (selected, name) => (selected && name && !state.categories.some((item) => item.category_id === Number(selected)) ? '<option value="' + Number(selected) + '" selected>' + escapeHTML(name) + "（已停用）</option>" : "") + state.categories.map((item) => '<option value="' + item.category_id + '"' + (item.category_id === Number(selected) ? " selected" : "") + ">" + escapeHTML(item.category_name) + "</option>").join("");
 const changeTypes = {PURCHASE_IN: "采购入库", SALE_OUT: "销售出库", STOCKTAKE_IN: "盘盈", STOCKTAKE_OUT: "盘亏"};
 const orderStatus = (row) => row.status !== "DRAFT" ? statusNames[row.status] : Number(row.is_customer_order) === 1 && !row.submitted_at ? (state.user.role === "CUSTOMER" ? "购物车" : "顾客选购中") : row.submitted_at ? "待受理" : statusNames.DRAFT;
-const payable = (row) => row.status === "COMPLETED" ? row.payable_amount : Number(row.draft_amount) - Number(row.discount_amount);
+const payable = (row) => row.status === "CANCELLED" ? null : row.status === "COMPLETED" ? row.payable_amount : Number(row.draft_amount) - Number(row.discount_amount);
 const signed = (value) => (value > 0 ? "+" : "") + value;
 const badge = (label, color) => '<span class="badge ' + color + '">' + escapeHTML(label) + "</span>";
-let toastTimer;
-function toast(message) { $("toast").textContent = message; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => {$("toast").hidden = true;}, 4200); }
+let toastTimer, toastOpen = false;
+// 提示条是顶层 popover；有弹窗打开时挂到最上层弹窗内，才不会被模态遮罩挡住或失去焦点外的点击命中。
+function placeToast() {
+  const box = $("toast"), host = ["confirmation", "editor"].map($).find((dialog) => dialog.open) || document.body;
+  if (box.parentElement !== host) host.append(box);
+  if (box.matches(":popover-open")) box.hidePopover();
+  if (toastOpen) box.showPopover();
+}
+function toast(message) {
+  $("toast").textContent = message; toastOpen = true; placeToast();
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => {toastOpen = false; placeToast();}, 4200);
+}
 function showError(id, error) {
   const element = $(id);
   element.textContent = error.message + (error.requestId ? "（参考编号：" + error.requestId.slice(0, 10) + "）" : "");
   element.hidden = false;
+  element.scrollIntoView({block: "center", behavior: "instant"});
 }
 async function api(path, options = {}) {
   const headers = {"Accept": "application/json"};
@@ -112,7 +123,7 @@ async function loadList() {
     if (state.view === "inventory") {
       return "<tr><td>" + escapeHTML(row.product_name) + "</td><td>" + escapeHTML(row.sku) + "</td><td>" + escapeHTML(row.category_name) + '</td><td class="price">' + row.quantity + "</td><td>" + row.min_quantity + "</td><td>" + badge(statusNames[row.stock_status], row.stock_status === "NORMAL" ? "green" : "amber") + "</td><td>" + (state.user.role === "ADMIN" ? actionButton("minimum", row.product_id, "设置预警") + actionButton("adjust", row.product_id, "调整库存") + actionButton("logs", row.product_id, "查看流水") : "—") + "</td></tr>";
     }
-    return "<tr><td>" + escapeHTML(row.sale_no) + "</td><td>" + escapeHTML(row.created_at.replace("T", " ").slice(0, 16)) + "</td><td>" + badge(orderStatus(row), row.status === "DRAFT" ? "amber" : row.status === "COMPLETED" ? "green" : "gray") + '</td><td class="price"><span>¥</span>' + price(row.draft_amount) + '</td><td class="price"><span>¥</span>' + price(payable(row)) + "</td><td>¥ " + price(row.discount_amount) + "</td><td>" + actionButton("detail", row.sale_id, "查看明细") + "</td></tr>";
+    return "<tr><td>" + escapeHTML(row.sale_no) + "</td><td>" + escapeHTML(row.created_at.replace("T", " ").slice(0, 16)) + "</td><td>" + badge(orderStatus(row), row.status === "DRAFT" ? "amber" : row.status === "COMPLETED" ? "green" : "gray") + '</td><td class="price"><span>¥</span>' + price(row.draft_amount) + '</td><td class="price">' + (payable(row) === null ? "—" : "<span>¥</span>" + price(payable(row))) + "</td><td>¥ " + price(row.discount_amount) + "</td><td>" + actionButton("detail", row.sale_id, "查看明细") + "</td></tr>";
   }).join("") : '<tr><td class="empty" colspan="' + heads.length + '"><strong>这里还没有记录</strong>' + (state.view === "orders" && state.user.role === "CUSTOMER" ? "试试调整筛选条件，或先到商品页加入购物车。" : "试试调整筛选条件，或新建一份草稿。") + "</td></tr>";
   if (state.view === "products") summary([["筛选商品", state.total, "件"], ["本页在售", state.rows.filter((p) => p.status).length, "件"], ["商品分类", state.categories.length, "类"]]);
   else if (state.view === "inventory") summary([["筛选商品", state.total, "件"], ["当前库存合计", state.rows.reduce((n, p) => n + p.quantity, 0), "件"], ["需关注库存", state.rows.filter((p) => p.stock_status !== "NORMAL").length, "件"]]);
@@ -126,10 +137,11 @@ function openEditor(title, content, wide = false) {
   $("editor-title").textContent = title; $("editor-content").innerHTML = content;
   $("editor-error").hidden = true; $("editor").classList.toggle("wide", wide);
   if (!$("editor").open) $("editor").showModal();
+  placeToast();
 }
 function confirmation(title, description) {
   $("confirm-title").textContent = title; $("confirm-description").textContent = description;
-  $("confirmation").showModal();
+  $("confirmation").showModal(); placeToast();
   return new Promise((resolve) => {
     $("confirm-cancel").onclick = () => {$("confirmation").close(); resolve(false);};
     $("confirm-accept").onclick = () => {$("confirmation").close(); resolve(true);};
@@ -177,34 +189,42 @@ async function inventoryLogs(row, page = 1) {
 function paymentOptions(selected) {
   return [["CASH", "现金"], ["WECHAT", "微信"], ["ALIPAY", "支付宝"], ["BANK_CARD", "银行卡"]].map(([value, label]) => '<option value="' + value + '"' + (value === selected ? " selected" : "") + ">" + label + "</option>").join("");
 }
+async function activeProducts() {
+  const items = [];
+  for (let page = 1; ; page += 1) {
+    const data = await api("/products?status=1&page_size=100&page=" + page);
+    items.push(...data.items);
+    if (!data.items.length || items.length >= data.total) return items;
+  }
+}
 async function orderDetail(saleId, latest = null, notice = "") {
-  const [order, catalog] = await Promise.all([latest || api("/orders/" + saleId), api("/products?status=1&page_size=100")]);
-  state.detail = order; state.catalog = catalog.items;
+  const [order, catalog] = await Promise.all([latest || api("/orders/" + saleId), activeProducts()]);
+  state.detail = order; state.catalog = catalog;
   const customer = state.user.role === "CUSTOMER";
   const draft = order.status === "DRAFT";
   const submitted = draft && Boolean(order.submitted_at);
   const waiting = draft && Number(order.is_customer_order) === 1 && !order.submitted_at;
   const editable = draft && !(customer && submitted);
   const message = !draft ? "此订单已完成或取消，保留原有记录，不再修改明细。" : customer ? (submitted ? "待店员受理。店员结算后订单完成，结算前可以取消订单。" : "这是你的购物车，确认选购内容后点击“提交订单”，库存在店员结算时才扣减。") :
-    waiting ? "顾客尚未提交，暂不能结算。顾客提交后才可确认收款。" : "这是一份尚未结算的草稿，库存在确认收款并结算时才扣减。";
+    waiting ? "顾客尚未提交，暂不能结算。顾客提交后才可确认收款。" : submitted ? "顾客已提交，确认收款后完成结算，库存在结算时扣减。" : "这是一份尚未结算的草稿，库存在确认收款并结算时才扣减。";
   const lines = order.items.length ? order.items.map((item) => '<tr><td>' + escapeHTML(item.product_name) + '<span class="product-subtitle">' + escapeHTML(item.sku) + '</span></td><td>¥ ' + price(item.unit_price) + "</td><td>" + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '数量" type="number" min="1" max="1000000" value="' + item.quantity + '" data-quantity="' + item.item_id + '">' : item.quantity) + "</td><td>¥ " + price(item.line_amount) + "</td><td>" + (editable ? actionButton("save-line", item.item_id, "更新") + actionButton("remove-line", item.item_id, "移除", true) : "—") + "</td></tr>").join("") :
-    '<tr><td colspan="5" class="empty">草稿暂时没有明细，请添加商品。</td></tr>';
+    '<tr><td colspan="5" class="empty">' + (customer ? "购物车" : "草稿") + "暂时没有明细，请添加商品。</td></tr>";
   const selectedProducts = new Set(order.items.map((item) => item.product_id));
-  const available = catalog.items.filter((product) => !selectedProducts.has(product.product_id));
-  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(orderStatus(order), draft ? "amber" : order.status === "COMPLETED" ? "green" : "gray") + '</div><div class="order-message">' + message + '</div>' + (notice ? '<div class="order-message order-notice" role="status">' + escapeHTML(notice) + "</div>" : "") + '<div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="order-sums"><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p><p class="order-discount">优惠<strong>- ¥ ' + price(order.discount_amount) + '</strong></p><p class="order-payable">应付<strong>¥ ' + price(payable(order)) + "</strong></p></div>" +
-    (editable ? '<form id="add-line-form" class="add-item-form"><div><label for="line-product">添加商品</label><select id="line-product" required><option value="">请选择商品</option>' + available.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.product_name) + " · ¥" + price(product.sale_price) + "</option>").join("") + '</select></div><div><label for="line-quantity">数量</label><input id="line-quantity" type="number" min="1" max="1000000" value="1" required></div><button type="submit" class="secondary">加入草稿</button></form><form id="order-info-form"><div class="form-grid"><div><label for="order-payment">支付方式</label><select id="order-payment">' + paymentOptions(order.payment_method) + '</select></div><div><label for="order-discount">优惠金额（元）</label><input id="order-discount" type="number" min="0" step=".01" value="' + price(order.discount_amount) + '"' + (customer ? " disabled" : "") + '></div><div class="span-two"><label for="order-remark">备注</label><textarea id="order-remark" maxlength="255" rows="2">' + escapeHTML(order.remark || "") + '</textarea></div></div>    <div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消这份草稿</button><button type="submit" class="primary">保存草稿信息</button>' + (customer ? '<button id="submit-order" type="button" class="primary">提交订单</button>' : waiting ? "" : '<button id="settle-order" type="button" class="primary">确认收款并结算</button>') + '</div></form>' :
-          '<p class="helper">备注：' + escapeHTML(order.remark || "暂无") + "</p>" + (submitted ? '<div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消订单</button></div>' : "")), true);
+  const available = catalog.filter((product) => !selectedProducts.has(product.product_id));
+  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(orderStatus(order), draft ? "amber" : order.status === "COMPLETED" ? "green" : "gray") + '</div><div class="order-message">' + message + '</div>' + (notice ? '<div class="order-message order-notice" role="status">' + escapeHTML(notice) + "</div>" : "") + '<div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="order-sums"><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p><p class="order-discount">优惠<strong>- ¥ ' + price(order.discount_amount) + '</strong></p><p class="order-payable">应付<strong>' + (payable(order) === null ? "—" : "¥ " + price(payable(order))) + "</strong></p></div>" +
+    (editable ? '<form id="add-line-form" class="add-item-form"><div><label for="line-product">添加商品</label><select id="line-product" required><option value="">请选择商品</option>' + available.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.product_name) + " · ¥" + price(product.sale_price) + "</option>").join("") + '</select></div><div><label for="line-quantity">数量</label><input id="line-quantity" type="number" min="1" max="1000000" value="1" required></div><button type="submit" class="secondary">' + (customer ? "加入购物车" : "加入草稿") + '</button></form><form id="order-info-form"><div class="form-grid"><div><label for="order-payment">支付方式</label><select id="order-payment">' + paymentOptions(order.payment_method) + '</select></div><div><label for="order-discount">优惠金额（元）</label><input id="order-discount" type="number" min="0" step=".01" value="' + price(order.discount_amount) + '"' + (customer ? " disabled" : "") + '></div><div class="span-two"><label for="order-remark">备注</label><textarea id="order-remark" maxlength="255" rows="2">' + escapeHTML(order.remark || "") + '</textarea>    </div></div><div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">' + (customer ? "取消订单" : "取消这份草稿") + '</button><button type="submit" class="primary">' + (customer ? "保存信息" : "保存草稿信息") + "</button>" + (customer ? '<button id="submit-order" type="button" class="primary">提交订单</button>' : waiting ? "" : '<button id="settle-order" type="button" class="primary">确认收款并结算</button>') + '</div></form>' :
+        '<p class="helper">备注：' + escapeHTML(order.remark || "暂无") + "</p>" + (submitted ? '<div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消订单</button></div>' : "")), true);
       if (submitted) $("cancel-draft").onclick = (event) => cancelDraft(event.currentTarget, saleId);
       if (!editable) return;
   $("add-line-form").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
     await api("/orders/" + saleId + "/items", {method: "POST", body: {product_id: Number($("line-product").value), quantity: Number($("line-quantity").value)}});
-    await orderDetail(saleId); await loadList(); toast("商品已加入草稿。");
+    await orderDetail(saleId); await loadList(); toast(customer ? "商品已加入购物车。" : "商品已加入草稿。");
   }, "editor-error");};
   $("order-info-form").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
     const data = {payment_method: $("order-payment").value, remark: $("order-remark").value};
     if (!customer) data.discount_amount = $("order-discount").value;
     await api("/orders/" + saleId, {method: "PATCH", body: data});
-    await orderDetail(saleId); await loadList(); toast("草稿信息已保存。");
+    await orderDetail(saleId); await loadList(); toast(customer ? "信息已保存。" : "草稿信息已保存。");
   }, "editor-error");};
   $("cancel-draft").onclick = (event) => cancelDraft(event.currentTarget, saleId);
   if ($("submit-order")) $("submit-order").onclick = (event) => busy(event.currentTarget, async () => {
@@ -217,15 +237,18 @@ async function orderDetail(saleId, latest = null, notice = "") {
   }, "editor-error");
   if ($("settle-order")) $("settle-order").onclick = (event) => busy(event.currentTarget, async () => {
     if (!await confirmation("确认收款并结算？", "结算后将扣减库存，订单变为已完成，不能再修改。")) return;
+    const remark = $("order-remark").value;
+    if (remark.trim() !== (order.remark || "").trim()) await api("/orders/" + saleId, {method: "PATCH", body: {remark}});
     await api("/orders/" + saleId + "/settle", {method: "POST", body: {payment_method: $("order-payment").value, discount_amount: $("order-discount").value}});
     await orderDetail(saleId); await loadList(); toast("订单已结算，库存已扣减。");
   }, "editor-error");
 }
 function cancelDraft(button, saleId) {
+  const customer = state.user.role === "CUSTOMER";
   return busy(button, async () => {
-    if (!await confirmation("取消草稿订单？", "取消后保留订单记录，不能再修改或加入商品。")) return;
+    if (!await confirmation(customer ? "取消订单？" : "取消草稿订单？", "取消后保留订单记录，不能再修改或加入商品。")) return;
     await api("/orders/" + saleId + "/cancel", {method: "POST", body: {}});
-    await orderDetail(saleId); await loadList(); toast("草稿订单已取消。");
+    await orderDetail(saleId); await loadList(); toast(customer ? "订单已取消。" : "草稿订单已取消。");
   }, "editor-error");
 }
 async function newDraft(items = []) {
@@ -257,6 +280,7 @@ $("heading-action").onclick = (event) => {
 $("previous-page").onclick = (event) => {state.page -= 1; busy(event.currentTarget, loadList);};
 $("next-page").onclick = (event) => {state.page += 1; busy(event.currentTarget, loadList);};
 $("close-editor").onclick = () => $("editor").close();
+["editor", "confirmation"].forEach((id) => $(id).addEventListener("close", placeToast));
 $("table-body").onclick = (event) => {
   const button = event.target.closest("[data-action]"); if (!button) return;
   busy(button, async () => {
@@ -285,7 +309,7 @@ $("editor-content").onclick = (event) => {
     } else if (button.dataset.action === "remove-line") {
       await api("/orders/" + saleId + "/items/" + itemId, {method: "DELETE"});
     }
-    await orderDetail(saleId); await loadList(); toast("草稿明细已更新。");
+    await orderDetail(saleId); await loadList(); toast(state.user.role === "CUSTOMER" ? "购物车明细已更新。" : "草稿明细已更新。");
   }, "editor-error");
 };
 (async () => {

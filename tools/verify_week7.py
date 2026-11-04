@@ -12,7 +12,7 @@ from werkzeug.serving import make_server
 
 from app import create_app
 from app.config import ROOT
-from tools.prepare_week7 import drop_owned_database, provision_database
+from tools.prepare_week7 import DriverUnavailable, drop_owned_database, provision_database, resolve_driver
 
 
 def run(command, environment, destination):
@@ -28,12 +28,17 @@ def main():
     parser.add_argument("--server", default=r".\SQLEXPRESS")
     parser.add_argument("--output", default=str(ROOT / "results/app-test"))
     parser.add_argument("--browser-executable", default=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE"))
+    parser.add_argument("--driver", help="ODBC 驱动名称；默认使用已安装的最高版本")
     parser.add_argument("--skip-browser", action="store_true")
     parser.add_argument("--only-browser", action="store_true")
     args = parser.parse_args()
+    try:
+        driver = resolve_driver(args.driver)
+    except DriverUnavailable as error:
+        raise SystemExit("准备失败：" + str(error))
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
-    environment = {**os.environ, "PYTHONUTF8": "1", "CAMPUS_TEST_SERVER": args.server,
+    environment = {**os.environ, "PYTHONUTF8": "1", "CAMPUS_TEST_SERVER": args.server, "CAMPUS_DB_DRIVER": driver,
                    "CAMPUS_TEST_RESULTS": str(output / "integration-results.json")}
     if not args.only_browser:
         run([sys.executable, "-m", "pytest", "-v", "--junitxml=" + str(output / "integration-junit.xml")],
@@ -44,7 +49,7 @@ def main():
     if args.skip_browser:
         return
     database = "CampusStoreDB_W7_Test_" + secrets.token_hex(6)
-    settings = provision_database(args.server, database)
+    settings = provision_database(args.server, database, driver=driver)
     settings["LOG_PATH"] = str(ROOT / "instance/tests" / database / "browser-application.jsonl")
     application = create_app(settings)
     server = None
@@ -54,7 +59,8 @@ def main():
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         command = [sys.executable, "-m", "tools.verify_week7_browser",
-                   "--url", "http://127.0.0.1:" + str(server.server_port), "--output", str(output)]
+                   "--url", "http://127.0.0.1:" + str(server.server_port), "--output", str(output),
+                   "--server", args.server, "--database", database, "--driver", driver]
         if args.browser_executable:
             command.extend(["--browser-executable", args.browser_executable])
         run(command, environment, output / "browser-output.txt")
@@ -67,7 +73,7 @@ def main():
             thread.join(timeout=10)
         for handler in application.extensions["audit_logger"].handlers:
             handler.close()
-        drop_owned_database(args.server, database)
+        drop_owned_database(args.server, database, driver)
     integrations = json.loads((output / "integration-results.json").read_text(encoding="utf-8"))
     browsers = json.loads((output / "browser-results.json").read_text(encoding="utf-8"))
     summary = {

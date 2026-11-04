@@ -290,6 +290,17 @@ def test_database_execution_identity_has_no_owner_or_sensitive_table_access(app,
             connection.execute("UPDATE dbo.Inventory SET Quantity=Quantity+1 WHERE ProductID=1;")
 
 
+@pytest.mark.parametrize("role,principal", [("AUTH", "WebAuth"), ("ADMIN", "WebAdmin"), ("STAFF", "WebStaff"), ("CUSTOMER", "WebCustomer")])
+def test_business_code_cannot_revert_the_restricted_identity(app, role, principal):
+    database = app.extensions["database"]
+    with database.transaction(role) as connection:
+        try:
+            connection.execute("REVERT;")
+        except pyodbc.Error:
+            pass
+        assert one(connection, "SELECT USER_NAME() AS principal;")["principal"] == principal
+
+
 def test_database_view_enforces_ownership_without_api_filter(app, login):
     a, b = login("customer"), login("customer2")
     order_a, order_b = draft(a), draft(b)

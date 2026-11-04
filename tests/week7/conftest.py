@@ -7,19 +7,20 @@ import pytest
 
 from app import create_app
 from app.config import ROOT
-from tools.prepare_week7 import DEMO_PASSWORD, drop_owned_database, provision_database
+from tools.prepare_week7 import DEMO_PASSWORD, drop_owned_database, provision_database, resolve_driver
 
 
 @pytest.fixture(scope="session")
 def settings():
     server = os.environ.get("CAMPUS_TEST_SERVER", r".\SQLEXPRESS")
+    driver = resolve_driver()
     database = "CampusStoreDB_W7_Test_" + secrets.token_hex(6)
-    configuration = provision_database(server, database)
+    configuration = provision_database(server, database, driver=driver)
     configuration.update(TESTING=True, LOG_PATH=str(ROOT / "instance/tests" / database / "application.jsonl"))
     try:
         yield configuration
     finally:
-        drop_owned_database(server, database)
+        drop_owned_database(server, database, driver)
 
 
 @pytest.fixture(scope="session")

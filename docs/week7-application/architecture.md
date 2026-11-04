@@ -71,7 +71,8 @@ WebAdmin只获得商品INSERT/UPDATE、更新条件所需ProductID读取、库�
 
 订单视图对WebAdmin/WebStaff开放全店，其他身份按只读SESSION_CONTEXT(WebUserID)过滤；
 明细视图再次连接受控订单视图。另一顾客订单统一404，即使直接查视图也不返回越权记录。
-关闭连接池，每请求单独连接、结束撤销模拟并关闭，防止身份和会话键跨用户复用。
+关闭连接池，每请求单独连接；用EXECUTE AS USER ... WITH NO REVERT切换到固定受限用户，
+业务代码无法用REVERT回到管理身份，连接用完即关，防止身份和会话键跨用户复用。
 
 ## 认证、异常与日志
 

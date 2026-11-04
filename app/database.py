@@ -5,10 +5,10 @@ import pyodbc
 # 每个请求使用独立物理连接，避免 EXECUTE AS / SESSION_CONTEXT 留在连接池。
 pyodbc.pooling = False
 PRINCIPALS = {
-    "AUTH": "EXECUTE AS USER = 'WebAuth';",
-    "ADMIN": "EXECUTE AS USER = 'WebAdmin';",
-    "STAFF": "EXECUTE AS USER = 'WebStaff';",
-    "CUSTOMER": "EXECUTE AS USER = 'WebCustomer';",
+    "AUTH": "EXECUTE AS USER = 'WebAuth' WITH NO REVERT;",
+    "ADMIN": "EXECUTE AS USER = 'WebAdmin' WITH NO REVERT;",
+    "STAFF": "EXECUTE AS USER = 'WebStaff' WITH NO REVERT;",
+    "CUSTOMER": "EXECUTE AS USER = 'WebCustomer' WITH NO REVERT;",
 }
 SQL_OPTIONS = """
 SET QUOTED_IDENTIFIER ON; SET ANSI_NULLS ON; SET ANSI_PADDING ON;
@@ -56,8 +56,6 @@ class Database:
                 connection.rollback()
             raise
         finally:
-            with suppress(pyodbc.Error):
-                connection.execute("REVERT;")
             connection.close()
 
 

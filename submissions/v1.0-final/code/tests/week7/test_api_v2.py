@@ -494,6 +494,68 @@ def test_pending_filter_rejects_other_values(login, value):
         failure(login(username).get("/orders", query_string={"pending": value}), 400, "INVALID_INPUT")
 
 
+# ---------- GET /products?category_id ----------
+
+def category_ids(user):
+    return {row["category_name"]: row["category_id"] for row in result(user.get("/categories"))}
+
+
+def listed(user, **query):
+    return result(user.get("/products", query_string={"page_size": 100, **query}))
+
+
+def skus(user, **query):
+    return {row["sku"] for row in listed(user, **query)["items"]}
+
+
+@pytest.mark.parametrize("username", ["admin", "staff", "customer"])
+def test_category_filter_returns_that_category_and_its_children(login, username):
+    user = login(username)
+    ids = category_ids(user)
+    drinks = skus(user, category_id=ids["饮料"])
+    assert {"P0001", "P0003"} <= drinks and not drinks & {"P0002", "P0004", "P0005", "P0006"}
+    food = skus(user, category_id=ids["食品"])
+    assert {"P0001", "P0003", "P0004", "P0005"} <= food and not food & {"P0002", "P0006"}
+    assert "P0002" in skus(user, category_id=ids["日用品"])
+
+
+def test_category_filter_combines_with_search_and_paging(login, stocked, product_data, settings):
+    admin = login("admin")
+    product_id = stocked(0)
+    sku = scalar(settings, "SELECT SKU FROM dbo.Product WHERE ProductID=?;", product_id)
+    own, other = product_data["category_id"], category_ids(admin)["食品"]
+    assert listed(admin, category_id=own, q=sku)["total"] == 1
+    assert listed(admin, category_id=other, q=sku)["total"] == 0
+    page = listed(admin, category_id=own, page_size=1)
+    assert len(page["items"]) == 1
+    assert page["total"] == scalar(settings, "SELECT COUNT(*) FROM dbo.Product WHERE CategoryID=?;", own)
+
+
+def test_empty_category_filter_means_all_and_unknown_category_is_empty(login):
+    user = login("customer")
+    assert skus(user, category_id="") == skus(user)
+    assert listed(user, category_id=999999)["total"] == 0
+
+
+@pytest.mark.parametrize("value", ["abc", "0", "-1", "1.5", "1 OR 1=1", "1000001"])
+def test_bad_category_filter_is_rejected(login, value):
+    failure(login("customer").get("/products", query_string={"category_id": value}), 400, "INVALID_INPUT")
+
+
+def test_disabled_category_stays_hidden_from_customers_in_the_filter(login, stocked, product_data, settings):
+    admin, customer = login("admin"), login("customer")
+    stocked(0)
+    category = product_data["category_id"]
+    connection = administrative_connection(settings["DB_SERVER"], settings["DB_DATABASE"])
+    try:
+        connection.execute("UPDATE dbo.Category SET Status=0 WHERE CategoryID=?;", category)
+        assert listed(customer, category_id=category)["total"] == 0
+        assert listed(admin, category_id=category)["total"] >= 1
+    finally:
+        connection.execute("UPDATE dbo.Category SET Status=1 WHERE CategoryID=?;", category)
+        connection.close()
+
+
 # ---------- PATCH /orders/<id> 顾客改备注的回归 ----------
 
 def test_customer_can_edit_remark_and_payment_after_staff_sets_a_discount(login, new_customer, stocked):

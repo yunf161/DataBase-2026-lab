@@ -9,7 +9,7 @@
 | POST /auth/login | username、password | 公开账号和新令牌 |
 | POST /auth/logout | 空对象 | 清除登录、新匿名令牌 |
 | GET /categories | 无 | 启用分类 |
-| GET /products | q、status、page、page_size | 按角色过滤的items/total/page/page_size |
+| GET /products | q、status、category_id、page、page_size | 按角色过滤的items/total/page/page_size；category_id筛选该分类及其子分类，格式错误400，不存在的分类返回空列表 |
 | POST /products | sku、product_name、category_id、sale_price；可选barcode/specification/unit/status | 管理员新增，返回零库存商品 |
 | PUT /products/id | 同新增字段 | 管理员完整更新 |
 | DELETE /products/id | 空对象 | 管理员安全删除 |

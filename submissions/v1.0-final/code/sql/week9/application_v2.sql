@@ -36,6 +36,15 @@ SELECT LogID AS log_id,ProductID AS product_id,SKU AS sku,ProductName AS product
  Remark AS remark,CreatedAt AS created_at
 FROM dbo.v_inventory_log_detail;
 GO
+-- 分类可以分层：member_id 是 category_id 自身及其全部子孙分类，触发器已保证分类不成环。
+CREATE OR ALTER VIEW app.v_CategoryScope AS
+WITH scope AS (
+ SELECT CategoryID AS category_id,CategoryID AS member_id FROM dbo.Category
+ UNION ALL
+ SELECT s.category_id,c.CategoryID FROM scope s JOIN dbo.Category c ON c.ParentID=s.member_id
+)
+SELECT category_id,member_id FROM scope;
+GO
 CREATE OR ALTER PROCEDURE app.WriteSaleItem
  @SaleID bigint,@ProductID bigint,@Quantity int,@UnitPrice decimal(10,2)=NULL,@SaleItemID bigint=NULL
 AS
@@ -194,4 +203,5 @@ GRANT EXECUTE ON app.SubmitSale TO WebCustomerRole;
 GRANT EXECUTE ON app.SettleSale TO WebAdminRole,WebStaffRole;
 GRANT EXECUTE ON app.AdjustInventory TO WebAdminRole;
 GRANT SELECT ON app.v_InventoryLog TO WebAdminRole;
+GRANT SELECT ON app.v_CategoryScope TO WebAdminRole,WebStaffRole,WebCustomerRole;
 PRINT N'第九周应用增量已部署';

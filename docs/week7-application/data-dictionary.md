@@ -41,6 +41,7 @@
 | --- | --- | --- |
 | app.v_Catalog | 三角色 | 商品与库存数量；顾客只看到商品和分类都启用的商品 |
 | app.v_Categories | 三角色 | 启用分类 |
+| app.v_CategoryScope | 三角色 | 分类与其自身及全部子孙分类的对应关系，用于按分类查询商品（第九周） |
 | app.v_Cashiers | 三角色 | 启用且职责为收银或管理员的员工编号，供顾客订单指派 |
 | app.v_Inventory | 管理员、店员 | 库存数量、预警下限和 `stock_status` |
 | app.v_OrderAccess | 三角色 | 订单可见性：管理员/店员看全部，其他身份按会话中的 `WebUserID` 过滤；已完成订单才返回 `payable_amount`；含 `submitted_at` 和 `is_customer_order`（第九周） |

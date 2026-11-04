@@ -26,7 +26,7 @@
 
 | 角色 | 能做什么 |
 | --- | --- |
-| 顾客 | 浏览在售商品，加入购物车，修改并提交订单，查看自己的订单（待受理、已完成、已取消），取消订单 |
+| 顾客 | 浏览在售商品（可按名称、编号和分类查询），加入购物车，修改并提交订单，查看自己的订单（待受理、已完成、已取消），取消订单 |
 | 店员 | 查看商品、库存和全店订单，受理顾客已提交的订单并结算，自己开单并结算 |
 | 管理员 | 店员的全部操作，另外维护商品（新增、编辑、停用、安全删除）、设置库存预警、盘点调整库存（必填原因）、查看库存流水 |
 
@@ -209,7 +209,7 @@ sequenceDiagram
     P->>R: GET /api/products?q=可乐&status=1&page=1
     R->>R: before_request：从会话取账号并重新核对状态
     R->>S: products(user, query)
-    S->>S: 校验角色、status/page/page_size，转义搜索词中的 % _ [
+    S->>S: 校验角色、status/category_id/page/page_size，转义搜索词中的 % _ [
     S->>D: transaction(user)：新连接，写入 WebUserID，EXECUTE AS USER 受限用户 WITH NO REVERT
     D->>Q: SELECT … FROM app.v_Catalog WHERE (product_name LIKE ? OR sku LIKE ?) … OFFSET ? ROWS FETCH NEXT ? ROWS ONLY
     Q-->>D: 视图按 USER_NAME() 过滤（顾客只看到在售商品）
@@ -409,7 +409,7 @@ sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W6_Group1 -i sql\week6\regressio
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-Week6Migration.ps1 -ServerInstance "."` | 第 6 周迁移 | 退出码 0，21 + 8 + 3 + 1 项通过（[输出](results/migration/verify-week6-migration.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-CampusStore.ps1 -ServerInstance "."` | 第 1—4 周主流程与反例 | 退出码 0（[输出](results/migration/verify-campusstore.txt)） |
 | `sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 最终只读回归 | 30 项通过、0 项失败（[final-regression.txt](results/final-regression.txt)） |
-| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **295 项集成测试通过、25 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
+| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **307 项集成测试通过、26 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
 | `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server "."` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
 
 单独运行集成测试：

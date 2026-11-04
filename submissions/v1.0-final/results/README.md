@@ -9,13 +9,13 @@
 | [er/](er) | 第 5 周 v0.1 ER 图、第 6 周 v1.0 ER 图，各有 draw.io 源文件、SVG 和 PNG | 复制自 `docs/week5-er/`、`docs/week6-normalization/` |
 | [normalization/](normalization) | 函数依赖清单、范式与异常分析、目标结构与无损/依赖保持证明 | 复制自 `docs/week6-normalization/`，只调整了相对链接 |
 | [migration/](migration) | 迁移前后关键结果 [key-results.md](migration/key-results.md)；两个验证脚本的完整输出 | `tests\Verify-Week6Migration.ps1`、`tests\Verify-CampusStore.ps1` |
-| [app-test/](app-test) | 应用集成测试（295 项）、浏览器验收（25 项）、21 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
+| [app-test/](app-test) | 应用集成测试（307 项）、浏览器验收（26 项）、22 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
 | [doctor.txt](doctor.txt) | 环境预检输出：8 项全部通过 | `python -m tools.doctor --server "."` |
 | [prepare-week7.txt](prepare-week7.txt) | 建开发库 `CampusStoreDB_W7_Development` 的输出 | `python -m tools.prepare_week7 --server "."` |
 | [final-regression.txt](final-regression.txt) | 开发库上的 30 项只读回归：库存与流水、订单金额、销量统计、外键与流水来源、受限角色权限 | `sql/week9/final_regression.sql` |
 | [package-smoke.json](package-smoke.json) | 把交付包解压到临时目录后的空环境复现结果 | `tools/smoke_package.py` |
 
-`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 295 项通过、浏览器 25 项通过、0 个未捕获 JavaScript 异常、测试库已清理。
+`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 307 项通过、浏览器 26 项通过、0 个未捕获 JavaScript 异常、测试库已清理。
 
 ## 不同角色的完整业务流程与截图
 
@@ -25,6 +25,7 @@
 | --- | --- | --- |
 | 所有角色 | 登录页，登录失败提示 | [01](app-test/01-login.png) |
 | 顾客 customer | 浏览在售商品（无库存和维护入口） | [06](app-test/06-customer-catalog.png) |
+| | 按分类查询商品，选父分类时包含子分类 | [22](app-test/22-category-filter.png) |
 | | 加入购物车，在“我的订单”维护购物车 | [07](app-test/07-customer-draft.png) |
 | | 管理员改价后提交，提示价格已更新、需再次确认 | [15](app-test/15-price-changed.png) |
 | | 提交订单，状态变为“待受理”，只能取消 | [09](app-test/09-customer-cart-submitted.png) |

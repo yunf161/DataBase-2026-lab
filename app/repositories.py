@@ -33,14 +33,16 @@ class StoreRepository:
     def transaction(self, user):
         return self.database.transaction(user["role"], user["user_id"])
 
-    def products(self, connection, pattern, status, limit, offset):
+    def products(self, connection, pattern, status, limit, offset, category_id=0):
         where = """ FROM app.v_Catalog
-            WHERE (product_name LIKE ? OR sku LIKE ?) AND (?=-1 OR status=?) """
-        total = one(connection, "SELECT COUNT(*) AS total" + where, pattern, pattern, status, status)["total"]
+            WHERE (product_name LIKE ? OR sku LIKE ?) AND (?=-1 OR status=?)
+            AND (?=0 OR category_id IN (SELECT member_id FROM app.v_CategoryScope WHERE category_id=?)) """
+        total = one(connection, "SELECT COUNT(*) AS total" + where,
+                    pattern, pattern, status, status, category_id, category_id)["total"]
         result = records(
             connection, "SELECT " + PRODUCT_FIELDS + where +
             " ORDER BY product_id OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;",
-            pattern, pattern, status, status, offset, limit,
+            pattern, pattern, status, status, category_id, category_id, offset, limit,
         )
         return {"items": result, "total": total}
 

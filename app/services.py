@@ -124,11 +124,13 @@ class StoreService:
         status = query.get("status", "1" if user["role"] == "CUSTOMER" else "all")
         if status not in {"all", "0", "1"} or (user["role"] == "CUSTOMER" and status != "1"):
             raise AppError("INVALID_INPUT", "商品状态筛选不正确。")
+        category = query.get("category_id", "")
+        category_id = query_integer(category, "分类") if category else 0
         page = query_integer(query.get("page", "1"), "页码")
         limit = query_integer(query.get("page_size", "20"), "每页数量", 100)
         pattern = search_pattern(query.get("q", ""))
         with self.repository.transaction(user) as connection:
-            result = self.repository.products(connection, pattern, -1 if status == "all" else int(status), limit, (page - 1) * limit)
+            result = self.repository.products(connection, pattern, -1 if status == "all" else int(status), limit, (page - 1) * limit, category_id)
         return {**result, "page": page, "page_size": limit}
 
     def product_data(self, data):

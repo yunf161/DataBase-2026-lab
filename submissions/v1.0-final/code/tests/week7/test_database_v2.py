@@ -668,6 +668,8 @@ def test_upgrade_tool_upgrades_an_old_week7_database_in_place(app, settings):
         assert call("staff", "EXEC app.SettleSale ?", sale) == [{"sale_id": sale}]
         assert connection.execute("SELECT Quantity FROM dbo.Inventory WHERE ProductID=?;", product_id).fetchone()[0] == stock - 2
 
+        assert call("customer", "SELECT COUNT(*) AS total FROM app.v_CategoryScope;")[0]["total"] > 0
+
         before = upgrade_state(connection)
         second = run_upgrade(server, name)
         assert second.returncode == 0, second.stdout + second.stderr

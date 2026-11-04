@@ -57,7 +57,7 @@
       "test": "店员在待受理筛选中结算",
       "result": "passed",
       "actual": "请求带pending=1且不带status；优惠1.00、支付宝；状态已完成，应付10.00",
-      "request": "http://127.0.0.1:57780/api/orders?q=&page=1&page_size=10&pending=1"
+      "request": "http://127.0.0.1:54981/api/orders?q=&page=1&page_size=10&pending=1"
     },
     {
       "test": "顾客看到已完成订单和应付金额",
@@ -118,6 +118,11 @@
       "test": "停用分类下的商品编辑保持原分类",
       "result": "passed",
       "actual": "下拉框显示“文具（已停用）”且被选中，保存后分类编号不变"
+    },
+    {
+      "test": "按分类查询商品",
+      "result": "passed",
+      "actual": "饮料2件；食品含子分类共4件；切换页面后筛选复位"
     },
     {
       "test": "商品超过100件时可选商品完整",

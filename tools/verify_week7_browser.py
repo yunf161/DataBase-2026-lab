@@ -543,6 +543,29 @@ def main():
                         manager.execute("UPDATE dbo.Category SET Status=1 WHERE CategoryID=?;", category_id)
                     manager.close()
 
+        with scenario("按分类查询商品，选父分类时包含子分类"):
+            shopper = new_page("customer")
+            category_filter = shopper.locator("#category-filter")
+            expect(category_filter).to_be_visible()
+            expect(category_filter).to_have_value("")
+            category_filter.select_option(label="饮料")
+            shopper.get_by_role("button", name="查询", exact=True).click()
+            expect(shopper.locator("#table-body tr")).to_have_count(2)
+            expect(sku_row(shopper, "P0001")).to_have_count(1)
+            expect(sku_row(shopper, "P0003")).to_have_count(1)
+            category_filter.select_option(label="食品")
+            shopper.get_by_role("button", name="查询", exact=True).click()
+            expect(shopper.locator("#table-body tr")).to_have_count(4)
+            expect(sku_row(shopper, "P0004")).to_have_count(1)
+            expect(sku_row(shopper, "P0002")).to_have_count(0)
+            shot(shopper, "22-category-filter.png")
+            shopper.locator('[data-view="orders"]').click()
+            expect(category_filter).to_be_hidden()
+            shopper.locator('[data-view="products"]').click()
+            expect(category_filter).to_have_value("")
+            expect(sku_row(shopper, "P0002")).to_have_count(1)
+            findings.append({"test": "按分类查询商品", "result": "passed", "actual": "饮料2件；食品含子分类共4件；切换页面后筛选复位"})
+
         with scenario("商品超过100件时订单详情仍可选择全部商品"):
             clerk = new_page("staff")
             token = admin.context.request.get(args.url + "/api/auth/session").json()["data"]["csrf_token"]

@@ -100,6 +100,8 @@ async function activate(view) {
     view === "orders" ? [["", "全部状态"], ...(customer ? [] : [["pending", "待受理"]]), ["DRAFT", "草稿"], ["COMPLETED", "已完成"], ["CANCELLED", "已取消"]] :
     [["", "全部库存"], ["NORMAL", "库存正常"], ["LOW_STOCK", "低于预警"], ["OUT_OF_STOCK", "暂无库存"]];
   $("status-filter").innerHTML = filters.map(([value, label]) => '<option value="' + value + '">' + label + "</option>").join("");
+  $("category-filter").innerHTML = '<option value="">全部分类</option>' + categoryOptions();
+  $("category-filter").hidden = view !== "products";
   $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
   await loadList();
 }
@@ -107,6 +109,7 @@ async function loadList() {
   const params = new URLSearchParams({q: $("search").value, page: state.page, page_size: state.pageSize});
   if (state.view === "orders" && $("status-filter").value === "pending") params.set("pending", "1");
   else params.set(state.view === "inventory" ? "stock_status" : "status", $("status-filter").value);
+  if (state.view === "products" && $("category-filter").value) params.set("category_id", $("category-filter").value);
   const data = await api("/" + state.view + "?" + params);
   state.rows = Array.isArray(data) ? data : data.items;
   state.total = Array.isArray(data) ? data.length : data.total;

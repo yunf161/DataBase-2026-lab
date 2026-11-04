@@ -107,7 +107,7 @@ pending只接受1，表示只返回status=DRAFT且submitted_at非空（顾客已
 失败ok=false、data=null。code区分INVALID_INPUT、AUTH_REQUIRED、AUTH_FAILED、FORBIDDEN、
 CSRF_INVALID、NOT_FOUND、DUPLICATE_RECORD、BUSINESS_RULE、CONSTRAINT_CONFLICT、
 TRANSACTION_FAILED、DATABASE_UNAVAILABLE、INTERNAL_ERROR。message为用户提示，内部错误只写后端日志。
-数据库错误号只取驱动文本中后面紧跟(SQLxxx)、分号或结尾的括号数字，用户数据里的括号数字不参与分类。
+数据库错误号只取驱动文本中后面紧跟(SQLxxx)、"; ["或结尾的括号数字，用户数据里的括号数字不参与分类。
 BUSINESS_RULE（409）按错误号给出具体提示，如库存不足(51305)、空订单(51302)、订单状态已变化(51300等)。
 TRANSACTION_FAILED（409）对应死锁/锁超时/事务回滚(1205、1222、3960、3930)及SQLSTATE 40001，提示稍后重试。
 执行阶段的SQLSTATE HYT00、HYT01（语句因等锁等原因超过查询超时）同样归入TRANSACTION_FAILED；

@@ -96,7 +96,7 @@ class AuthService:
         fields(data, {"username", "password"}, {"username", "password"})
         username = text(data["username"], "用户名", 40, True)
         password = data["password"]
-        if not isinstance(password, str) or not 1 <= len(password) <= 128:
+        if not isinstance(password, str) or utf16_length(password) is None or not 1 <= len(password) <= 128:
             raise AppError("INVALID_INPUT", "密码长度不正确。")
         user = self.repository.by_username(username)
         valid = check_password_hash(user["password_hash"] if user else self.dummy_hash, password)

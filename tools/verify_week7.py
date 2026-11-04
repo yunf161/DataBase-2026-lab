@@ -26,7 +26,7 @@ def run(command, environment, destination):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server", default=r".\SQLEXPRESS")
-    parser.add_argument("--output", default=str(ROOT / "docs/week7-application/results"))
+    parser.add_argument("--output", default=str(ROOT / "results/app-test"))
     parser.add_argument("--browser-executable", default=os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE"))
     parser.add_argument("--skip-browser", action="store_true")
     parser.add_argument("--only-browser", action="store_true")

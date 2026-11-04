@@ -64,6 +64,14 @@ def test_bad_login_does_not_reveal_account_or_accept_injection(client, username)
     assert response.json["message"] == "用户名或密码不正确。"
 
 
+def test_lone_surrogate_password_is_invalid_input_not_server_error(client):
+    token = client.get("/api/auth/session").json["data"]["csrf_token"]
+    response = client.post("/api/auth/login", data='{"username": "admin", "password": "\\ud800"}',
+                           content_type="application/json", headers={"X-CSRF-Token": token})
+    result(response, 400, "INVALID_INPUT")
+    assert response.json["message"] == "密码长度不正确。"
+
+
 def test_login_requires_csrf(client):
     result(client.post("/api/auth/login", json={"username": "admin", "password": "Campus2026!"}), 403, "CSRF_INVALID")
 

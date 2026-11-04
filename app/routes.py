@@ -132,7 +132,7 @@ def orders():
 @api.post("/orders")
 @signed_in
 def create_order():
-    return reply(store().create_order(g.user, body()), "草稿订单已创建，尚未扣减库存。", 201)
+    return reply(store().create_order(g.user, body()), "草稿订单已创建，库存将在结算时扣减。", 201)
 
 
 @api.get("/orders/<int:sale_id>")

@@ -5,7 +5,11 @@ const roleNames = {ADMIN: "店铺管理员", STAFF: "值班店员", CUSTOMER: "�
 const statusNames = {DRAFT: "草稿待处理", COMPLETED: "已完成", CANCELLED: "已取消", NORMAL: "库存正常", LOW_STOCK: "低于预警", OUT_OF_STOCK: "暂无库存"};
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char]));
 const price = (value) => Number(value || 0).toFixed(2);
-const categoryOptions = (selected) => state.categories.map((item) => '<option value="' + item.category_id + '"' + (item.category_id === Number(selected) ? " selected" : "") + ">" + escapeHTML(item.category_name) + "</option>").join("");
+const categoryOptions = (selected, name) => (selected && name && !state.categories.some((item) => item.category_id === Number(selected)) ? '<option value="' + Number(selected) + '" selected>' + escapeHTML(name) + "（已停用）</option>" : "") + state.categories.map((item) => '<option value="' + item.category_id + '"' + (item.category_id === Number(selected) ? " selected" : "") + ">" + escapeHTML(item.category_name) + "</option>").join("");
+const changeTypes = {PURCHASE_IN: "采购入库", SALE_OUT: "销售出库", STOCKTAKE_IN: "盘盈", STOCKTAKE_OUT: "盘亏"};
+const orderStatus = (row) => row.status !== "DRAFT" ? statusNames[row.status] : Number(row.is_customer_order) === 1 && !row.submitted_at ? (state.user.role === "CUSTOMER" ? "购物车" : "顾客选购中") : row.submitted_at ? "待受理" : statusNames.DRAFT;
+const payable = (row) => row.status === "COMPLETED" ? row.payable_amount : Number(row.draft_amount) - Number(row.discount_amount);
+const signed = (value) => (value > 0 ? "+" : "") + value;
 const badge = (label, color) => '<span class="badge ' + color + '">' + escapeHTML(label) + "</span>";
 let toastTimer;
 function toast(message) { $("toast").textContent = message; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => {$("toast").hidden = true;}, 4200); }
@@ -74,41 +78,42 @@ async function activate(view) {
   const config = {
     products: [state.user.role === "ADMIN" ? "商品管理" : "商品货架", "PRODUCTS & SHELVES", customer ? "挑选校园里的日常好物，随时查看自己的订单。" : "每一件日常好物，都值得被好好打理。", "搜索商品名称或编号"],
     inventory: ["库存查询", "STOCK & SUPPLIES", "及时关注货架余量，让每一份需要都有着落。", "搜索商品名称或编号"],
-    orders: [customer ? "我的订单" : "销售订单", "ORDERS & DAILY BUSINESS", customer ? "属于你的每一笔订单，都有清晰的来处。" : "查看订单与明细，有序处理每一份草稿。", "搜索订单编号"]
+    orders: [customer ? "我的订单" : "销售订单", "ORDERS & DAILY BUSINESS", customer ? "属于你的每一笔订单，都有清晰的来处。" : "查看订单与明细，受理顾客提交的订单并完成结算。", "搜索订单编号"]
   }[view];
   $("page-title").textContent = config[0]; $("breadcrumb-title").textContent = config[0];
   $("page-eyebrow").textContent = config[1]; $("page-description").textContent = config[2];
   $("search").placeholder = config[3]; $("search").value = "";
-  $("heading-action").hidden = !(view === "products" && state.user.role === "ADMIN") && view !== "orders";
+  $("heading-action").hidden = view === "orders" ? customer : !(view === "products" && state.user.role === "ADMIN");
   $("heading-action").textContent = view === "orders" ? "＋ 新建草稿" : "＋ 新增商品";
   const filters = view === "products" ? (customer ? [["1", "在售商品"]] : [["all", "全部状态"], ["1", "在售"], ["0", "已停用"]]) :
-    view === "orders" ? [["", "全部状态"], ["DRAFT", "草稿"], ["COMPLETED", "已完成"], ["CANCELLED", "已取消"]] :
+    view === "orders" ? [["", "全部状态"], ...(customer ? [] : [["pending", "待受理"]]), ["DRAFT", "草稿"], ["COMPLETED", "已完成"], ["CANCELLED", "已取消"]] :
     [["", "全部库存"], ["NORMAL", "库存正常"], ["LOW_STOCK", "低于预警"], ["OUT_OF_STOCK", "暂无库存"]];
   $("status-filter").innerHTML = filters.map(([value, label]) => '<option value="' + value + '">' + label + "</option>").join("");
-  $("page-tip").textContent = view === "orders" ? "草稿尚未结算，不扣减库存；已完成订单保持历史记录。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
+  $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
   await loadList();
 }
 async function loadList() {
   const params = new URLSearchParams({q: $("search").value, page: state.page, page_size: state.pageSize});
-  params.set(state.view === "inventory" ? "stock_status" : "status", $("status-filter").value);
+  if (state.view === "orders" && $("status-filter").value === "pending") params.set("pending", "1");
+  else params.set(state.view === "inventory" ? "stock_status" : "status", $("status-filter").value);
   const data = await api("/" + state.view + "?" + params);
   state.rows = Array.isArray(data) ? data : data.items;
   state.total = Array.isArray(data) ? data.length : data.total;
   const heads = state.view === "products" ? ["商品", "商品编号", "分类", "售价", "可售库存", "状态", "操作"] :
     state.view === "inventory" ? ["商品名称", "商品编号", "分类", "当前库存", "预警下限", "库存状态", "操作"] :
-    ["订单编号", "创建时间", "状态", "明细合计", "优惠金额", "操作"];
+    ["订单编号", "创建时间", "状态", "明细合计", "应付金额", "优惠金额", "操作"];
   $("table-head").innerHTML = "<tr>" + heads.map((item) => "<th>" + item + "</th>").join("") + "</tr>";
   $("table-body").innerHTML = state.rows.length ? state.rows.map((row) => {
     if (state.view === "products") {
       const actions = state.user.role === "ADMIN" ? actionButton("edit-product", row.product_id, "编辑") + actionButton("delete-product", row.product_id, "删除", true) :
-        row.status ? actionButton("shop", row.product_id, "加入草稿") : "—";
+        row.status ? actionButton("shop", row.product_id, state.user.role === "CUSTOMER" ? "加入购物车" : "加入草稿") : "—";
       return "<tr><td>" + productCell(row) + "</td><td>" + escapeHTML(row.sku) + '</td><td><span class="category-pill">' + escapeHTML(row.category_name) + '</span></td><td class="price"><span>¥</span>' + price(row.sale_price) + '</td><td class="' + (row.quantity === 0 ? "stock-zero" : "") + '">' + row.quantity + " " + escapeHTML(row.unit) + "</td><td>" + badge(row.status ? "在售" : "已停用", row.status ? "green" : "gray") + "</td><td>" + actions + "</td></tr>";
     }
     if (state.view === "inventory") {
-      return "<tr><td>" + escapeHTML(row.product_name) + "</td><td>" + escapeHTML(row.sku) + "</td><td>" + escapeHTML(row.category_name) + '</td><td class="price">' + row.quantity + "</td><td>" + row.min_quantity + "</td><td>" + badge(statusNames[row.stock_status], row.stock_status === "NORMAL" ? "green" : "amber") + "</td><td>" + (state.user.role === "ADMIN" ? actionButton("minimum", row.product_id, "设置预警") : "—") + "</td></tr>";
+      return "<tr><td>" + escapeHTML(row.product_name) + "</td><td>" + escapeHTML(row.sku) + "</td><td>" + escapeHTML(row.category_name) + '</td><td class="price">' + row.quantity + "</td><td>" + row.min_quantity + "</td><td>" + badge(statusNames[row.stock_status], row.stock_status === "NORMAL" ? "green" : "amber") + "</td><td>" + (state.user.role === "ADMIN" ? actionButton("minimum", row.product_id, "设置预警") + actionButton("adjust", row.product_id, "调整库存") + actionButton("logs", row.product_id, "查看流水") : "—") + "</td></tr>";
     }
-    return "<tr><td>" + escapeHTML(row.sale_no) + "</td><td>" + escapeHTML(row.created_at.replace("T", " ").slice(0, 16)) + "</td><td>" + badge(statusNames[row.status], row.status === "DRAFT" ? "amber" : row.status === "COMPLETED" ? "green" : "gray") + '</td><td class="price"><span>¥</span>' + price(row.draft_amount) + "</td><td>¥ " + price(row.discount_amount) + "</td><td>" + actionButton("detail", row.sale_id, "查看明细") + "</td></tr>";
-  }).join("") : '<tr><td class="empty" colspan="' + heads.length + '"><strong>这里还没有记录</strong>试试调整筛选条件，或新建一份草稿。</td></tr>';
+    return "<tr><td>" + escapeHTML(row.sale_no) + "</td><td>" + escapeHTML(row.created_at.replace("T", " ").slice(0, 16)) + "</td><td>" + badge(orderStatus(row), row.status === "DRAFT" ? "amber" : row.status === "COMPLETED" ? "green" : "gray") + '</td><td class="price"><span>¥</span>' + price(row.draft_amount) + '</td><td class="price"><span>¥</span>' + price(payable(row)) + "</td><td>¥ " + price(row.discount_amount) + "</td><td>" + actionButton("detail", row.sale_id, "查看明细") + "</td></tr>";
+  }).join("") : '<tr><td class="empty" colspan="' + heads.length + '"><strong>这里还没有记录</strong>' + (state.view === "orders" && state.user.role === "CUSTOMER" ? "试试调整筛选条件，或先到商品页加入购物车。" : "试试调整筛选条件，或新建一份草稿。") + "</td></tr>";
   if (state.view === "products") summary([["筛选商品", state.total, "件"], ["本页在售", state.rows.filter((p) => p.status).length, "件"], ["商品分类", state.categories.length, "类"]]);
   else if (state.view === "inventory") summary([["筛选商品", state.total, "件"], ["当前库存合计", state.rows.reduce((n, p) => n + p.quantity, 0), "件"], ["需关注库存", state.rows.filter((p) => p.stock_status !== "NORMAL").length, "件"]]);
   else summary([["筛选订单", state.total, "笔"], ["本页待处理", state.rows.filter((p) => p.status === "DRAFT").length, "笔"], ["本页已完成", state.rows.filter((p) => p.status === "COMPLETED").length, "笔"]]);
@@ -133,7 +138,7 @@ function confirmation(title, description) {
 }
 function productEditor(product = null) {
   openEditor(product ? "编辑商品" : "新增商品",
-    '<form id="product-form"><div class="form-grid"><div><label for="p-sku">商品编号 *</label><input id="p-sku" maxlength="30" pattern="[A-Za-z0-9_-]+" required value="' + escapeHTML(product?.sku || "") + '"></div><div><label for="p-barcode">商品条码</label><input id="p-barcode" maxlength="32" pattern="[A-Za-z0-9_-]*" value="' + escapeHTML(product?.barcode || "") + '"></div><div class="span-two"><label for="p-name">商品名称 *</label><input id="p-name" maxlength="100" required value="' + escapeHTML(product?.product_name || "") + '"></div><div><label for="p-category">商品分类 *</label><select id="p-category">' + categoryOptions(product?.category_id) + '</select></div><div><label for="p-price">售价（元）*</label><input id="p-price" type="number" step=".01" min="0" max="99999999.99" required value="' + escapeHTML(product?.sale_price || "") + '"></div><div><label for="p-spec">商品规格</label><input id="p-spec" maxlength="100" value="' + escapeHTML(product?.specification || "") + '"></div><div><label for="p-unit">计量单位 *</label><input id="p-unit" maxlength="20" required value="' + escapeHTML(product?.unit || "件") + '"></div><div class="span-two"><label for="p-status">商品状态</label><select id="p-status"><option value="1">在售</option><option value="0">已停用</option></select></div></div><p class="helper">新商品初始库存为零。有库存或历史业务记录的商品，请选择停用以保留记录。</p><div class="dialog-actions"><button type="submit" class="primary">保存商品</button></div></form>');
+    '<form id="product-form"><div class="form-grid"><div><label for="p-sku">商品编号 *</label><input id="p-sku" maxlength="30" pattern="[A-Za-z0-9_-]+" required value="' + escapeHTML(product?.sku || "") + '"></div><div><label for="p-barcode">商品条码</label><input id="p-barcode" maxlength="32" pattern="[A-Za-z0-9_-]*" value="' + escapeHTML(product?.barcode || "") + '"></div><div class="span-two"><label for="p-name">商品名称 *</label><input id="p-name" maxlength="100" required value="' + escapeHTML(product?.product_name || "") + '"></div><div><label for="p-category">商品分类 *</label><select id="p-category">' + categoryOptions(product?.category_id, product?.category_name) + '</select></div><div><label for="p-price">售价（元）*</label><input id="p-price" type="number" step=".01" min="0" max="99999999.99" required value="' + escapeHTML(product?.sale_price || "") + '"></div><div><label for="p-spec">商品规格</label><input id="p-spec" maxlength="100" value="' + escapeHTML(product?.specification || "") + '"></div><div><label for="p-unit">计量单位 *</label><input id="p-unit" maxlength="20" required value="' + escapeHTML(product?.unit || "件") + '"></div><div class="span-two"><label for="p-status">商品状态</label><select id="p-status"><option value="1">在售</option><option value="0">已停用</option></select></div></div><p class="helper">新商品初始库存为零。有库存或历史业务记录的商品，请选择停用以保留记录。</p><div class="dialog-actions"><button type="submit" class="primary">保存商品</button></div></form>');
   $("p-status").value = Number(product?.status ?? 1);
   $("product-form").onsubmit = (event) => {
     event.preventDefault();
@@ -151,22 +156,46 @@ function minimumEditor(row) {
     $("editor").close(); toast("库存预警已更新。"); await loadList();
   }, "editor-error");};
 }
+function adjustEditor(row) {
+  openEditor("调整库存", '<form id="adjust-form"><p class="muted">' + escapeHTML(row.product_name) + " · 当前数量 " + row.quantity + '</p><div class="form-grid"><div class="span-two"><label for="adjust-quantity">新数量 *</label><input id="adjust-quantity" type="number" min="0" max="1000000" step="1" required value="' + row.quantity + '"></div><div class="span-two"><label for="adjust-reason">调整原因 *</label><textarea id="adjust-reason" maxlength="255" rows="2" required></textarea></div></div><p id="adjust-delta" class="helper" aria-live="polite">变化量：0</p><div class="dialog-actions"><button type="submit" class="primary">确认调整</button></div></form>');
+  $("adjust-quantity").oninput = () => {$("adjust-delta").textContent = "变化量：" + ($("adjust-quantity").value === "" ? "—" : signed(Number($("adjust-quantity").value) - row.quantity));};
+  $("adjust-form").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
+    await api("/inventory/" + row.product_id + "/quantity", {method: "PATCH", body: {new_quantity: Number($("adjust-quantity").value), reason: $("adjust-reason").value}});
+    $("editor").close(); toast("库存数量已调整。"); await loadList();
+  }, "editor-error");};
+}
+async function inventoryLogs(row, page = 1) {
+  const size = 10;
+  const data = await api("/inventory/" + row.product_id + "/logs?page=" + page + "&page_size=" + size);
+  const lines = data.items.length ? data.items.map((log) => "<tr><td>" + escapeHTML(String(log.created_at).replace("T", " ").slice(0, 19)) + "</td><td>" + escapeHTML(Object.hasOwn(changeTypes, log.change_type) ? changeTypes[log.change_type] : log.change_type) + "</td><td>" + signed(log.change_quantity) + "</td><td>" + log.before_quantity + " → " + log.after_quantity + "</td><td>" + escapeHTML(log.business_no || "—") + "</td><td>" + escapeHTML(log.employee_no || "—") + "</td><td>" + escapeHTML(log.remark || "—") + "</td></tr>").join("") :
+    '<tr><td colspan="7" class="empty">这个商品还没有库存流水。</td></tr>';
+  openEditor("库存流水", '<p class="muted">' + escapeHTML(row.product_name) + " · " + escapeHTML(row.sku) + '</p><div class="order-items log-table"><table><thead><tr><th>时间</th><th>类型</th><th>变化量</th><th>前后数量</th><th>单号</th><th>员工</th><th>备注</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="log-pager"><button id="log-previous" type="button" class="secondary small">上一页</button><span>第 ' + page + " 页 · 共 " + data.total + ' 条</span><button id="log-next" type="button" class="secondary small">下一页</button></div>', true);
+  $("log-previous").disabled = page <= 1; $("log-next").disabled = page * size >= data.total;
+  $("log-previous").onclick = (event) => busy(event.currentTarget, () => inventoryLogs(row, page - 1), "editor-error");
+  $("log-next").onclick = (event) => busy(event.currentTarget, () => inventoryLogs(row, page + 1), "editor-error");
+}
 function paymentOptions(selected) {
   return [["CASH", "现金"], ["WECHAT", "微信"], ["ALIPAY", "支付宝"], ["BANK_CARD", "银行卡"]].map(([value, label]) => '<option value="' + value + '"' + (value === selected ? " selected" : "") + ">" + label + "</option>").join("");
 }
-async function orderDetail(saleId) {
-  const [order, catalog] = await Promise.all([api("/orders/" + saleId), api("/products?status=1&page_size=100")]);
+async function orderDetail(saleId, latest = null, notice = "") {
+  const [order, catalog] = await Promise.all([latest || api("/orders/" + saleId), api("/products?status=1&page_size=100")]);
   state.detail = order; state.catalog = catalog.items;
-  const editable = order.status === "DRAFT";
   const customer = state.user.role === "CUSTOMER";
+  const draft = order.status === "DRAFT";
+  const submitted = draft && Boolean(order.submitted_at);
+  const waiting = draft && Number(order.is_customer_order) === 1 && !order.submitted_at;
+  const editable = draft && !(customer && submitted);
+  const message = !draft ? "此订单已完成或取消，保留原有记录，不再修改明细。" : customer ? (submitted ? "待店员受理。店员结算后订单完成，结算前可以取消订单。" : "这是你的购物车，确认选购内容后点击“提交订单”，库存在店员结算时才扣减。") :
+    waiting ? "顾客尚未提交，暂不能结算。顾客提交后才可确认收款。" : "这是一份尚未结算的草稿，库存在确认收款并结算时才扣减。";
   const lines = order.items.length ? order.items.map((item) => '<tr><td>' + escapeHTML(item.product_name) + '<span class="product-subtitle">' + escapeHTML(item.sku) + '</span></td><td>¥ ' + price(item.unit_price) + "</td><td>" + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '数量" type="number" min="1" max="1000000" value="' + item.quantity + '" data-quantity="' + item.item_id + '">' : item.quantity) + "</td><td>¥ " + price(item.line_amount) + "</td><td>" + (editable ? actionButton("save-line", item.item_id, "更新") + actionButton("remove-line", item.item_id, "移除", true) : "—") + "</td></tr>").join("") :
     '<tr><td colspan="5" class="empty">草稿暂时没有明细，请添加商品。</td></tr>';
   const selectedProducts = new Set(order.items.map((item) => item.product_id));
   const available = catalog.items.filter((product) => !selectedProducts.has(product.product_id));
-  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(statusNames[order.status], editable ? "amber" : "gray") + '</div><div class="order-message">' + (editable ? "这是一份尚未结算的草稿，暂不扣减库存。确认选购内容后，交由店员受理。" : "此订单已完成或取消，保留原有记录，不再修改明细。") + '</div><div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + "</strong></p>" +
-    (editable ? '<form id="add-line-form" class="add-item-form"><div><label for="line-product">添加商品</label><select id="line-product" required><option value="">请选择商品</option>' + available.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.product_name) + " · ¥" + price(product.sale_price) + "</option>").join("") + '</select></div><div><label for="line-quantity">数量</label><input id="line-quantity" type="number" min="1" max="1000000" value="1" required></div><button type="submit" class="secondary">加入草稿</button></form><form id="order-info-form"><div class="form-grid"><div><label for="order-payment">支付方式</label><select id="order-payment">' + paymentOptions(order.payment_method) + '</select></div><div><label for="order-discount">优惠金额（元）</label><input id="order-discount" type="number" min="0" step=".01" value="' + price(order.discount_amount) + '"' + (customer ? " disabled" : "") + '></div><div class="span-two"><label for="order-remark">备注</label><textarea id="order-remark" maxlength="255" rows="2">' + escapeHTML(order.remark || "") + '</textarea></div></div><div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消这份草稿</button><button type="submit" class="primary">保存草稿信息</button></div></form>' :
-      '<p class="helper">备注：' + escapeHTML(order.remark || "暂无") + "</p>"), true);
-  if (!editable) return;
+  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(orderStatus(order), draft ? "amber" : order.status === "COMPLETED" ? "green" : "gray") + '</div><div class="order-message">' + message + '</div>' + (notice ? '<div class="order-message order-notice" role="status">' + escapeHTML(notice) + "</div>" : "") + '<div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="order-sums"><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p><p class="order-discount">优惠<strong>- ¥ ' + price(order.discount_amount) + '</strong></p><p class="order-payable">应付<strong>¥ ' + price(payable(order)) + "</strong></p></div>" +
+    (editable ? '<form id="add-line-form" class="add-item-form"><div><label for="line-product">添加商品</label><select id="line-product" required><option value="">请选择商品</option>' + available.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.product_name) + " · ¥" + price(product.sale_price) + "</option>").join("") + '</select></div><div><label for="line-quantity">数量</label><input id="line-quantity" type="number" min="1" max="1000000" value="1" required></div><button type="submit" class="secondary">加入草稿</button></form><form id="order-info-form"><div class="form-grid"><div><label for="order-payment">支付方式</label><select id="order-payment">' + paymentOptions(order.payment_method) + '</select></div><div><label for="order-discount">优惠金额（元）</label><input id="order-discount" type="number" min="0" step=".01" value="' + price(order.discount_amount) + '"' + (customer ? " disabled" : "") + '></div><div class="span-two"><label for="order-remark">备注</label><textarea id="order-remark" maxlength="255" rows="2">' + escapeHTML(order.remark || "") + '</textarea></div></div>    <div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消这份草稿</button><button type="submit" class="primary">保存草稿信息</button>' + (customer ? '<button id="submit-order" type="button" class="primary">提交订单</button>' : waiting ? "" : '<button id="settle-order" type="button" class="primary">确认收款并结算</button>') + '</div></form>' :
+          '<p class="helper">备注：' + escapeHTML(order.remark || "暂无") + "</p>" + (submitted ? '<div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消订单</button></div>' : "")), true);
+      if (submitted) $("cancel-draft").onclick = (event) => cancelDraft(event.currentTarget, saleId);
+      if (!editable) return;
   $("add-line-form").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
     await api("/orders/" + saleId + "/items", {method: "POST", body: {product_id: Number($("line-product").value), quantity: Number($("line-quantity").value)}});
     await orderDetail(saleId); await loadList(); toast("商品已加入草稿。");
@@ -177,7 +206,23 @@ async function orderDetail(saleId) {
     await api("/orders/" + saleId, {method: "PATCH", body: data});
     await orderDetail(saleId); await loadList(); toast("草稿信息已保存。");
   }, "editor-error");};
-  $("cancel-draft").onclick = (event) => busy(event.target, async () => {
+  $("cancel-draft").onclick = (event) => cancelDraft(event.currentTarget, saleId);
+  if ($("submit-order")) $("submit-order").onclick = (event) => busy(event.currentTarget, async () => {
+    await api("/orders/" + saleId, {method: "PATCH", body: {payment_method: $("order-payment").value, remark: $("order-remark").value}});
+    const result = await api("/orders/" + saleId + "/submit", {method: "POST", body: {}});
+    if (result.price_changed) {
+      await orderDetail(saleId, result.order, "部分商品价格已更新，请确认新的金额后再次提交订单。"); await loadList(); toast("价格已更新，请确认后再提交。"); return;
+    }
+    await orderDetail(saleId); await loadList(); toast("订单已提交，请等待店员受理。");
+  }, "editor-error");
+  if ($("settle-order")) $("settle-order").onclick = (event) => busy(event.currentTarget, async () => {
+    if (!await confirmation("确认收款并结算？", "结算后将扣减库存，订单变为已完成，不能再修改。")) return;
+    await api("/orders/" + saleId + "/settle", {method: "POST", body: {payment_method: $("order-payment").value, discount_amount: $("order-discount").value}});
+    await orderDetail(saleId); await loadList(); toast("订单已结算，库存已扣减。");
+  }, "editor-error");
+}
+function cancelDraft(button, saleId) {
+  return busy(button, async () => {
     if (!await confirmation("取消草稿订单？", "取消后保留订单记录，不能再修改或加入商品。")) return;
     await api("/orders/" + saleId + "/cancel", {method: "POST", body: {}});
     await orderDetail(saleId); await loadList(); toast("草稿订单已取消。");
@@ -185,7 +230,7 @@ async function orderDetail(saleId) {
 }
 async function newDraft(items = []) {
   const order = await api("/orders", {method: "POST", body: {payment_method: "CASH", items}});
-  await activate("orders"); await orderDetail(order.sale_id); toast("草稿已创建，尚未扣减库存。");
+  await activate("orders"); await orderDetail(order.sale_id); toast("草稿已创建，库存将在结算时扣减。");
 }
 $("login-form").onsubmit = (event) => {
   event.preventDefault();
@@ -218,15 +263,20 @@ $("table-body").onclick = (event) => {
     const id = Number(button.dataset.id); const row = state.rows.find((item) => (item.product_id || item.sale_id) === id);
     if (button.dataset.action === "edit-product") productEditor(row);
     if (button.dataset.action === "minimum") minimumEditor(row);
+    if (button.dataset.action === "adjust") adjustEditor(row);
+    if (button.dataset.action === "logs") await inventoryLogs(row);
     if (button.dataset.action === "detail") await orderDetail(id);
-    if (button.dataset.action === "shop") await newDraft([{product_id: id, quantity: 1}]);
+    if (button.dataset.action === "shop") {
+      await api("/cart/items", {method: "POST", body: {product_id: id, quantity: 1}});
+      toast(state.user.role === "CUSTOMER" ? "已加入购物车，可在“我的订单”中提交。" : "已加入草稿，可在“销售订单”中查看。");
+    }
     if (button.dataset.action === "delete-product" && await confirmation("删除这个商品？", "仅无业务引用且库存为零的商品可以删除。已有历史记录的商品请改为停用。")) {
       await api("/products/" + id, {method: "DELETE"}); toast("未使用商品已删除。"); await loadList();
     }
   });
 };
 $("editor-content").onclick = (event) => {
-  const button = event.target.closest("[data-action]"); if (!button) return;
+  const button = event.target.closest("[data-action]"); if (!button || !["save-line", "remove-line"].includes(button.dataset.action)) return;
   busy(button, async () => {
     const itemId = Number(button.dataset.id); const saleId = state.detail.sale_id;
     if (button.dataset.action === "save-line") {

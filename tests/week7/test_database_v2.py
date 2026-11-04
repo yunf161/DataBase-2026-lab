@@ -227,6 +227,63 @@ def test_price_change_refreshes_lines_and_needs_second_submit(env, new_price):
     assert env.scalar("SELECT SubmittedAt FROM app.SaleOwner WHERE SaleID=?;", sale) is not None
 
 
+def submitted_at(env, sale):
+    return env.scalar("SELECT SubmittedAt FROM app.SaleOwner WHERE SaleID=?;", sale)
+
+
+def assert_submit_rejected(env, sale, number):
+    before = submitted_at(env, sale)
+    assert env.fail("customer", "EXEC app.SubmitSale ?", sale) == number
+    assert submitted_at(env, sale) == before
+
+
+def test_submit_rejects_empty_order(env):
+    sale = env.order("customer", [])
+    assert_submit_rejected(env, sale, 51302)
+    assert submitted_at(env, sale) is None
+
+
+def test_submit_rejects_disabled_product(env):
+    product_id = env.product(5)
+    sale = env.order("customer", [(product_id, 1)])
+    env.conn.execute("UPDATE dbo.Product SET Status=0 WHERE ProductID=?;", product_id)
+    assert_submit_rejected(env, sale, 51304)
+    assert submitted_at(env, sale) is None
+
+
+def test_submit_rejects_disabled_category(env):
+    product_id = env.product(5)
+    sale = env.order("customer", [(product_id, 1)])
+    category = env.product_data["category_id"]
+    original = env.scalar("SELECT Status FROM dbo.Category WHERE CategoryID=?;", category)
+    env.conn.execute("UPDATE dbo.Category SET Status=0 WHERE CategoryID=?;", category)
+    try:
+        assert_submit_rejected(env, sale, 51304)
+        assert submitted_at(env, sale) is None
+    finally:
+        env.conn.execute("UPDATE dbo.Category SET Status=? WHERE CategoryID=?;", int(original), category)
+
+
+def test_submit_rejects_an_already_submitted_order(env):
+    sale = env.order("customer", [(env.product(5), 1)], submit=True)
+    assert submitted_at(env, sale) is not None
+    assert_submit_rejected(env, sale, 51811)
+
+
+def test_settle_uses_the_price_accepted_at_submit_even_after_a_price_rise(env):
+    first, second = env.product(10, "6.50"), env.product(10, "4.00")
+    sale = env.order("customer", [(first, 2), (second, 3)], submit=True)
+    sku = env.scalar("SELECT SKU FROM dbo.Product WHERE ProductID=?;", first)
+    raised = env.admin_api.send("PUT", f"/products/{first}", {**env.product_data, "sku": sku, "sale_price": "9.99"})
+    assert raised.status_code == 200, raised.json
+    assert env.scalar("SELECT SalePrice FROM dbo.Product WHERE ProductID=?;", first) == Decimal("9.99")
+    env.call("staff", "EXEC app.SettleSale ?", sale)
+    assert env.header(sale).TotalAmount == Decimal("25.00")
+    prices = {row.ProductID: row.UnitPrice for row in env.conn.execute(
+        "SELECT ProductID,UnitPrice FROM dbo.SaleItem WHERE SaleID=?;", sale).fetchall()}
+    assert prices == {first: Decimal("6.50"), second: Decimal("4.00")}
+
+
 def test_adjust_inventory_direction_log_employee_and_reason(env):
     product_id = env.product(10)
     assert env.call("admin", "EXEC app.AdjustInventory ?,?,?", product_id, 14, "  盘点盘盈  ") == [

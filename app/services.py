@@ -24,12 +24,23 @@ def fields(data, allowed, required=()):
     return data
 
 
+def utf16_length(value):
+    # SQL Server 的 nvarchar 按 UTF-16 代码单元计长，emoji 占两个单位；孤立代理项无法编码，按非法输入处理。
+    try:
+        return len(value.encode("utf-16-le")) // 2
+    except UnicodeEncodeError:
+        return None
+
+
 def text(value, name, maximum, required=False):
     if value is None and not required:
         return None
-    if not isinstance(value, str) or "\x00" in value or len(value.strip()) > maximum:
+    if not isinstance(value, str) or "\x00" in value:
         raise AppError("INVALID_INPUT", name + "格式或长度不正确。")
     value = value.strip()
+    length = utf16_length(value)
+    if length is None or length > maximum:
+        raise AppError("INVALID_INPUT", name + "格式或长度不正确。")
     if required and not value:
         raise AppError("INVALID_INPUT", "请填写" + name + "。")
     return value or None
@@ -176,15 +187,39 @@ class StoreService:
             self.repository.update_minimum(connection, product_id, minimum)
         return {"product_id": product_id, "min_quantity": minimum}
 
+    def adjust_inventory(self, user, product_id, data):
+        require_role(user, "ADMIN")
+        fields(data, {"new_quantity", "reason"}, {"new_quantity", "reason"})
+        quantity = integer(data["new_quantity"], "库存数量", 0, 1000000)
+        reason = text(data["reason"], "调整原因", 255, True)
+        with self.repository.transaction(user) as connection:
+            if not self.repository.product(connection, product_id):
+                raise AppError("NOT_FOUND", "商品不存在。", 404)
+            return self.repository.adjust_inventory(connection, product_id, quantity, reason)
+
+    def inventory_logs(self, user, product_id, query):
+        require_role(user, "ADMIN")
+        page = query_integer(query.get("page", "1"), "页码")
+        limit = query_integer(query.get("page_size", "20"), "每页数量", 100)
+        with self.repository.transaction(user) as connection:
+            if not self.repository.product(connection, product_id):
+                raise AppError("NOT_FOUND", "商品不存在。", 404)
+            result = self.repository.inventory_logs(connection, product_id, limit, (page - 1) * limit)
+        return {**result, "page": page, "page_size": limit}
+
     def orders(self, user, query):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
         status = query.get("status", "")
         if status not in {"", "DRAFT", "COMPLETED", "CANCELLED"}:
             raise AppError("INVALID_INPUT", "订单状态不正确。")
+        pending = query.get("pending")
+        if pending not in {None, "1"}:
+            raise AppError("INVALID_INPUT", "待受理筛选不正确。")
         page = query_integer(query.get("page", "1"), "页码")
         limit = query_integer(query.get("page_size", "20"), "每页数量", 100)
         with self.repository.transaction(user) as connection:
-            result = self.repository.orders(connection, search_pattern(query.get("q", "")), status, limit, (page - 1) * limit)
+            result = self.repository.orders(connection, search_pattern(query.get("q", "")), status,
+                                            limit, (page - 1) * limit, pending == "1")
         return {**result, "page": page, "page_size": limit}
 
     def order(self, user, sale_id):
@@ -213,6 +248,14 @@ class StoreService:
             price = money(data["unit_price"], "成交单价")
         return integer(data["product_id"], "商品") if creating else None, quantity, price
 
+    def responsible_employee(self, connection, user):
+        if user["role"] != "CUSTOMER":
+            return user["employee_id"]
+        cashier = self.repository.cashier(connection, self.settings["DEFAULT_CASHIER_NO"])
+        if not cashier:
+            raise AppError("BUSINESS_RULE", "暂无可受理订单的店员，请稍后重试。", 409)
+        return cashier["employee_id"]
+
     def create_order(self, user, data):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
         fields(data, {"payment_method", "remark", "items"})
@@ -225,31 +268,77 @@ class StoreService:
             raise AppError("INVALID_INPUT", "订单明细必须是最多100项的列表。")
         clean_items = [self.item_data(user, item, True) for item in items]
         with self.repository.transaction(user) as connection:
-            if user["role"] == "CUSTOMER":
-                cashier = self.repository.cashier(connection, self.settings["DEFAULT_CASHIER_NO"])
-                if not cashier:
-                    raise AppError("BUSINESS_RULE", "暂无可受理订单的店员，请稍后重试。", 409)
-                employee_id = cashier["employee_id"]
-            else:
-                employee_id = user["employee_id"]
+            employee_id = self.responsible_employee(connection, user)
             sale_id = self.repository.create_order(connection, employee_id, payment, remark)
             for product_id, quantity, price in clean_items:
                 self.repository.write_item(connection, sale_id, product_id, quantity, price)
             return self.repository.order(connection, sale_id)
+
+    def draft_values(self, user, order, data):
+        if "payment_method" in data:
+            payment = data["payment_method"]
+            if not isinstance(payment, str) or payment not in PAYMENTS:
+                raise AppError("INVALID_INPUT", "请选择有效支付方式。")
+        else:
+            payment = order["payment_method"]
+        discount = order["discount_amount"]
+        if "discount_amount" in data:
+            discount = money(data["discount_amount"], "优惠金额", "9999999999.99")
+            if user["role"] == "CUSTOMER" and discount != order["discount_amount"]:
+                raise AppError("FORBIDDEN", "顾客不能设置订单优惠。", 403)
+        return payment, discount
 
     def update_order(self, user, sale_id, data):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
         fields(data, {"payment_method", "discount_amount", "remark"})
         with self.repository.transaction(user) as connection:
             order = self.draft(connection, sale_id)
-            payment = data.get("payment_method", order["payment_method"])
-            if not isinstance(payment, str) or payment not in PAYMENTS:
-                raise AppError("INVALID_INPUT", "请选择有效支付方式。")
-            discount = money(data.get("discount_amount", order["discount_amount"]), "优惠金额", "9999999999.99")
-            if user["role"] == "CUSTOMER" and discount != 0:
-                raise AppError("FORBIDDEN", "顾客不能设置订单优惠。", 403)
+            payment, discount = self.draft_values(user, order, data)
             remark = text(data.get("remark", order["remark"]), "备注", 255)
             self.repository.update_order(connection, sale_id, payment, discount, remark)
+            return self.repository.order(connection, sale_id)
+
+    def submit_order(self, user, sale_id):
+        require_role(user, "CUSTOMER")
+        with self.repository.transaction(user) as connection:
+            outcome = self.repository.submit_sale(connection, sale_id)
+            return {"submitted": bool(outcome["submitted"]), "price_changed": bool(outcome["price_changed"]),
+                    "order": self.repository.order(connection, sale_id)}
+
+    def settle_order(self, user, sale_id, data):
+        require_role(user, "ADMIN", "STAFF")
+        fields(data, {"payment_method", "discount_amount"})
+        with self.repository.transaction(user) as connection:
+            order = self.draft(connection, sale_id)
+            if data:
+                payment, discount = self.draft_values(user, order, data)
+                self.repository.update_order(connection, sale_id, payment, discount, order["remark"])
+            self.repository.settle_sale(connection, sale_id)
+            return self.repository.order(connection, sale_id)
+
+    def add_to_cart(self, user, data):
+        require_role(user, "ADMIN", "STAFF", "CUSTOMER")
+        fields(data, {"product_id", "quantity"}, {"product_id", "quantity"})
+        product_id = integer(data["product_id"], "商品")
+        quantity = integer(data["quantity"], "数量", 1, 1000000)
+        with self.repository.transaction(user) as connection:
+            # 同一用户的并发加购串行执行，避免同时新建多张草稿。
+            if not self.repository.lock_cart(connection, user["user_id"]):
+                raise AppError("TRANSACTION_FAILED", "操作因并发冲突未生效，请稍后重试。", 409)
+            current = self.repository.current_draft(connection, user["user_id"])
+            if current:
+                sale_id = current["sale_id"]
+                existing = next((item for item in self.repository.order(connection, sale_id)["items"]
+                                 if item["product_id"] == product_id), None)
+            else:
+                sale_id = self.repository.create_order(
+                    connection, self.responsible_employee(connection, user), "CASH", None)
+                existing = None
+            if existing:
+                total = integer(existing["quantity"] + quantity, "数量", 1, 1000000)
+                self.repository.write_item(connection, sale_id, product_id, total, None, existing["item_id"])
+            else:
+                self.repository.write_item(connection, sale_id, product_id, quantity)
             return self.repository.order(connection, sale_id)
 
     def write_item(self, user, sale_id, data, item_id=None):

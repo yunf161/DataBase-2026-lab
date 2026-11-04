@@ -78,13 +78,29 @@ class StoreRepository:
     def update_minimum(self, connection, product_id, minimum):
         connection.execute("UPDATE dbo.Inventory SET MinQuantity=? WHERE ProductID=?;", minimum, product_id)
 
-    def orders(self, connection, pattern, status, limit, offset):
-        where = " FROM app.v_OrderAccess WHERE sale_no LIKE ? AND (?='' OR status=?) "
-        total = one(connection, "SELECT COUNT(*) AS total" + where, pattern, status, status)["total"]
+    def orders(self, connection, pattern, status, limit, offset, pending=False):
+        where = """ FROM app.v_OrderAccess WHERE sale_no LIKE ? AND (?='' OR status=?)
+            AND (?=0 OR (status='DRAFT' AND submitted_at IS NOT NULL)) """
+        total = one(connection, "SELECT COUNT(*) AS total" + where, pattern, status, status, int(pending))["total"]
         data = records(connection, "SELECT *" + where +
                        "ORDER BY sale_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;",
-                       pattern, status, status, offset, limit)
+                       pattern, status, status, int(pending), offset, limit)
         return {"items": data, "total": total}
+
+    def lock_cart(self, connection, user_id):
+        return one(connection, """
+            DECLARE @result int;
+            EXEC @result=sys.sp_getapplock @Resource=?,@LockMode=N'Exclusive',
+                 @LockOwner=N'Transaction',@LockTimeout=10000;
+            SELECT @result AS result;
+        """, "cart:" + str(user_id))["result"] >= 0
+
+    def current_draft(self, connection, user_id):
+        return one(connection, """
+            SELECT TOP 1 * FROM app.v_OrderAccess
+            WHERE owner_user_id=? AND status='DRAFT' AND submitted_at IS NULL
+            ORDER BY sale_id DESC;
+        """, user_id)
 
     def order(self, connection, sale_id):
         order = one(connection, "SELECT * FROM app.v_OrderAccess WHERE sale_id=?;", sale_id)
@@ -116,3 +132,20 @@ class StoreRepository:
 
     def cancel_order(self, connection, sale_id):
         connection.execute("EXEC app.CancelSaleDraft @SaleID=?;", sale_id)
+
+    def submit_sale(self, connection, sale_id):
+        return one(connection, "EXEC app.SubmitSale @SaleID=?;", sale_id)
+
+    def settle_sale(self, connection, sale_id):
+        return one(connection, "EXEC app.SettleSale @SaleID=?;", sale_id)
+
+    def adjust_inventory(self, connection, product_id, new_quantity, reason):
+        return one(connection, "EXEC app.AdjustInventory @ProductID=?,@NewQuantity=?,@Reason=?;",
+                   product_id, new_quantity, reason)
+
+    def inventory_logs(self, connection, product_id, limit, offset):
+        where = " FROM app.v_InventoryLog WHERE product_id=? "
+        total = one(connection, "SELECT COUNT(*) AS total" + where, product_id)["total"]
+        data = records(connection, "SELECT *" + where +
+                       "ORDER BY log_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;", product_id, offset, limit)
+        return {"items": data, "total": total}

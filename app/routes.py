@@ -111,6 +111,18 @@ def update_minimum(product_id):
     return reply(store().update_minimum(g.user, product_id, body()), "库存预警下限已更新。")
 
 
+@api.patch("/inventory/<int:product_id>/quantity")
+@signed_in
+def adjust_inventory(product_id):
+    return reply(store().adjust_inventory(g.user, product_id, body()), "库存数量已调整。")
+
+
+@api.get("/inventory/<int:product_id>/logs")
+@signed_in
+def inventory_logs(product_id):
+    return reply(store().inventory_logs(g.user, product_id, request.args))
+
+
 @api.get("/orders")
 @signed_in
 def orders():
@@ -159,6 +171,27 @@ def delete_item(sale_id, item_id):
 def cancel_order(sale_id):
     store().cancel_order(g.user, sale_id)
     return reply(message="草稿订单已取消。")
+
+
+@api.post("/orders/<int:sale_id>/submit")
+@signed_in
+def submit_order(sale_id):
+    result = store().submit_order(g.user, sale_id)
+    if result["price_changed"]:
+        return reply(result, "部分商品价格已更新，请确认后重新提交。")
+    return reply(result, "订单已提交，请等待店员受理。")
+
+
+@api.post("/orders/<int:sale_id>/settle")
+@signed_in
+def settle_order(sale_id):
+    return reply(store().settle_order(g.user, sale_id, body()), "订单已结算，库存已扣减。")
+
+
+@api.post("/cart/items")
+@signed_in
+def add_to_cart():
+    return reply(store().add_to_cart(g.user, body()), "商品已加入购物车。")
 
 
 def check_csrf():

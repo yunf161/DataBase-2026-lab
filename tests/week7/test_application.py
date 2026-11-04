@@ -127,6 +127,17 @@ def test_product_duplicate_is_a_friendly_conflict(login, product_data):
     assert "INSERT" not in response.json["message"] and "SQL Server" not in response.json["message"]
 
 
+def test_numeric_duplicate_sku_is_duplicate_not_forbidden(login, product_data, settings):
+    admin = login("admin")
+    data = {**product_data, "sku": "229"}
+    created = result(admin.send("POST", "/products", data), 201)
+    try:
+        result(admin.send("POST", "/products", data), 409, "DUPLICATE_RECORD")
+    finally:
+        admin.send("DELETE", "/products/" + str(created["product_id"]))
+    assert scalar(settings, "SELECT COUNT(*) FROM dbo.Product WHERE SKU=?;", "229") == 0
+
+
 @pytest.mark.parametrize("key,value", [("sale_price", "-1"), ("sale_price", "NaN"), ("sale_price", "1.234"),
                                      ("sale_price", True), ("category_id", True), ("status", 4),
                                      ("sku", "bad' OR 1=1--"), ("product_name", "")])

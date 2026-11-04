@@ -37,6 +37,15 @@ ERROR_MAP.update({n: ERROR_MAP[2601] for n in (2627,)})
 ERROR_MAP[51808] = AppError("BUSINESS_RULE", "商品已停用或不存在，请刷新后重试。", 409)
 ERROR_MAP.update({n: AppError("BUSINESS_RULE", STATE_CHANGED, 409)
                   for n in (51300, 51400, 51411, 51803, 51310, 51320, 51321, 51322)})
+ERROR_MAP.update({
+    51201: AppError("BUSINESS_RULE", "采购单还没有明细，无法确认入库。", 409),
+    51202: AppError("BUSINESS_RULE", "商品缺少库存记录，请联系管理员。", 409),
+    51203: AppError("BUSINESS_RULE", "经办员工无采购职责，请联系管理员。", 409),
+    51204: AppError("BUSINESS_RULE", "供应商已停用，无法确认入库。", 409),
+    51814: AppError("BUSINESS_RULE", "供应商不存在或已停用，请刷新后重试。", 409),
+})
+ERROR_MAP.update({n: AppError("BUSINESS_RULE", "采购单状态已变化，请刷新后查看。", 409)
+                  for n in (51200, 51210, 51222, 51410)})
 ERROR_MAP.update({n: AppError("BUSINESS_RULE", GENERIC_RULE, 409)
                   for n in (51801, 51802, 51805, 51806, 51807, 51810, 51220, 51221, 51401, 51402)})
 ERROR_MAP.update({n: AppError("CONSTRAINT_CONFLICT", "数据与现有记录或数量、金额限制冲突，请检查后重试。", 409)

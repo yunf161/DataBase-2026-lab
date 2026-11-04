@@ -194,6 +194,61 @@ def add_to_cart():
     return reply(store().add_to_cart(g.user, body()), "商品已加入购物车。")
 
 
+@api.get("/suppliers")
+@signed_in
+def suppliers():
+    return reply(store().suppliers(g.user))
+
+
+@api.get("/purchases")
+@signed_in
+def purchases():
+    return reply(store().purchases(g.user))
+
+
+@api.post("/purchases")
+@signed_in
+def create_purchase():
+    return reply(store().create_purchase(g.user, body()), "采购草稿已创建，尚未入库。", 201)
+
+
+@api.get("/purchases/<int:purchase_id>")
+@signed_in
+def purchase(purchase_id):
+    return reply(store().purchase(g.user, purchase_id))
+
+
+@api.post("/purchases/<int:purchase_id>/confirm")
+@signed_in
+def confirm_purchase(purchase_id):
+    return reply(store().confirm_purchase(g.user, purchase_id), "采购已确认，库存和流水已同步更新。")
+
+
+@api.post("/purchases/<int:purchase_id>/items")
+@signed_in
+def add_purchase_item(purchase_id):
+    return reply(store().write_purchase_item(g.user, purchase_id, body()), "采购明细已加入。", 201)
+
+
+@api.patch("/purchases/<int:purchase_id>/items/<int:item_id>")
+@signed_in
+def update_purchase_item(purchase_id, item_id):
+    return reply(store().write_purchase_item(g.user, purchase_id, body(), item_id), "采购明细已更新。")
+
+
+@api.delete("/purchases/<int:purchase_id>/items/<int:item_id>")
+@signed_in
+def delete_purchase_item(purchase_id, item_id):
+    store().delete_purchase_item(g.user, purchase_id, item_id)
+    return reply(message="采购明细已移除。")
+
+
+@api.post("/purchases/<int:purchase_id>/cancel")
+@signed_in
+def cancel_purchase(purchase_id):
+    return reply(store().cancel_purchase(g.user, purchase_id), "采购草稿已取消。")
+
+
 def check_csrf():
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
         expected = session.get("csrf_token", "")

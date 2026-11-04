@@ -1,1 +1,1 @@
-{"browser_checks": 26, "result": "passed"}
+{"browser_checks": 27, "result": "passed"}

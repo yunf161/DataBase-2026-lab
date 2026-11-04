@@ -33,7 +33,7 @@
 | --- | --- |
 | 顾客 | 浏览在售商品（可按名称、编号和分类查询），加入购物车，修改并提交订单，查看自己的订单（待受理、已完成、已取消），取消订单 |
 | 店员 | 查看商品、库存和全店订单，受理顾客已提交的订单并结算，自己开单并结算 |
-| 管理员 | 店员的全部操作，另外维护商品（新增、编辑、停用、安全删除）、设置库存预警、盘点调整库存（必填原因）、查看库存流水 |
+| 管理员 | 店员的全部操作，另外维护商品（新增、编辑、停用、安全删除）、设置库存预警、盘点调整库存（必填原因）、查看库存流水、采购入库（选供应商建采购单、维护明细、确认入库或取消） |
 
 订单流转：**购物车 → 待受理（顾客已提交）→ 已完成 / 已取消**。库存只在结算（已完成）时扣减，并同时写库存流水。应用层包含登录与会话、CSRF 保护、参数化查询、统一错误响应和 JSON 审计日志，业务 SQL 在不含 db_owner 的受限数据库身份下执行。
 
@@ -42,7 +42,7 @@
 - 第 5 周：为 10 张表建立 ER 模型，梳理联系基数（见[第 7 节](#7-er-图依赖分析范式与分解方案)）。
 - 第 6 周：函数依赖与范式分析，受控反规范化取舍，把库存流水的文本 `BusinessNo` 迁移为订单外键，并做迁移回归（见[第 8 节](#8-迁移与回归)）。
 - 第 7 周：Flask 四层应用、登录、商品增改查、库存查询、订单草稿。
-- 第 8—9 周：顾客提交与店员结算、库存盘点调整与流水、环境预检与旧库升级工具、界面和身份加固、最终回归与交付整理。
+- 第 8—9 周：采购入库与供应商查询、顾客提交与店员结算、库存盘点调整与流水、环境预检与旧库升级工具、界面和身份加固、最终回归与交付整理。
 
 第 1—4 周（第一阶段）的基础交付保持原样，简述如下：
 
@@ -91,12 +91,13 @@
 │   ├── 01_…07_*.sql, query.sql, view.sql, role.sql …   第 1—4 周建库、过程、视图、授权、反例
 │   ├── week6/baseline.sql, migration.sql, regression.sql   第 6 周基线、迁移、回归
 │   ├── week7/application.sql          app 架构：账号、订单归属、受限视图/过程、角色授权
-│   └── week9/application_v2.sql, final_regression.sql      提交/结算/盘点过程；最终只读回归
+│   ├── week8/application.sql          采购与供应商的受限视图/过程
+│   └── week9/application_v2.sql, final_regression.sql      提交/结算/盘点过程、分类范围视图；最终只读回归
 ├── tests/                             测试脚本
 │   ├── week7/                         应用测试（pytest，真实 SQL Server）
 │   └── Verify-*.ps1, Audit-Sql.ps1    第 1—6 周的隔离库验证脚本
 ├── tools/                             doctor、prepare_week7、upgrade_week9、verify_week7、浏览器验收、打包
-├── docs/                              各周文档：week1/2、week5-er、week6-normalization、week7-application
+├── docs/                              各周文档：week1/2、week5-er、week6-normalization、week7-application、week8-application
 ├── report/                            阶段报告与小组分工
 ├── ai_log/                            AI 使用记录
 ├── results/                           实际运行结果、截图和说明（见 results/README.md）
@@ -139,7 +140,7 @@ python -m venv .venv
 
 - **doctor 要在安装依赖之后运行**：它自己要导入 pyodbc，依赖没装时会直接报 `ModuleNotFoundError`。第一次在建库之前运行，“instance/settings.json”一项会失败（还没有配置文件）；如果这台机器上也没有默认开发库 `CampusStoreDB_W7_Development`，“开发库”一项同样失败，这些都是预期的。第 4 步之后再运行应全部通过（本机结果见 [results/doctor.txt](results/doctor.txt)：8 项全部通过）。
 - **`python` 命令不可用时**：Windows 的应用执行别名会让 `python` 指向 `WindowsApps` 里的占位程序，它不是真正的 Python（doctor 的“Python 解释器”项会提示）。改用真实解释器的完整路径建虚拟环境，例如 `& "C:\Path\To\Python313\python.exe" -m venv .venv`、`py -3 -m venv .venv`，或 Miniconda 的 `& "$env:USERPROFILE\miniconda3\python.exe" -m venv .venv`；之后一律使用 `.\.venv\Scripts\python.exe`，不再依赖 `python`。
-- **已有旧的开发库**：`prepare_week7` 不会覆盖已有库，会报“目标数据库已存在，拒绝覆盖”。如果该库还是第 7 周的版本，用升级工具补上第 9 周的增量（可重复执行，不删数据）：
+- **已有旧的开发库**：`prepare_week7` 不会覆盖已有库，会报“目标数据库已存在，拒绝覆盖”。如果该库还是第 7 周或第 8 周的版本，用升级工具补上第 8、9 周的增量（可重复执行，不删数据）：
 
   ```powershell
   .\.venv\Scripts\python.exe -m tools.upgrade_week9 --server "." --database CampusStoreDB_W7_Development
@@ -148,7 +149,7 @@ python -m venv .venv
   如果 `instance/settings.json` 丢了而库还在，用环境变量指定：`CAMPUS_DB_SERVER`、`CAMPUS_DB_DATABASE`、`CAMPUS_SECRET_KEY`（至少 32 个字符）。想要另一个全新的库，加 `--database CampusStoreDB_W7_Team2`。
 - **多个 ODBC 驱动**：工具默认选已安装的最高版本，可用 `--driver "ODBC Driver 18 for SQL Server"` 指定，结果写入 `instance/settings.json`。
 - **命名说明**：`prepare_week7` 和 `CampusStoreDB_W7_` 前缀是历史命名——这个工具和数据库命名规则诞生在第 7 周，之后的第 8—9 周继续沿用，应用只接受名称匹配 `CampusStoreDB_W7_*` 的库。名字里的 7 不表示它只含第 7 周的内容，开发库已包含第 9 周的全部增量。
-- `prepare_week7` 做的事：从冻结的 v0.1 建一个随机命名的 W6 副本 → 执行 `baseline.sql`、`migration.sql` → 改名为目标库 → 部署 `week7/application.sql` 与 `week9/application_v2.sql` → 写入演示账号。它不连接也不修改正式库 `CampusStoreDB`。
+- `prepare_week7` 做的事：从冻结的 v0.1 建一个随机命名的 W6 副本 → 执行 `baseline.sql`、`migration.sql` → 改名为目标库 → 部署 `week7/application.sql`、`week8/application.sql` 与 `week9/application_v2.sql` → 写入演示账号。它不连接也不修改正式库 `CampusStoreDB`。
 - 原始的第 1—4 周建库脚本只在空环境执行一次：`sqlcmd -S . -E -No -b -f 65001 -i sql\01_create_campus_store_database.sql`，之后依次是 `02_business_procedures.sql`、`view.sql`、`role.sql`、`03_sample_data.sql`（`-E` Windows 身份验证，`-No` 连接加密可选，`-b` 出错返回非零，`-f 65001` 以 UTF-8 读取）。如已有正式库，请改用隔离验证（第 9 节），不要为演示删除现有库。
 
 ## 5. 操作手册
@@ -171,6 +172,7 @@ python -m venv .venv
 | 查看库存与预警 | ✔ | ✔ | ✘ |
 | 设置预警下限 | ✔ | ✘ | ✘ |
 | 盘点调整库存、查看库存流水 | ✔ | ✘ | ✘ |
+| 采购入库（供应商查询、采购单、确认入库、取消） | ✔ | ✘ | ✘ |
 | 直接修改 `Inventory.Quantity` | ✘ | ✘ | ✘ |
 | 查看订单 | 全店 | 全店 | 仅本人 |
 | 加入购物车、改明细、取消 | ✔ | ✔ | 仅本人订单 |
@@ -192,11 +194,15 @@ python -m venv .venv
 
 ![库存不足时结算被拒绝](results/app-test/13-insufficient-stock.png)
 
-### 管理员：商品、库存、盘点
+### 管理员：商品、库存、盘点、采购
 
 管理员可维护商品；在“库存查询”点“调整库存”，填写新数量和调整原因，系统记一条盘盈或盘亏流水；点“查看流水”按时间倒序查看某商品全部流水（采购入库、销售出库、盘点）。
 
 ![管理员调整库存并查看流水](results/app-test/14-admin-adjust-and-logs.png)
+
+在“采购入库”点“新建采购”，选供应商后逐项添加商品、数量和进价。采购草稿不增加库存；点“确认入库”后，库存增加并写采购入库流水。
+
+![管理员确认采购入库](results/app-test/23-purchase-received.png)
 
 更多截图（登录、商品管理、手机布局、已取消订单不显示应付金额等）按角色对应关系列在 [results/README.md](results/README.md)，逐步操作见[操作手册](docs/week7-application/user-manual.md)。
 
@@ -414,7 +420,7 @@ sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W6_Group1 -i sql\week6\regressio
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-Week6Migration.ps1 -ServerInstance "."` | 第 6 周迁移 | 退出码 0，21 + 8 + 3 + 1 项通过（[输出](results/migration/verify-week6-migration.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-CampusStore.ps1 -ServerInstance "."` | 第 1—4 周主流程与反例 | 退出码 0（[输出](results/migration/verify-campusstore.txt)） |
 | `sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 最终只读回归 | 30 项通过、0 项失败（[final-regression.txt](results/final-regression.txt)） |
-| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **307 项集成测试通过、26 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
+| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **324 项集成测试通过、27 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
 | `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server "."` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
 
 单独运行集成测试：
@@ -437,7 +443,7 @@ $env:CAMPUS_TEST_SERVER = "."
 ## 10. 已知限制
 
 - **数据库连接身份**：应用连接本身仍使用运行者的 Windows 身份，再切换到受限用户（`EXECUTE AS USER … WITH NO REVERT`），没有配置独立的低权限 SQL 登录。切换到受限用户后业务代码无法回到 dbo，但这不等于已部署了最小权限的服务账号；正式部署需要专用的低权限连接身份。
-- **范围**：没有真实支付（支付方式只是订单上的一个字段）、没有采购界面（采购入库只有数据库过程 `dbo.ConfirmPurchase`，没有页面）、没有退货（`SALE_RETURN`、`PURCHASE_RETURN` 流水类型只是预留）、没有登录限流（可以无限次尝试密码）。
+- **范围**：没有真实支付（支付方式只是订单上的一个字段）、没有供应商和分类的维护界面（供应商只能查询，分类只能选择和筛选）、没有退货（`SALE_RETURN`、`PURCHASE_RETURN` 流水类型只是预留）、没有登录限流（可以无限次尝试密码）。
 - **价格**：顾客提交订单后，价格按提交时确定，之后商品调价不再影响这张订单；提交前价格变化时需要顾客重新确认一次。库存在提交时只提示不预留，库存可能在提交与结算之间被别的订单用掉，结算时会被拒绝。
 - **演示账号**：`admin`、`staff`、`customer`、`customer2` 和统一密码 `Campus2026!` 只用于本地课程演示，不能用于正式环境。服务只监听 `127.0.0.1`，没有 HTTPS，`SESSION_COOKIE_SECURE` 默认关闭。
 - **脚本与环境**：`tools.doctor` 要在安装依赖之后才能运行。最终验证只在 SQL Server 2025 Developer 默认实例 + Python 3.13.12 上完成，Express 与 Python 3.14 是第 7 周的验证结果，没有在最终版重跑。
@@ -445,7 +451,7 @@ $env:CAMPUS_TEST_SERVER = "."
 
 ## 文档索引
 
-- 各周文档：[第五周 ER](docs/week5-er/README.md)、[第六周规范化与迁移](docs/week6-normalization/README.md)、[第七至九周应用](docs/week7-application/README.md)（[操作手册](docs/week7-application/user-manual.md)、[架构](docs/week7-application/architecture.md)、[API](docs/week7-application/api.md)、[数据字典](docs/week7-application/data-dictionary.md)、[验证记录](docs/week7-application/verification.md)）
+- 各周文档：[第五周 ER](docs/week5-er/README.md)、[第六周规范化与迁移](docs/week6-normalization/README.md)、[第八周当时的记录](docs/week8-application/README.md)、[第七至九周应用](docs/week7-application/README.md)（[操作手册](docs/week7-application/user-manual.md)、[架构](docs/week7-application/architecture.md)、[API](docs/week7-application/api.md)、[数据字典](docs/week7-application/data-dictionary.md)、[验证记录](docs/week7-application/verification.md)）
 - 阶段报告：[report/阶段报告.md](report/阶段报告.md)；小组分工：[report/小组分工.md](report/小组分工.md)
 - AI 使用记录：[ai_log/](ai_log)
 - 实际结果：[results/README.md](results/README.md)

@@ -28,6 +28,14 @@
 | POST /orders/id/submit | 空对象 | 仅顾客提交本人草稿，返回submitted、price_changed、order |
 | POST /orders/id/settle | 可选payment_method、discount_amount | 仅管理员/店员结算，返回已完成订单 |
 | POST /cart/items | product_id、quantity | 所有登录角色，加入当前草稿，返回订单 |
+| GET /suppliers | 无 | 仅管理员，启用的供应商 |
+| GET /purchases、GET /purchases/id | 无 | 仅管理员，采购单列表/单张及items，不存在404 |
+| POST /purchases | supplier_id；可选items:[{product_id,quantity,unit_cost}] | 仅管理员，原子创建草稿，不增加库存 |
+| POST /purchases/id/items | product_id、quantity、unit_cost | 仅管理员，加明细 |
+| PATCH /purchases/id/items/item_id | quantity、unit_cost | 仅管理员，改明细 |
+| DELETE /purchases/id/items/item_id | 空对象 | 仅管理员，移除明细 |
+| POST /purchases/id/confirm | 空对象 | 仅管理员，确认入库：增加库存并写流水；无明细409 |
+| POST /purchases/id/cancel | 空对象 | 仅管理员，取消草稿 |
 
 商品PUT提交完整业务字段，订单PATCH提交需修改字段。
 SKU/条码允许字母、数字、下划线及短横线；名称支持中文/普通文本。

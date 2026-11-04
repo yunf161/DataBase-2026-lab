@@ -47,6 +47,9 @@
 | app.v_OrderAccess | 三角色 | 订单可见性：管理员/店员看全部，其他身份按会话中的 `WebUserID` 过滤；已完成订单才返回 `payable_amount`；含 `submitted_at` 和 `is_customer_order`（第九周） |
 | app.v_OrderItems | 三角色 | 订单明细，通过 `v_OrderAccess` 再次过滤 |
 | app.v_InventoryLog | 管理员 | 库存流水，来自 `dbo.v_inventory_log_detail`（第九周） |
+| app.v_Suppliers | 管理员 | 启用的供应商（第八周） |
+| app.v_PurchaseOrders | 管理员 | 采购单及明细合计（第八周） |
+| app.v_PurchaseItems | 管理员 | 采购明细（第八周） |
 
 ## 过程
 
@@ -59,6 +62,8 @@
 | app.SubmitSale | 顾客 | 提交订单（第九周） |
 | app.SettleSale | 管理员、店员 | 结算，调用 `dbo.CompleteSale`（第九周） |
 | app.AdjustInventory | 管理员 | 盘点调整库存并写流水（第九周） |
+| app.CreatePurchaseDraft / WritePurchaseItem / DeletePurchaseItem / CancelPurchaseDraft | 管理员 | 采购草稿和明细维护（第八周） |
+| app.ConfirmPurchase | 管理员 | 确认入库，调用 `dbo.ConfirmPurchase`（第八周） |
 
 ## 数据库角色与用户
 

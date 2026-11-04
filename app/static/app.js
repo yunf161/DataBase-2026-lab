@@ -2,7 +2,7 @@
 const $ = (id) => document.getElementById(id);
 const state = {user: null, csrf: "", view: "products", page: 1, pageSize: 10, total: 0, rows: [], categories: [], detail: null, catalog: []};
 const roleNames = {ADMIN: "店铺管理员", STAFF: "值班店员", CUSTOMER: "校园顾客"};
-const statusNames = {DRAFT: "草稿待处理", COMPLETED: "已完成", CANCELLED: "已取消", NORMAL: "库存正常", LOW_STOCK: "低于预警", OUT_OF_STOCK: "暂无库存"};
+const statusNames = {DRAFT: "草稿待处理", COMPLETED: "已完成", RECEIVED: "已入库", CANCELLED: "已取消", NORMAL: "库存正常", LOW_STOCK: "低于预警", OUT_OF_STOCK: "暂无库存"};
 const escapeHTML = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[char]));
 const price = (value) => Number(value || 0).toFixed(2);
 const categoryOptions = (selected, name) => (selected && name && !state.categories.some((item) => item.category_id === Number(selected)) ? '<option value="' + Number(selected) + '" selected>' + escapeHTML(name) + "（已停用）</option>" : "") + state.categories.map((item) => '<option value="' + item.category_id + '"' + (item.category_id === Number(selected) ? " selected" : "") + ">" + escapeHTML(item.category_name) + "</option>").join("");
@@ -56,8 +56,8 @@ async function busy(button, action, errorId = "page-error") {
   $(errorId).hidden = true;
   try { await action(); } catch (error) { showError(errorId, error); }
   finally {
-    if (button.id === "previous-page") button.disabled = state.view === "inventory" || state.page <= 1;
-    else if (button.id === "next-page") button.disabled = state.view === "inventory" || state.page * state.pageSize >= state.total;
+    if (button.id === "previous-page") button.disabled = ["inventory", "purchases"].includes(state.view) || state.page <= 1;
+    else if (button.id === "next-page") button.disabled = ["inventory", "purchases"].includes(state.view) || state.page * state.pageSize >= state.total;
     else button.disabled = false;
   }
 }
@@ -71,15 +71,23 @@ function actionButton(action, id, label, danger = false) {
   return '<button class="link-button' + (danger ? " danger-text" : "") + '" data-action="' + action + '" data-id="' + id + '">' + label + "</button>";
 }
 async function enterWorkspace() {
-  $("login-screen").hidden = true; $("workspace").hidden = false;
+  $("login-screen").hidden = true; $("workspace").hidden = true;
   $("display-name").textContent = state.user.display_name;
   $("role-name").textContent = roleNames[state.user.role];
   $("avatar").textContent = state.user.display_name.slice(0, 1);
   $("inventory-nav").hidden = state.user.role === "CUSTOMER";
+  $("purchases-nav").hidden = state.user.role !== "ADMIN";
   $("products-nav-label").textContent = state.user.role === "ADMIN" ? "商品管理" : "商品货架";
   $("orders-nav-label").textContent = state.user.role === "CUSTOMER" ? "我的订单" : "销售订单";
-  state.categories = await api("/categories");
-  await activate("products");
+  try {
+    state.categories = await api("/categories");
+    await activate("products");
+    $("workspace").hidden = false;
+  } catch (error) {
+    // 初始数据失败时保留可见的登录页，让用户看到错误并重试。
+    $("login-screen").hidden = false;
+    throw error;
+  }
 }
 async function activate(view) {
   state.view = view; state.page = 1;
@@ -89,23 +97,26 @@ async function activate(view) {
   const config = {
     products: [state.user.role === "ADMIN" ? "商品管理" : "商品货架", "PRODUCTS & SHELVES", customer ? "挑选校园里的日常好物，随时查看自己的订单。" : "每一件日常好物，都值得被好好打理。", "搜索商品名称或编号"],
     inventory: ["库存查询", "STOCK & SUPPLIES", "及时关注货架余量，让每一份需要都有着落。", "搜索商品名称或编号"],
-    orders: [customer ? "我的订单" : "销售订单", "ORDERS & DAILY BUSINESS", customer ? "属于你的每一笔订单，都有清晰的来处。" : "查看订单与明细，受理顾客提交的订单并完成结算。", "搜索订单编号"]
+    orders: [customer ? "我的订单" : "销售订单", "ORDERS & DAILY BUSINESS", customer ? "属于你的每一笔订单，都有清晰的来处。" : "查看订单与明细，受理顾客提交的订单并完成结算。", "搜索订单编号"],
+    purchases: ["采购入库", "PURCHASES & SUPPLIES", "建立采购草稿，核对商品后确认入库。", "搜索采购编号或供应商"]
   }[view];
   $("page-title").textContent = config[0]; $("breadcrumb-title").textContent = config[0];
   $("page-eyebrow").textContent = config[1]; $("page-description").textContent = config[2];
   $("search").placeholder = config[3]; $("search").value = "";
-  $("heading-action").hidden = view === "orders" ? customer : !(view === "products" && state.user.role === "ADMIN");
-  $("heading-action").textContent = view === "orders" ? "＋ 新建草稿" : "＋ 新增商品";
+  $("heading-action").hidden = view === "orders" ? customer : view !== "purchases" && !(view === "products" && state.user.role === "ADMIN");
+  $("heading-action").textContent = view === "orders" ? "＋ 新建草稿" : view === "purchases" ? "＋ 新建采购" : "＋ 新增商品";
   const filters = view === "products" ? (customer ? [["1", "在售商品"]] : [["all", "全部状态"], ["1", "在售"], ["0", "已停用"]]) :
     view === "orders" ? [["", "全部状态"], ...(customer ? [] : [["pending", "待受理"]]), ["DRAFT", "草稿"], ["COMPLETED", "已完成"], ["CANCELLED", "已取消"]] :
+    view === "purchases" ? [["", "全部状态"], ["DRAFT", "草稿"], ["RECEIVED", "已入库"], ["CANCELLED", "已取消"]] :
     [["", "全部库存"], ["NORMAL", "库存正常"], ["LOW_STOCK", "低于预警"], ["OUT_OF_STOCK", "暂无库存"]];
   $("status-filter").innerHTML = filters.map(([value, label]) => '<option value="' + value + '">' + label + "</option>").join("");
   $("category-filter").innerHTML = '<option value="">全部分类</option>' + categoryOptions();
   $("category-filter").hidden = view !== "products";
-  $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
+  $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "purchases" ? "采购草稿不增加库存；确认入库后同步生成库存流水。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
   await loadList();
 }
 async function loadList() {
+  if (state.view === "purchases") return loadPurchases();
   const params = new URLSearchParams({q: $("search").value, page: state.page, page_size: state.pageSize});
   if (state.view === "orders" && $("status-filter").value === "pending") params.set("pending", "1");
   else params.set(state.view === "inventory" ? "stock_status" : "status", $("status-filter").value);
@@ -135,6 +146,19 @@ async function loadList() {
   $("page-number").textContent = state.page;
   $("previous-page").disabled = state.view === "inventory" || state.page <= 1;
   $("next-page").disabled = state.view === "inventory" || state.page * state.pageSize >= state.total;
+}
+async function loadPurchases() {
+  const all = await api("/purchases");
+  const q = $("search").value.trim().toLowerCase();
+  const status = $("status-filter").value;
+  state.rows = all.filter((row) => (!q || row.purchase_no.toLowerCase().includes(q) || row.supplier_name.toLowerCase().includes(q)) && (!status || row.status === status));
+  state.total = state.rows.length;
+  $("table-head").innerHTML = "<tr><th>采购编号</th><th>供应商</th><th>创建时间</th><th>状态</th><th>明细合计</th><th>操作</th></tr>";
+  $("table-body").innerHTML = state.rows.length ? state.rows.map((row) => "<tr><td>" + escapeHTML(row.purchase_no) + "</td><td>" + escapeHTML(row.supplier_name) + "</td><td>" + escapeHTML(row.order_time.replace("T", " ").slice(0, 16)) + "</td><td>" + badge(statusNames[row.status], row.status === "DRAFT" ? "amber" : row.status === "RECEIVED" ? "green" : "gray") + '</td><td class="price">¥ ' + price(row.draft_amount) + "</td><td>" + actionButton("purchase-detail", row.purchase_id, "查看明细") + "</td></tr>").join("") : '<tr><td class="empty" colspan="6">暂无采购记录。</td></tr>';
+  summary([["筛选采购单", state.total, "笔"], ["待确认", state.rows.filter((row) => row.status === "DRAFT").length, "笔"], ["已入库", state.rows.filter((row) => row.status === "RECEIVED").length, "笔"]]);
+  $("table-count").textContent = "共 " + state.total + " 条记录";
+  $("page-number").textContent = "1";
+  $("previous-page").disabled = true; $("next-page").disabled = true;
 }
 function openEditor(title, content, wide = false) {
   $("editor-title").textContent = title; $("editor-content").innerHTML = content;
@@ -254,6 +278,46 @@ function cancelDraft(button, saleId) {
     await orderDetail(saleId); await loadList(); toast(customer ? "订单已取消。" : "草稿订单已取消。");
   }, "editor-error");
 }
+async function newPurchase() {
+  const suppliers = await api("/suppliers");
+  openEditor("新建采购草稿", '<form id="new-purchase-form"><label for="supplier-id">供应商 *</label><select id="supplier-id" required><option value="">请选择供应商</option>' + suppliers.map((supplier) => '<option value="' + supplier.supplier_id + '">' + escapeHTML(supplier.supplier_name) + "</option>").join("") + '</select><p class="helper">新建后可逐项添加商品，确认前库存不会变化。</p><div class="dialog-actions"><button type="submit" class="primary">建立采购单</button></div></form>');
+  $("new-purchase-form").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
+    const order = await api("/purchases", {method: "POST", body: {supplier_id: Number($("supplier-id").value)}});
+    await activate("purchases"); await purchaseDetail(order.purchase_id); toast("采购草稿已创建。");
+  }, "editor-error");};
+}
+function purchaseProductOptions(products) {
+  return '<option value="">请选择商品</option>' + products.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.sku + " · " + product.product_name) + '</option>').join("");
+}
+async function purchaseDetail(purchaseId) {
+  const [order, catalog] = await Promise.all([api("/purchases/" + purchaseId), api("/products?status=1&page_size=100")]);
+  state.detail = order;
+  const editable = order.status === "DRAFT";
+  const lines = order.items.length ? order.items.map((item) => '<tr><td>' + escapeHTML(item.product_name) + '</td><td>' + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '采购数量" type="number" min="1" max="1000000" value="' + item.quantity + '" data-purchase-quantity="' + item.item_id + '">' : item.quantity) + '</td><td>' + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '进价" type="number" min="0" max="99999999.99" step=".01" value="' + price(item.unit_cost) + '" data-purchase-cost="' + item.item_id + '">' : '¥ ' + price(item.unit_cost)) + '</td><td>¥ ' + price(item.line_amount) + '</td><td>' + (editable ? actionButton("save-purchase-line", item.item_id, "更新") + actionButton("remove-purchase-line", item.item_id, "移除", true) : "—") + '</td></tr>').join("") : '<tr><td colspan="5" class="empty">尚无采购明细，请先添加商品。</td></tr>';
+  openEditor("采购明细", '<div class="order-meta"><span>' + escapeHTML(order.purchase_no) + ' · ' + escapeHTML(order.supplier_name) + '</span>' + badge(statusNames[order.status], editable ? "amber" : "green") + '</div><div class="order-items"><table><thead><tr><th>商品</th><th>数量</th><th>进价</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p>' + (editable ? '<div class="add-item-form"><div><label for="purchase-search">搜索可采购商品</label><input id="purchase-search" maxlength="100" placeholder="输入商品名称或编号"></div><button id="search-purchase-product" type="button" class="secondary">搜索商品</button></div><p id="purchase-search-count" class="helper">' + (catalog.total > catalog.items.length ? "当前显示前100件，请输入名称或编号搜索其他商品。" : "可按商品名称或编号缩小选择范围。") + '</p><form id="add-purchase-line" class="add-item-form"><div><label for="purchase-product">添加商品</label><select id="purchase-product" required>' + purchaseProductOptions(catalog.items) + '</select></div><div><label for="purchase-quantity">数量</label><input id="purchase-quantity" type="number" min="1" max="1000000" value="1" required></div><div><label for="purchase-cost">进价（元）</label><input id="purchase-cost" type="number" min="0" max="99999999.99" step=".01" required></div><button type="submit" class="secondary">加入采购单</button></form><div class="dialog-actions"><button id="cancel-purchase" type="button" class="secondary">取消采购单</button><button id="confirm-purchase" type="button" class="primary">确认入库</button></div>' : '<p class="helper">该采购单已结束，明细保留供查询。</p>'), true);
+  if (!editable) return;
+  $("search-purchase-product").onclick = (event) => busy(event.target, async () => {
+    const q = $("purchase-search").value.trim();
+    const found = await api("/products?status=1&page_size=100&q=" + encodeURIComponent(q));
+    $("purchase-product").innerHTML = purchaseProductOptions(found.items);
+    $("purchase-search-count").textContent = found.total > found.items.length ? "匹配结果超过100件，请输入更具体的名称或编号。" : "找到 " + found.total + " 件商品。";
+  }, "editor-error");
+  $("purchase-search").onkeydown = (event) => {if (event.key === "Enter") {event.preventDefault(); $("search-purchase-product").click();}};
+  $("add-purchase-line").onsubmit = (event) => {event.preventDefault(); busy(event.submitter, async () => {
+    await api("/purchases/" + purchaseId + "/items", {method: "POST", body: {product_id: Number($("purchase-product").value), quantity: Number($("purchase-quantity").value), unit_cost: $("purchase-cost").value}});
+    await purchaseDetail(purchaseId); await loadList(); toast("商品已加入采购单。");
+  }, "editor-error");};
+  $("confirm-purchase").onclick = (event) => busy(event.target, async () => {
+    if (!await confirmation("确认采购入库？", "入库后所有明细计入库存并生成采购流水，不能再修改。")) return;
+    await api("/purchases/" + purchaseId + "/confirm", {method: "POST", body: {}});
+    await purchaseDetail(purchaseId); await loadList(); toast("采购已入库，库存流水已记录。");
+  }, "editor-error");
+  $("cancel-purchase").onclick = (event) => busy(event.target, async () => {
+    if (!await confirmation("取消采购草稿？", "取消后保留采购记录，但不能再修改。")) return;
+    await api("/purchases/" + purchaseId + "/cancel", {method: "POST", body: {}});
+    await purchaseDetail(purchaseId); await loadList(); toast("采购草稿已取消。");
+  }, "editor-error");
+}
 async function newDraft(items = []) {
   const order = await api("/orders", {method: "POST", body: {payment_method: "CASH", items}});
   await activate("orders"); await orderDetail(order.sale_id); toast("草稿已创建，库存将在结算时扣减。");
@@ -278,7 +342,7 @@ $("filter-form").onsubmit = (event) => {event.preventDefault(); state.page = 1; 
 $("refresh").onclick = (event) => busy(event.currentTarget, loadList);
 $("heading-action").onclick = (event) => {
   if (state.view === "products") productEditor();
-  else busy(event.currentTarget, () => newDraft());
+  else busy(event.currentTarget, () => state.view === "purchases" ? newPurchase() : newDraft());
 };
 $("previous-page").onclick = (event) => {state.page -= 1; busy(event.currentTarget, loadList);};
 $("next-page").onclick = (event) => {state.page += 1; busy(event.currentTarget, loadList);};
@@ -287,12 +351,13 @@ $("close-editor").onclick = () => $("editor").close();
 $("table-body").onclick = (event) => {
   const button = event.target.closest("[data-action]"); if (!button) return;
   busy(button, async () => {
-    const id = Number(button.dataset.id); const row = state.rows.find((item) => (item.product_id || item.sale_id) === id);
+    const id = Number(button.dataset.id); const row = state.rows.find((item) => (item.product_id || item.sale_id || item.purchase_id) === id);
     if (button.dataset.action === "edit-product") productEditor(row);
     if (button.dataset.action === "minimum") minimumEditor(row);
     if (button.dataset.action === "adjust") adjustEditor(row);
     if (button.dataset.action === "logs") await inventoryLogs(row);
     if (button.dataset.action === "detail") await orderDetail(id);
+    if (button.dataset.action === "purchase-detail") await purchaseDetail(id);
     if (button.dataset.action === "shop") {
       await api("/cart/items", {method: "POST", body: {product_id: id, quantity: 1}});
       toast(state.user.role === "CUSTOMER" ? "已加入购物车，可在“我的订单”中提交。" : "已加入草稿，可在“销售订单”中查看。");
@@ -303,7 +368,7 @@ $("table-body").onclick = (event) => {
   });
 };
 $("editor-content").onclick = (event) => {
-  const button = event.target.closest("[data-action]"); if (!button || !["save-line", "remove-line"].includes(button.dataset.action)) return;
+  const button = event.target.closest("[data-action]"); if (!button || !["save-line", "remove-line", "save-purchase-line", "remove-purchase-line"].includes(button.dataset.action)) return;
   busy(button, async () => {
     const itemId = Number(button.dataset.id); const saleId = state.detail.sale_id;
     if (button.dataset.action === "save-line") {
@@ -311,7 +376,12 @@ $("editor-content").onclick = (event) => {
       await api("/orders/" + saleId + "/items/" + itemId, {method: "PATCH", body: {quantity}});
     } else if (button.dataset.action === "remove-line") {
       await api("/orders/" + saleId + "/items/" + itemId, {method: "DELETE"});
+    } else if (button.dataset.action === "save-purchase-line") {
+      await api("/purchases/" + state.detail.purchase_id + "/items/" + itemId, {method: "PATCH", body: {quantity: Number(document.querySelector('[data-purchase-quantity="' + itemId + '"]').value), unit_cost: document.querySelector('[data-purchase-cost="' + itemId + '"]').value}});
+    } else if (button.dataset.action === "remove-purchase-line") {
+      await api("/purchases/" + state.detail.purchase_id + "/items/" + itemId, {method: "DELETE"});
     }
+    if (state.detail.purchase_id) {await purchaseDetail(state.detail.purchase_id); await loadList(); toast("采购明细已更新。"); return;}
     await orderDetail(saleId); await loadList(); toast(state.user.role === "CUSTOMER" ? "购物车明细已更新。" : "草稿明细已更新。");
   }, "editor-error");
 };

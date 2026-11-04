@@ -1,4 +1,4 @@
-"""把已有的第七周开发库升级到第九周应用增量；只执行可重复的结构/过程脚本，不删除数据。"""
+"""把已有的第七周开发库升级到第八、九周应用增量；只执行可重复的结构/过程脚本，不删除数据。"""
 import argparse
 import sys
 
@@ -13,6 +13,7 @@ def upgrade_database(server, database, driver=None):
         raise ValueError("目标库名必须为 CampusStoreDB_W7_ 加字母、数字或下划线")
     connection = administrative_connection(server, database, driver)
     try:
+        run_script(connection, ROOT / "sql/week8/application.sql")
         run_script(connection, ROOT / "sql/week9/application_v2.sql")
     finally:
         connection.close()

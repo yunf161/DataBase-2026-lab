@@ -37,6 +37,13 @@ def test_other_business_rules_keep_generic_message(number):
     assert error.message == "当前数据或订单状态不允许此操作，请刷新后检查。"
 
 
+@pytest.mark.parametrize("number,word", [(51201, "没有明细"), (51202, "库存记录"), (51203, "采购职责"), (51204, "供应商"),
+                                         (51814, "供应商"), (51200, "采购单"), (51210, "采购单"), (51222, "采购单"), (51410, "采购单")])
+def test_purchase_errors_are_business_rules(number, word):
+    error = database_error(sql_error(number))
+    assert (error.code, error.status) == ("BUSINESS_RULE", 409) and word in error.message
+
+
 def test_not_found_and_forbidden():
     assert (database_error(sql_error(51804)).code, database_error(sql_error(51804)).status) == ("NOT_FOUND", 404)
     assert (database_error(sql_error(229)).code, database_error(sql_error(229)).status) == ("FORBIDDEN", 403)

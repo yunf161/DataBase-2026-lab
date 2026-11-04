@@ -292,7 +292,6 @@ class StoreService:
 
     def update_order(self, user, sale_id, data):
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
-        fields(data, {"payment_method", "discount_amount", "remark"})
         with self.repository.transaction(user) as connection:
             order = self.draft(connection, sale_id)
             payment, discount = self.draft_values(user, order, data)
@@ -362,3 +361,82 @@ class StoreService:
         with self.repository.transaction(user) as connection:
             self.draft(connection, sale_id)
             self.repository.cancel_order(connection, sale_id)
+
+    def suppliers(self, user):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            return self.repository.suppliers(connection)
+
+    def purchases(self, user):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            return self.repository.purchases(connection)
+
+    def purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            order = self.repository.purchase(connection, purchase_id)
+            if not order:
+                raise AppError("NOT_FOUND", "采购单不存在。", 404)
+            return order
+
+    def purchase_item_data(self, data, creating=True):
+        fields(data, {"quantity", "unit_cost"} | ({"product_id"} if creating else set()),
+               {"quantity", "unit_cost"} | ({"product_id"} if creating else set()))
+        return (integer(data["product_id"], "商品") if creating else None,
+                integer(data["quantity"], "采购数量", 1, 1000000),
+                money(data["unit_cost"], "采购进价"))
+
+    def create_purchase(self, user, data):
+        require_role(user, "ADMIN")
+        fields(data, {"supplier_id", "items"}, {"supplier_id"})
+        supplier_id = integer(data["supplier_id"], "供应商")
+        items = data.get("items", [])
+        if not isinstance(items, list) or len(items) > 100:
+            raise AppError("INVALID_INPUT", "采购明细最多100项。")
+        clean_items = [self.purchase_item_data(item) for item in items]
+        with self.repository.transaction(user) as connection:
+            purchase_id = self.repository.create_purchase(connection, supplier_id)
+            for product_id, quantity, unit_cost in clean_items:
+                self.repository.write_purchase_item(connection, purchase_id, product_id, quantity, unit_cost)
+            return self.repository.purchase(connection, purchase_id)
+
+    def confirm_purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            order = self.repository.purchase(connection, purchase_id)
+            if not order:
+                raise AppError("NOT_FOUND", "采购单不存在。", 404)
+            if order["status"] != "DRAFT":
+                raise AppError("BUSINESS_RULE", "只有草稿采购单可以确认入库。", 409)
+            self.repository.confirm_purchase(connection, purchase_id)
+            return self.repository.purchase(connection, purchase_id)
+
+    def purchase_draft(self, connection, purchase_id):
+        order = self.repository.purchase(connection, purchase_id)
+        if not order:
+            raise AppError("NOT_FOUND", "采购单不存在。", 404)
+        if order["status"] != "DRAFT":
+            raise AppError("BUSINESS_RULE", "只有草稿采购单可以修改。", 409)
+        return order
+
+    def write_purchase_item(self, user, purchase_id, data, item_id=None):
+        require_role(user, "ADMIN")
+        product_id, quantity, unit_cost = self.purchase_item_data(data, item_id is None)
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.write_purchase_item(connection, purchase_id, product_id, quantity, unit_cost, item_id)
+            return self.repository.purchase(connection, purchase_id)
+
+    def delete_purchase_item(self, user, purchase_id, item_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.delete_purchase_item(connection, purchase_id, item_id)
+
+    def cancel_purchase(self, user, purchase_id):
+        require_role(user, "ADMIN")
+        with self.repository.transaction(user) as connection:
+            self.purchase_draft(connection, purchase_id)
+            self.repository.cancel_purchase(connection, purchase_id)
+            return self.repository.purchase(connection, purchase_id)

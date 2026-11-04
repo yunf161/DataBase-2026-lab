@@ -1,6 +1,6 @@
 {
-  "integration_passed": 307,
-  "browser_passed": 26,
+  "integration_passed": 324,
+  "browser_passed": 27,
   "javascript_errors": [],
   "test_databases_cleaned": true
 }

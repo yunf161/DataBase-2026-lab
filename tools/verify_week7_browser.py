@@ -566,6 +566,43 @@ def main():
             expect(sku_row(shopper, "P0002")).to_have_count(1)
             findings.append({"test": "按分类查询商品", "result": "passed", "actual": "饮料2件；食品含子分类共4件；切换页面后筛选复位"})
 
+        with scenario("管理员采购入库，库存和流水同步"):
+            buyer = new_page("admin")
+            def cola_stock():
+                return buyer.context.request.get(args.url + "/api/inventory?q=P0001").json()["data"][0]["quantity"]
+            before = cola_stock()
+            buyer.locator('[data-view="purchases"]').click()
+            expect(buyer.locator("#page-title")).to_have_text("采购入库")
+            expect(buyer.locator("#category-filter")).to_be_hidden()
+            buyer.locator("#heading-action").click()
+            buyer.locator("#supplier-id").select_option(index=1)
+            buyer.locator("#new-purchase-form button[type=submit]").click()
+            expect(buyer.locator("#add-purchase-line")).to_be_visible()
+            buyer.locator("#purchase-search").fill("P0001")
+            buyer.locator("#search-purchase-product").click()
+            expect(buyer.locator("#purchase-search-count")).to_contain_text("找到 1 件")
+            buyer.locator("#purchase-product").select_option(index=1)
+            buyer.locator("#purchase-quantity").fill("5")
+            buyer.locator("#purchase-cost").fill("2.00")
+            buyer.locator("#add-purchase-line button[type=submit]").click()
+            expect(buyer.locator(".order-total")).to_contain_text("10.00")
+            assert cola_stock() == before, "草稿不应增加库存"
+            buyer.locator("#confirm-purchase").click()
+            buyer.locator("#confirm-accept").click()
+            expect(buyer.locator(".order-meta")).to_contain_text("已入库")
+            assert cola_stock() == before + 5, "确认后库存应增加 5"
+            shot(buyer, "23-purchase-received.png", toast="采购已入库")
+            buyer.locator("#close-editor").click()
+            buyer.locator('[data-view="inventory"]').click()
+            sku_row(buyer, "P0001").get_by_role("button", name="查看流水", exact=True).click()
+            expect(buyer.locator("#editor")).to_contain_text("采购入库")
+            expect(buyer.locator("#editor")).to_contain_text("W8P")
+            for username in ("staff", "customer"):
+                other_role = new_page(username)
+                expect(other_role.locator("#purchases-nav")).to_be_hidden()
+                assert other_role.context.request.get(args.url + "/api/purchases").status == 403
+            findings.append({"test": "管理员采购入库", "result": "passed", "actual": "草稿不加库存；确认后可乐+5，流水显示采购入库；店员和顾客无入口，接口403"})
+
         with scenario("商品超过100件时订单详情仍可选择全部商品"):
             clerk = new_page("staff")
             token = admin.context.request.get(args.url + "/api/auth/session").json()["data"]["csrf_token"]

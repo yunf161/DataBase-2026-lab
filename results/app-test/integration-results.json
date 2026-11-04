@@ -9,12 +9,12 @@
     {
       "test": "tests/week7/test_api_v2.py::test_anonymous_requests_are_rejected[POST-/orders/1/settle]",
       "result": "passed",
-      "duration": 0.002
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_api_v2.py::test_anonymous_requests_are_rejected[POST-/cart/items]",
       "result": "passed",
-      "duration": 0.002
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_api_v2.py::test_anonymous_requests_are_rejected[PATCH-/inventory/1/quantity]",
@@ -29,12 +29,12 @@
     {
       "test": "tests/week7/test_api_v2.py::test_unauthorised_roles_are_forbidden[POST-/orders/1/submit]",
       "result": "passed",
-      "duration": 0.376
+      "duration": 0.361
     },
     {
       "test": "tests/week7/test_api_v2.py::test_unauthorised_roles_are_forbidden[POST-/orders/1/settle]",
       "result": "passed",
-      "duration": 0.181
+      "duration": 0.16
     },
     {
       "test": "tests/week7/test_api_v2.py::test_unauthorised_roles_are_forbidden[POST-/cart/items]",
@@ -44,237 +44,237 @@
     {
       "test": "tests/week7/test_api_v2.py::test_unauthorised_roles_are_forbidden[PATCH-/inventory/1/quantity]",
       "result": "passed",
-      "duration": 0.352
+      "duration": 0.325
     },
     {
       "test": "tests/week7/test_api_v2.py::test_unauthorised_roles_are_forbidden[GET-/inventory/1/logs]",
       "result": "passed",
-      "duration": 0.337
+      "duration": 0.334
     },
     {
       "test": "tests/week7/test_api_v2.py::test_writes_without_csrf_token_are_rejected[POST-/orders/1/submit]",
       "result": "passed",
-      "duration": 0.202
+      "duration": 0.215
     },
     {
       "test": "tests/week7/test_api_v2.py::test_writes_without_csrf_token_are_rejected[POST-/orders/1/settle]",
       "result": "passed",
-      "duration": 0.204
+      "duration": 0.19
     },
     {
       "test": "tests/week7/test_api_v2.py::test_writes_without_csrf_token_are_rejected[POST-/cart/items]",
       "result": "passed",
-      "duration": 0.212
+      "duration": 0.213
     },
     {
       "test": "tests/week7/test_api_v2.py::test_writes_without_csrf_token_are_rejected[PATCH-/inventory/1/quantity]",
       "result": "passed",
-      "duration": 0.2
+      "duration": 0.199
     },
     {
       "test": "tests/week7/test_api_v2.py::test_submit_succeeds_and_returns_the_submitted_order",
       "result": "passed",
-      "duration": 1.016
+      "duration": 0.902
     },
     {
       "test": "tests/week7/test_api_v2.py::test_submit_with_changed_price_returns_latest_order_and_needs_confirmation",
       "result": "passed",
-      "duration": 1.093
+      "duration": 0.993
     },
     {
       "test": "tests/week7/test_api_v2.py::test_submit_rejects_resubmission_empty_order_and_stale_orders",
       "result": "passed",
-      "duration": 0.946
+      "duration": 0.842
     },
     {
       "test": "tests/week7/test_api_v2.py::test_submit_rejects_insufficient_stock_without_marking_submitted",
       "result": "passed",
-      "duration": 0.628
+      "duration": 0.586
     },
     {
       "test": "tests/week7/test_api_v2.py::test_other_customer_cannot_submit_or_see_the_order",
       "result": "passed",
-      "duration": 1.026
+      "duration": 0.96
     },
     {
       "test": "tests/week7/test_api_v2.py::test_staff_settles_a_submitted_order_with_payment_and_discount",
       "result": "passed",
-      "duration": 1.388
+      "duration": 1.24
     },
     {
       "test": "tests/week7/test_api_v2.py::test_admin_settles_a_staff_order_without_changes",
       "result": "passed",
-      "duration": 0.611
+      "duration": 0.559
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_with_insufficient_stock_rolls_back_payment_and_discount",
       "result": "passed",
-      "duration": 5.234
+      "duration": 1.27
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_of_unsubmitted_customer_order_is_rejected_and_rolled_back",
       "result": "passed",
-      "duration": 1.027
+      "duration": 4.993
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_discount_above_total_and_keeps_the_draft",
       "result": "passed",
-      "duration": 0.533
+      "duration": 0.515
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data0]",
       "result": "passed",
-      "duration": 0.546
+      "duration": 0.482
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data1]",
       "result": "passed",
-      "duration": 0.547
+      "duration": 0.474
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data2]",
       "result": "passed",
-      "duration": 0.54
+      "duration": 0.466
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data3]",
       "result": "passed",
-      "duration": 0.545
+      "duration": 0.464
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data4]",
       "result": "passed",
-      "duration": 0.558
+      "duration": 0.479
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data5]",
       "result": "passed",
-      "duration": 0.536
+      "duration": 0.501
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data6]",
       "result": "passed",
-      "duration": 0.555
+      "duration": 0.466
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data7]",
       "result": "passed",
-      "duration": 0.564
+      "duration": 0.469
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data8]",
       "result": "passed",
-      "duration": 0.519
+      "duration": 0.47
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data9]",
       "result": "passed",
-      "duration": 0.507
+      "duration": 0.479
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data10]",
       "result": "passed",
-      "duration": 0.492
+      "duration": 0.446
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data11]",
       "result": "passed",
-      "duration": 0.506
+      "duration": 0.449
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data12]",
       "result": "passed",
-      "duration": 0.497
+      "duration": 0.44
     },
     {
       "test": "tests/week7/test_api_v2.py::test_settle_rejects_bad_input_before_changing_anything[data13]",
       "result": "passed",
-      "duration": 0.498
+      "duration": 0.454
     },
     {
       "test": "tests/week7/test_api_v2.py::test_customer_and_missing_orders_cannot_be_settled",
       "result": "passed",
-      "duration": 1.198
+      "duration": 1.077
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_creates_a_draft_and_returns_the_order",
       "result": "passed",
-      "duration": 0.527
+      "duration": 0.507
     },
     {
       "test": "tests/week7/test_api_v2.py::test_same_product_added_twice_merges_into_one_line_of_one_draft",
       "result": "passed",
-      "duration": 0.99
+      "duration": 0.898
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adding_after_submit_starts_a_new_draft_and_leaves_the_submitted_order",
       "result": "passed",
-      "duration": 0.931
+      "duration": 0.841
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_is_private_to_each_customer",
       "result": "passed",
-      "duration": 0.965
+      "duration": 0.9
     },
     {
       "test": "tests/week7/test_api_v2.py::test_staff_cart_belongs_to_the_staff_account",
       "result": "passed",
-      "duration": 0.575
+      "duration": 0.512
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_quantity_beyond_the_limit_and_keeps_the_line",
       "result": "passed",
-      "duration": 0.631
+      "duration": 0.571
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_with_unavailable_product_does_not_leave_an_empty_draft",
       "result": "passed",
-      "duration": 1.05
+      "duration": 1.008
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data0]",
       "result": "passed",
-      "duration": 0.385
+      "duration": 0.378
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data1]",
       "result": "passed",
-      "duration": 0.37
+      "duration": 0.358
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data2]",
       "result": "passed",
-      "duration": 0.364
+      "duration": 0.352
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data3]",
       "result": "passed",
-      "duration": 0.379
+      "duration": 0.358
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data4]",
       "result": "passed",
-      "duration": 0.383
+      "duration": 0.354
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data5]",
       "result": "passed",
-      "duration": 0.374
+      "duration": 0.363
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data6]",
       "result": "passed",
-      "duration": 0.382
+      "duration": 0.367
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data7]",
       "result": "passed",
-      "duration": 0.372
+      "duration": 0.359
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data8]",
       "result": "passed",
-      "duration": 0.363
+      "duration": 0.351
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data9]",
@@ -284,87 +284,87 @@
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data10]",
       "result": "passed",
-      "duration": 0.377
+      "duration": 0.347
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data11]",
       "result": "passed",
-      "duration": 0.376
+      "duration": 0.345
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data12]",
       "result": "passed",
-      "duration": 0.367
+      "duration": 0.387
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data13]",
       "result": "passed",
-      "duration": 0.377
+      "duration": 0.347
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data14]",
       "result": "passed",
-      "duration": 0.375
+      "duration": 0.361
     },
     {
       "test": "tests/week7/test_api_v2.py::test_cart_rejects_bad_input_without_creating_a_draft[data15]",
       "result": "passed",
-      "duration": 0.371
+      "duration": 0.364
     },
     {
       "test": "tests/week7/test_api_v2.py::test_concurrent_cart_adds_keep_a_single_draft_and_the_full_quantity",
       "result": "passed",
-      "duration": 1.082
+      "duration": 0.985
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_returns_new_quantity_and_writes_a_log",
       "result": "passed",
-      "duration": 0.779
+      "duration": 0.706
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_unchanged_quantity_and_unknown_product",
       "result": "passed",
-      "duration": 0.436
+      "duration": 0.372
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": \"5\", \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.411
+      "duration": 0.373
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": true, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.412
+      "duration": 0.415
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5.5, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.42
+      "duration": 0.38
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5.0, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.427
+      "duration": 0.379
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": null, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.428
+      "duration": 0.386
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": -1, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.415
+      "duration": 0.398
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 1000001, \"reason\": \"x\"}]",
       "result": "passed",
-      "duration": 0.432
+      "duration": 0.39
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5}]",
       "result": "passed",
-      "duration": 0.415
+      "duration": 0.384
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"reason\": \"x\"}]",
@@ -374,227 +374,227 @@
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{}]",
       "result": "passed",
-      "duration": 0.416
+      "duration": 0.394
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"\"}]",
       "result": "passed",
-      "duration": 0.417
+      "duration": 0.383
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"   \"}]",
       "result": "passed",
-      "duration": 0.413
+      "duration": 0.376
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"\\\\t\\\\n \\\\u3000\"}]",
       "result": "passed",
-      "duration": 0.426
+      "duration": 0.386
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": null}]",
       "result": "passed",
-      "duration": 0.414
+      "duration": 0.38
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": 123}]",
       "result": "passed",
-      "duration": 0.428
+      "duration": 0.37
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": [\"x\"]}]",
       "result": "passed",
-      "duration": 0.42
+      "duration": 0.391
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"x\", \"quantity\": 5}]",
       "result": "passed",
-      "duration": 0.424
+      "duration": 0.392
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"x\", \"min_quantity\": 1}]",
       "result": "passed",
-      "duration": 0.426
+      "duration": 0.4
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[{\"new_quantity\": 5, \"reason\": \"a\\\\u0000b\"}]",
       "result": "passed",
-      "duration": 0.434
+      "duration": 0.383
     },
     {
       "test": "tests/week7/test_api_v2.py::test_adjust_inventory_rejects_a_lone_surrogate_in_the_reason",
       "result": "passed",
-      "duration": 0.328
+      "duration": 0.324
     },
     {
       "test": "tests/week7/test_api_v2.py::test_overlong_reason_is_rejected_by_utf16_length[\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49-256\\u4e2a\\u6c49\\u5b57]",
       "result": "passed",
-      "duration": 0.42
+      "duration": 0.381
     },
     {
       "test": "tests/week7/test_api_v2.py::test_overlong_reason_is_rejected_by_utf16_length[\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600-128\\u4e2aemoji]",
       "result": "passed",
-      "duration": 0.395
+      "duration": 0.378
     },
     {
       "test": "tests/week7/test_api_v2.py::test_overlong_reason_is_rejected_by_utf16_length[\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\u5b57x-256\\u5355\\u4f4d]",
       "result": "passed",
-      "duration": 0.421
+      "duration": 0.392
     },
     {
       "test": "tests/week7/test_api_v2.py::test_overlong_reason_is_rejected_by_utf16_length[   \\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49-\\u7a7a\\u683c\\u540e256\\u4e2a\\u6c49\\u5b57]",
       "result": "passed",
-      "duration": 0.411
+      "duration": 0.367
     },
     {
       "test": "tests/week7/test_api_v2.py::test_reason_of_255_utf16_units_is_saved_completely[\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\u5b57]",
       "result": "passed",
-      "duration": 0.464
+      "duration": 0.422
     },
     {
       "test": "tests/week7/test_api_v2.py::test_reason_of_255_utf16_units_is_saved_completely[\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49\\u6c49]",
       "result": "passed",
-      "duration": 0.468
+      "duration": 0.405
     },
     {
       "test": "tests/week7/test_api_v2.py::test_reason_of_255_utf16_units_is_saved_completely[\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\U0001f600\\u5b57 ]",
       "result": "passed",
-      "duration": 0.455
+      "duration": 0.404
     },
     {
       "test": "tests/week7/test_api_v2.py::test_inventory_logs_are_paginated_newest_first_and_per_product",
       "result": "passed",
-      "duration": 0.932
+      "duration": 0.8
     },
     {
       "test": "tests/week7/test_api_v2.py::test_inventory_logs_reject_bad_parameters_and_unknown_products",
       "result": "passed",
-      "duration": 0.555
+      "duration": 0.501
     },
     {
       "test": "tests/week7/test_api_v2.py::test_existing_minimum_update_still_works_next_to_the_quantity_route",
       "result": "passed",
-      "duration": 0.429
+      "duration": 0.379
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_returns_only_submitted_drafts",
       "result": "passed",
-      "duration": 2.568
+      "duration": 2.335
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[2]",
       "result": "passed",
-      "duration": 0.372
+      "duration": 0.339
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[0]",
       "result": "passed",
-      "duration": 0.323
+      "duration": 0.336
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[]",
       "result": "passed",
-      "duration": 0.346
+      "duration": 0.31
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[true]",
       "result": "passed",
-      "duration": 0.343
+      "duration": 5.21
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[-1]",
       "result": "passed",
-      "duration": 0.334
+      "duration": 0.336
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[1 ]",
       "result": "passed",
-      "duration": 0.345
+      "duration": 0.359
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[01]",
       "result": "passed",
-      "duration": 0.348
+      "duration": 0.341
     },
     {
       "test": "tests/week7/test_api_v2.py::test_pending_filter_rejects_other_values[yes]",
       "result": "passed",
-      "duration": 0.333
+      "duration": 0.328
     },
     {
       "test": "tests/week7/test_api_v2.py::test_category_filter_returns_that_category_and_its_children[admin]",
       "result": "passed",
-      "duration": 0.562
+      "duration": 0.51
     },
     {
       "test": "tests/week7/test_api_v2.py::test_category_filter_returns_that_category_and_its_children[staff]",
       "result": "passed",
-      "duration": 0.432
+      "duration": 0.369
     },
     {
       "test": "tests/week7/test_api_v2.py::test_category_filter_returns_that_category_and_its_children[customer]",
       "result": "passed",
-      "duration": 0.405
+      "duration": 0.368
     },
     {
       "test": "tests/week7/test_api_v2.py::test_category_filter_combines_with_search_and_paging",
       "result": "passed",
-      "duration": 0.706
+      "duration": 0.636
     },
     {
       "test": "tests/week7/test_api_v2.py::test_empty_category_filter_means_all_and_unknown_category_is_empty",
       "result": "passed",
-      "duration": 0.353
+      "duration": 0.323
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[abc]",
       "result": "passed",
-      "duration": 0.174
+      "duration": 0.151
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[0]",
       "result": "passed",
-      "duration": 0.178
+      "duration": 0.161
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[-1]",
       "result": "passed",
-      "duration": 0.171
+      "duration": 0.168
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[1.5]",
       "result": "passed",
-      "duration": 0.157
+      "duration": 0.16
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[1 OR 1=1]",
       "result": "passed",
-      "duration": 0.156
+      "duration": 0.162
     },
     {
       "test": "tests/week7/test_api_v2.py::test_bad_category_filter_is_rejected[1000001]",
       "result": "passed",
-      "duration": 0.163
+      "duration": 0.169
     },
     {
       "test": "tests/week7/test_api_v2.py::test_disabled_category_stays_hidden_from_customers_in_the_filter",
       "result": "passed",
-      "duration": 0.458
+      "duration": 0.439
     },
     {
       "test": "tests/week7/test_api_v2.py::test_customer_can_edit_remark_and_payment_after_staff_sets_a_discount",
       "result": "passed",
-      "duration": 1.26
+      "duration": 1.399
     },
     {
       "test": "tests/week7/test_api_v2.py::test_customer_without_discount_can_still_edit_and_cannot_set_one",
       "result": "passed",
-      "duration": 0.848
+      "duration": 0.778
     },
     {
       "test": "tests/week7/test_application.py::test_public_page_is_served_without_database",
       "result": "passed",
-      "duration": 0.058
+      "duration": 0.067
     },
     {
       "test": "tests/week7/test_application.py::test_unauthenticated_requests_are_rejected[GET-/products]",
@@ -619,37 +619,37 @@
     {
       "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[admin-ADMIN]",
       "result": "passed",
-      "duration": 0.165
+      "duration": 0.167
     },
     {
       "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[staff-STAFF]",
       "result": "passed",
-      "duration": 0.168
+      "duration": 0.191
     },
     {
       "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[customer-CUSTOMER]",
       "result": "passed",
-      "duration": 0.18
+      "duration": 0.184
     },
     {
       "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[admin]",
       "result": "passed",
-      "duration": 0.147
+      "duration": 0.143
     },
     {
       "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[does-not-exist]",
       "result": "passed",
-      "duration": 0.132
+      "duration": 0.161
     },
     {
       "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[' OR 1=1--]",
       "result": "passed",
-      "duration": 0.133
+      "duration": 0.174
     },
     {
       "test": "tests/week7/test_application.py::test_lone_surrogate_password_is_invalid_input_not_server_error",
       "result": "passed",
-      "duration": 0.001
+      "duration": 0.003
     },
     {
       "test": "tests/week7/test_application.py::test_login_requires_csrf",
@@ -659,17 +659,17 @@
     {
       "test": "tests/week7/test_application.py::test_write_requires_current_csrf_token",
       "result": "passed",
-      "duration": 0.171
+      "duration": 0.184
     },
     {
       "test": "tests/week7/test_application.py::test_logout_invalidates_access",
       "result": "passed",
-      "duration": 0.166
+      "duration": 0.198
     },
     {
       "test": "tests/week7/test_application.py::test_read_response_cannot_restore_a_logged_out_cookie",
       "result": "passed",
-      "duration": 0.237
+      "duration": 0.307
     },
     {
       "test": "tests/week7/test_application.py::test_unsigned_session_cookie_is_rejected",
@@ -679,217 +679,217 @@
     {
       "test": "tests/week7/test_application.py::test_malformed_json_has_uniform_response",
       "result": "passed",
-      "duration": 0.001
+      "duration": 0.002
     },
     {
       "test": "tests/week7/test_application.py::test_product_crud_keeps_inventory_consistent",
       "result": "passed",
-      "duration": 0.458
+      "duration": 0.471
     },
     {
       "test": "tests/week7/test_application.py::test_product_maintenance_requires_admin[staff]",
       "result": "passed",
-      "duration": 0.254
+      "duration": 0.256
     },
     {
       "test": "tests/week7/test_application.py::test_product_maintenance_requires_admin[customer]",
       "result": "passed",
-      "duration": 0.24
+      "duration": 0.253
     },
     {
       "test": "tests/week7/test_application.py::test_product_duplicate_is_a_friendly_conflict",
       "result": "passed",
-      "duration": 0.279
+      "duration": 0.317
     },
     {
       "test": "tests/week7/test_application.py::test_numeric_duplicate_sku_is_duplicate_not_forbidden",
       "result": "passed",
-      "duration": 0.405
+      "duration": 4.62
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price--1]",
       "result": "passed",
-      "duration": 0.311
+      "duration": 0.234
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-NaN]",
       "result": "passed",
-      "duration": 5.181
+      "duration": 0.208
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-1.234]",
       "result": "passed",
-      "duration": 0.173
+      "duration": 0.206
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-True]",
       "result": "passed",
-      "duration": 0.171
+      "duration": 0.213
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[category_id-True]",
       "result": "passed",
-      "duration": 0.175
+      "duration": 0.205
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[status-4]",
       "result": "passed",
-      "duration": 0.181
+      "duration": 0.194
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sku-bad' OR 1=1--]",
       "result": "passed",
-      "duration": 0.179
+      "duration": 0.233
     },
     {
       "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[product_name-]",
       "result": "passed",
-      "duration": 0.161
+      "duration": 0.237
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_category_uses_database_constraint",
       "result": "passed",
-      "duration": 0.223
+      "duration": 0.267
     },
     {
       "test": "tests/week7/test_application.py::test_product_with_history_cannot_be_deleted",
       "result": "passed",
-      "duration": 0.244
+      "duration": 0.263
     },
     {
       "test": "tests/week7/test_application.py::test_search_is_parameterized_and_wildcards_are_literal",
       "result": "passed",
-      "duration": 0.961
+      "duration": 0.973
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query0]",
       "result": "passed",
-      "duration": 0.158
+      "duration": 0.223
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query1]",
       "result": "passed",
-      "duration": 0.166
+      "duration": 0.215
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query2]",
       "result": "passed",
-      "duration": 0.173
+      "duration": 0.194
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query3]",
       "result": "passed",
-      "duration": 0.167
+      "duration": 0.206
     },
     {
       "test": "tests/week7/test_application.py::test_customer_cannot_access_inventory_or_inactive_catalog",
       "result": "passed",
-      "duration": 0.648
+      "duration": 0.77
     },
     {
       "test": "tests/week7/test_application.py::test_inventory_threshold_does_not_change_quantity",
       "result": "passed",
-      "duration": 0.669
+      "duration": 0.778
     },
     {
       "test": "tests/week7/test_application.py::test_customer_draft_ownership_and_price",
       "result": "passed",
-      "duration": 0.845
+      "duration": 1.011
     },
     {
       "test": "tests/week7/test_application.py::test_draft_items_add_update_delete_cancel",
       "result": "passed",
-      "duration": 0.968
+      "duration": 1.106
     },
     {
       "test": "tests/week7/test_application.py::test_customer_cannot_override_price_owner_employee_or_status",
       "result": "passed",
-      "duration": 0.474
+      "duration": 0.609
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[None]",
       "result": "passed",
-      "duration": 0.185
+      "duration": 0.206
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[payment1]",
       "result": "passed",
-      "duration": 0.174
+      "duration": 0.2
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[payment2]",
       "result": "passed",
-      "duration": 0.161
+      "duration": 0.213
     },
     {
       "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[False]",
       "result": "passed",
-      "duration": 0.165
+      "duration": 0.209
     },
     {
       "test": "tests/week7/test_application.py::test_order_creation_rolls_back_all_partial_writes",
       "result": "passed",
-      "duration": 0.347
+      "duration": 0.41
     },
     {
       "test": "tests/week7/test_application.py::test_duplicate_order_lines_roll_back_header_and_first_line",
       "result": "passed",
-      "duration": 0.283
+      "duration": 0.341
     },
     {
       "test": "tests/week7/test_application.py::test_completed_orders_reject_mutations",
       "result": "passed",
-      "duration": 0.472
+      "duration": 0.545
     },
     {
       "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[ADMIN-admin-WebAdmin]",
       "result": "passed",
-      "duration": 0.236
+      "duration": 0.305
     },
     {
       "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[STAFF-staff-WebStaff]",
       "result": "passed",
-      "duration": 0.236
+      "duration": 0.285
     },
     {
       "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[CUSTOMER-customer-WebCustomer]",
       "result": "passed",
-      "duration": 0.245
+      "duration": 0.332
     },
     {
       "test": "tests/week7/test_application.py::test_business_code_cannot_revert_the_restricted_identity[AUTH-WebAuth]",
       "result": "passed",
-      "duration": 0.04
+      "duration": 0.048
     },
     {
       "test": "tests/week7/test_application.py::test_business_code_cannot_revert_the_restricted_identity[ADMIN-WebAdmin]",
       "result": "passed",
-      "duration": 0.039
+      "duration": 0.042
     },
     {
       "test": "tests/week7/test_application.py::test_business_code_cannot_revert_the_restricted_identity[STAFF-WebStaff]",
       "result": "passed",
-      "duration": 0.035
+      "duration": 0.044
     },
     {
       "test": "tests/week7/test_application.py::test_business_code_cannot_revert_the_restricted_identity[CUSTOMER-WebCustomer]",
       "result": "passed",
-      "duration": 0.036
+      "duration": 0.049
     },
     {
       "test": "tests/week7/test_application.py::test_database_view_enforces_ownership_without_api_filter",
       "result": "passed",
-      "duration": 0.485
+      "duration": 0.642
     },
     {
       "test": "tests/week7/test_application.py::test_disabled_account_is_rechecked_for_existing_session",
       "result": "passed",
-      "duration": 0.186
+      "duration": 0.233
     },
     {
       "test": "tests/week7/test_application.py::test_sql_connection_failure_is_friendly_and_logged",
       "result": "passed",
-      "duration": 1.241
+      "duration": 1.271
     },
     {
       "test": "tests/week7/test_application.py::test_query_timeout_defaults_to_fifteen_seconds",
@@ -899,222 +899,222 @@
     {
       "test": "tests/week7/test_application.py::test_blocked_inventory_update_times_out_as_transaction_conflict",
       "result": "passed",
-      "duration": 1.558
+      "duration": 1.74
     },
     {
       "test": "tests/week7/test_application.py::test_unknown_endpoint_and_invalid_method_share_error_format",
       "result": "passed",
-      "duration": 0.198
+      "duration": 0.259
     },
     {
       "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[GET-/orders/9223372036854775808]",
       "result": "passed",
-      "duration": 0.157
+      "duration": 0.217
     },
     {
       "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[DELETE-/products/0]",
       "result": "passed",
-      "duration": 0.156
+      "duration": 0.227
     },
     {
       "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[PATCH-/orders/1/items/9999999999999999999999999999]",
       "result": "passed",
-      "duration": 0.18
+      "duration": 0.214
     },
     {
       "test": "tests/week7/test_application.py::test_request_log_has_trace_role_code_and_result",
       "result": "passed",
-      "duration": 0.183
+      "duration": 0.219
     },
     {
       "test": "tests/week7/test_database_v2.py::test_customer_submit_then_admin_settles_multiple_lines",
       "result": "passed",
-      "duration": 0.502
+      "duration": 0.447
     },
     {
       "test": "tests/week7/test_database_v2.py::test_discount_is_applied_to_settled_total",
       "result": "passed",
-      "duration": 0.176
+      "duration": 0.166
     },
     {
       "test": "tests/week7/test_database_v2.py::test_stock_boundary_exact_quantity_settles_and_one_more_fails",
       "result": "passed",
-      "duration": 0.201
+      "duration": 0.211
     },
     {
       "test": "tests/week7/test_database_v2.py::test_staff_and_admin_orders_settle_without_submit",
       "result": "passed",
-      "duration": 0.176
+      "duration": 0.172
     },
     {
       "test": "tests/week7/test_database_v2.py::test_legacy_draft_without_owner_settles_and_stays_hidden_from_customers",
       "result": "passed",
-      "duration": 0.137
+      "duration": 0.127
     },
     {
       "test": "tests/week7/test_database_v2.py::test_price_change_refreshes_lines_and_needs_second_submit[8.00]",
       "result": "passed",
-      "duration": 0.172
+      "duration": 0.196
     },
     {
       "test": "tests/week7/test_database_v2.py::test_price_change_refreshes_lines_and_needs_second_submit[5.00]",
       "result": "passed",
-      "duration": 0.159
+      "duration": 0.168
     },
     {
       "test": "tests/week7/test_database_v2.py::test_submit_rejects_empty_order",
       "result": "passed",
-      "duration": 0.031
+      "duration": 0.028
     },
     {
       "test": "tests/week7/test_database_v2.py::test_submit_rejects_disabled_product",
       "result": "passed",
-      "duration": 0.092
+      "duration": 0.103
     },
     {
       "test": "tests/week7/test_database_v2.py::test_submit_rejects_disabled_category",
       "result": "passed",
-      "duration": 0.118
+      "duration": 0.127
     },
     {
       "test": "tests/week7/test_database_v2.py::test_submit_rejects_an_already_submitted_order",
       "result": "passed",
-      "duration": 0.096
+      "duration": 0.098
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_uses_the_price_accepted_at_submit_even_after_a_price_rise",
       "result": "passed",
-      "duration": 0.208
+      "duration": 0.223
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_direction_log_employee_and_reason",
       "result": "passed",
-      "duration": 0.136
+      "duration": 0.153
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[-1-x-51805]",
       "result": "passed",
-      "duration": 0.074
+      "duration": 0.088
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[1000001-x-51805]",
       "result": "passed",
-      "duration": 0.072
+      "duration": 0.088
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[6--51805]",
       "result": "passed",
-      "duration": 0.068
+      "duration": 0.079
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[6-   -51805]",
       "result": "passed",
-      "duration": 0.07
+      "duration": 0.068
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[None-x-51805]",
       "result": "passed",
-      "duration": 0.075
+      "duration": 0.069
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_inventory_rejects_bad_input_without_changes[5-x-51813]",
       "result": "passed",
-      "duration": 0.074
+      "duration": 0.088
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_failure_rolls_back_every_line_and_can_be_retried",
       "result": "passed",
-      "duration": 0.278
+      "duration": 0.269
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_empty_draft",
       "result": "passed",
-      "duration": 0.035
+      "duration": 0.04
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_discount_above_total",
       "result": "passed",
-      "duration": 0.109
+      "duration": 0.111
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_disabled_product",
       "result": "passed",
-      "duration": 0.111
+      "duration": 0.139
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_disabled_category_after_submit",
       "result": "passed",
-      "duration": 0.103
+      "duration": 0.134
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_missing_payment_method",
       "result": "passed",
-      "duration": 0.086
+      "duration": 0.096
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_rejects_disabled_operator_employee",
       "result": "passed",
-      "duration": 0.116
+      "duration": 0.129
     },
     {
       "test": "tests/week7/test_database_v2.py::test_log_insert_failure_rolls_back_settle_and_adjust",
       "result": "passed",
-      "duration": 0.222
+      "duration": 0.23
     },
     {
       "test": "tests/week7/test_database_v2.py::test_submitted_order_is_locked_for_customer_but_not_for_staff_or_cancel",
       "result": "passed",
-      "duration": 0.275
+      "duration": 0.269
     },
     {
       "test": "tests/week7/test_database_v2.py::test_completed_and_cancelled_orders_reject_submit_and_settle",
       "result": "passed",
-      "duration": 0.299
+      "duration": 0.308
     },
     {
       "test": "tests/week7/test_database_v2.py::test_customer_may_resend_the_existing_discount_but_not_change_it",
       "result": "passed",
-      "duration": 0.125
+      "duration": 0.123
     },
     {
       "test": "tests/week7/test_database_v2.py::test_unsubmitted_customer_draft_cannot_be_settled",
       "result": "passed",
-      "duration": 0.107
+      "duration": 0.117
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[staff-app.SubmitSale]",
       "result": "passed",
-      "duration": 0.102
+      "duration": 0.132
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[admin-app.SubmitSale]",
       "result": "passed",
-      "duration": 0.101
+      "duration": 0.108
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[customer-app.SettleSale]",
       "result": "passed",
-      "duration": 0.104
+      "duration": 0.118
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[staff-app.AdjustInventory]",
       "result": "passed",
-      "duration": 0.098
+      "duration": 0.115
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[customer-app.AdjustInventory]",
       "result": "passed",
-      "duration": 0.108
+      "duration": 0.109
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[staff-*]",
       "result": "passed",
-      "duration": 0.119
+      "duration": 0.121
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[customer-*]",
       "result": "passed",
-      "duration": 0.101
+      "duration": 0.113
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[admin-dbo.CompleteSale]",
@@ -1124,42 +1124,42 @@
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[staff-dbo.CompleteSale]",
       "result": "passed",
-      "duration": 0.105
+      "duration": 0.107
     },
     {
       "test": "tests/week7/test_database_v2.py::test_permission_matrix_is_denied[customer-dbo.CompleteSale]",
       "result": "passed",
-      "duration": 0.106
+      "duration": 0.107
     },
     {
       "test": "tests/week7/test_database_v2.py::test_other_customer_cannot_submit_someone_elses_order",
       "result": "passed",
-      "duration": 0.085
+      "duration": 0.097
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[admin-plain]",
       "result": "passed",
-      "duration": 0.064
+      "duration": 0.076
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[admin-session-key-set]",
       "result": "passed",
-      "duration": 0.062
+      "duration": 0.065
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[staff-plain]",
       "result": "passed",
-      "duration": 0.057
+      "duration": 0.058
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[staff-session-key-set]",
       "result": "passed",
-      "duration": 0.065
+      "duration": 0.062
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[customer-plain]",
       "result": "passed",
-      "duration": 0.057
+      "duration": 0.06
     },
     {
       "test": "tests/week7/test_database_v2.py::test_direct_quantity_update_is_denied[customer-session-key-set]",
@@ -1169,42 +1169,42 @@
     {
       "test": "tests/week7/test_database_v2.py::test_last_unit_is_sold_only_once",
       "result": "passed",
-      "duration": 0.746
+      "duration": 0.588
     },
     {
       "test": "tests/week7/test_database_v2.py::test_same_order_settled_twice_deducts_once",
       "result": "passed",
-      "duration": 0.527
+      "duration": 0.5
     },
     {
       "test": "tests/week7/test_database_v2.py::test_settle_and_cancel_race_has_a_single_winner",
       "result": "passed",
-      "duration": 0.552
+      "duration": 0.516
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adding_a_line_while_submitting_is_atomic",
       "result": "passed",
-      "duration": 0.679
+      "duration": 0.633
     },
     {
       "test": "tests/week7/test_database_v2.py::test_adjust_and_settle_race_keeps_log_chain",
       "result": "passed",
-      "duration": 0.542
+      "duration": 0.54
     },
     {
       "test": "tests/week7/test_database_v2.py::test_mixed_stress_keeps_every_invariant",
       "result": "passed",
-      "duration": 1.481
+      "duration": 1.504
     },
     {
       "test": "tests/week7/test_database_v2.py::test_upgrade_tool_upgrades_an_old_week7_database_in_place",
       "result": "passed",
-      "duration": 3.871
+      "duration": 3.977
     },
     {
       "test": "tests/week7/test_database_v2.py::test_upgrade_tool_refuses_a_database_outside_the_w7_naming_rule",
       "result": "passed",
-      "duration": 0.296
+      "duration": 0.43
     },
     {
       "test": "tests/week7/test_environment.py::test_highest_installed_odbc_driver_is_chosen",
@@ -1214,7 +1214,7 @@
     {
       "test": "tests/week7/test_environment.py::test_explicit_driver_must_be_installed",
       "result": "passed",
-      "duration": 0.0
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_environment.py::test_missing_driver_gives_chinese_guidance",
@@ -1224,7 +1224,7 @@
     {
       "test": "tests/week7/test_environment.py::test_prepare_tool_reports_missing_driver_without_traceback",
       "result": "passed",
-      "duration": 0.0
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_environment.py::test_provisioned_settings_record_the_driver",
@@ -1264,7 +1264,7 @@
     {
       "test": "tests/week7/test_environment.py::test_settings_check_reads_database_name",
       "result": "passed",
-      "duration": 0.002
+      "duration": 0.003
     },
     {
       "test": "tests/week7/test_environment.py::test_report_exit_code_ignores_skipped_checks_but_fails_on_failures",
@@ -1274,7 +1274,7 @@
     {
       "test": "tests/week7/test_environment.py::test_doctor_runs_without_database_when_driver_missing",
       "result": "passed",
-      "duration": 0.028
+      "duration": 0.052
     },
     {
       "test": "tests/week7/test_error_mapping.py::test_business_rule_messages[51305-\\u90e8\\u5206\\u5546\\u54c1\\u5e93\\u5b58\\u4e0d\\u8db3\\uff0c\\u8ba2\\u5355\\u672a\\u7ed3\\u7b97\\uff0c\\u8bf7\\u8c03\\u6574\\u6570\\u91cf\\u540e\\u91cd\\u8bd5\\u3002]",
@@ -1422,19 +1422,64 @@
       "duration": 0.0
     },
     {
-      "test": "tests/week7/test_error_mapping.py::test_not_found_and_forbidden",
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51201-\\u6ca1\\u6709\\u660e\\u7ec6]",
       "result": "passed",
       "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51202-\\u5e93\\u5b58\\u8bb0\\u5f55]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51203-\\u91c7\\u8d2d\\u804c\\u8d23]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51204-\\u4f9b\\u5e94\\u5546]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51814-\\u4f9b\\u5e94\\u5546]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51200-\\u91c7\\u8d2d\\u5355]",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51210-\\u91c7\\u8d2d\\u5355]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51222-\\u91c7\\u8d2d\\u5355]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_purchase_errors_are_business_rules[51410-\\u91c7\\u8d2d\\u5355]",
+      "result": "passed",
+      "duration": 0.0
+    },
+    {
+      "test": "tests/week7/test_error_mapping.py::test_not_found_and_forbidden",
+      "result": "passed",
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_error_mapping.py::test_duplicate_keys[2601]",
       "result": "passed",
-      "duration": 0.0
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_error_mapping.py::test_duplicate_keys[2627]",
       "result": "passed",
-      "duration": 0.0
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_error_mapping.py::test_duplicate_sku_229_is_not_a_permission_error",
@@ -1519,7 +1564,7 @@
     {
       "test": "tests/week7/test_error_mapping.py::test_query_timeout_is_transaction_conflict[HYT01]",
       "result": "passed",
-      "duration": 0.0
+      "duration": 0.001
     },
     {
       "test": "tests/week7/test_error_mapping.py::test_connection_timeout_is_unavailable[HYT00]",
@@ -1535,6 +1580,46 @@
       "test": "tests/week7/test_error_mapping.py::test_unknown_error_is_internal",
       "result": "passed",
       "duration": 0.0
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_admin_confirms_two_product_purchase",
+      "result": "passed",
+      "duration": 0.833
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_purchase_creation_rolls_back_and_rejects_other_roles",
+      "result": "passed",
+      "duration": 5.292
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_purchase_draft_items_can_change_only_before_confirmation",
+      "result": "passed",
+      "duration": 1.212
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_week8_incremental_script_can_be_reapplied_without_losing_data",
+      "result": "passed",
+      "duration": 0.238
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_direct_purchase_item_failure_rolls_back_insert",
+      "result": "passed",
+      "duration": 0.436
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_purchase_rejects_bad_input_and_unknown_records",
+      "result": "passed",
+      "duration": 0.724
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_empty_purchase_cannot_be_confirmed_and_message_is_specific",
+      "result": "passed",
+      "duration": 0.362
+    },
+    {
+      "test": "tests/week7/week8/test_business_flows.py::test_purchase_endpoints_are_admin_only_and_need_csrf",
+      "result": "passed",
+      "duration": 1.126
     }
   ]
 }

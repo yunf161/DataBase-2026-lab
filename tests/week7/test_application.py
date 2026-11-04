@@ -9,7 +9,7 @@ import pytest
 from app import create_app
 from app.database import one
 from app.errors import AppError
-from tools.prepare_week7 import administrative_connection
+from tools.prepare_week7 import DEMO_PASSWORD, administrative_connection
 
 
 def result(response, status=200, code="OK"):
@@ -324,6 +324,37 @@ def test_sql_connection_failure_is_friendly_and_logged(settings):
     assert response.json["request_id"] in log and "database_error" in log and "not-in-logs" not in log
     for handler in failing.extensions["audit_logger"].handlers:
         handler.close()
+
+
+def test_query_timeout_defaults_to_fifteen_seconds(app):
+    assert app.config["DB_QUERY_TIMEOUT"] == 15
+
+
+def test_blocked_inventory_update_times_out_as_transaction_conflict(settings, login, product_data):
+    product_id = result(login("admin").send("POST", "/products", product_data), 201)["product_id"]
+    slow = create_app({**settings, "DB_QUERY_TIMEOUT": 1,
+                       "LOG_PATH": str(Path(settings["LOG_PATH"]).with_name("query-timeout.jsonl"))})
+    client = slow.test_client()
+    token = client.get("/api/auth/session").json["data"]["csrf_token"]
+    response = client.post("/api/auth/login", json={"username": "admin", "password": DEMO_PASSWORD},
+                           headers={"X-CSRF-Token": token})
+    assert response.status_code == 200, response.json
+    token = response.json["data"]["csrf_token"]
+    blocker = administrative_connection(settings["DB_SERVER"], settings["DB_DATABASE"])
+    try:
+        blocker.autocommit = False
+        blocker.execute("UPDATE dbo.Inventory SET MinQuantity=MinQuantity WHERE ProductID=?;", product_id)
+        response = client.patch("/api/inventory/" + str(product_id), json={"min_quantity": 3},
+                                headers={"X-CSRF-Token": token})
+        result(response, 409, "TRANSACTION_FAILED")
+        payload = response.get_data(as_text=True)
+        assert all(word not in payload for word in ["ODBC", "SQL Server", "SQLExec", "Traceback", "UPDATE", "dbo."])
+    finally:
+        blocker.rollback()
+        blocker.close()
+        for handler in slow.extensions["audit_logger"].handlers:
+            handler.close()
+    assert scalar(settings, "SELECT MinQuantity FROM dbo.Inventory WHERE ProductID=?;", product_id) == 10
 
 
 def test_unknown_endpoint_and_invalid_method_share_error_format(login):

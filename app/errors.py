@@ -18,6 +18,7 @@ ERROR_MAP = {
     4060: UNAVAILABLE, 18456: UNAVAILABLE,
     1205: AppError("TRANSACTION_FAILED", "操作因并发冲突未生效，请稍后重试。", 409),
     229: AppError("FORBIDDEN", "当前账号没有执行此操作的权限。", 403),
+    230: AppError("FORBIDDEN", "当前账号没有执行此操作的权限。", 403),
     2601: AppError("DUPLICATE_RECORD", "编号、条码或订单中的商品已存在，请检查后重试。", 409),
     51804: AppError("NOT_FOUND", "记录不存在或当前账号无法访问。", 404),
     51305: AppError("BUSINESS_RULE", "部分商品库存不足，订单未结算，请调整数量后重试。", 409),
@@ -49,7 +50,10 @@ def database_error(error):
     state = str(args[0]) if args else ""
     text = str(args[1]) if len(args) > 1 else str(error)
     natives = [int(n) for n in NATIVE.findall(text)]
-    if state.startswith("08") or state in {"HYT00", "HYT01", "IM002", "28000"}:
+    if state in {"HYT00", "HYT01"}:
+        # 连接阶段超时才是服务不可用；语句执行超时多为锁等待，按并发冲突处理。
+        return UNAVAILABLE if "SQLDriverConnect" in text else ERROR_MAP[1205]
+    if state.startswith("08") or state in {"IM002", "28000"}:
         return UNAVAILABLE
     if state == "40001":
         return ERROR_MAP[1205]

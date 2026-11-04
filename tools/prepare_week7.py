@@ -69,7 +69,7 @@ def seed_users(connection, password):
         """, username, generate_password_hash(password), name, role, employee_id)
 
 
-def provision_database(server, target, password=DEMO_PASSWORD):
+def provision_database(server, target, password=DEMO_PASSWORD, *, apply_week9=True):
     if not DATABASE_NAME.fullmatch(target):
         raise ValueError("目标库名必须为 CampusStoreDB_W7_ 加字母、数字或下划线")
     staging = "CampusStoreDB_W6_W7_" + secrets.token_hex(6)
@@ -97,6 +97,8 @@ def provision_database(server, target, password=DEMO_PASSWORD):
         renamed = True
         connection = administrative_connection(server, target)
         run_script(connection, ROOT / "sql/week7/application.sql")
+        if apply_week9:
+            run_script(connection, ROOT / "sql/week9/application_v2.sql")
         seed_users(connection, password)
         print("已创建迁移后的第七周独立应用数据库：" + target, flush=True)
         return {

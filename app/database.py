@@ -42,7 +42,7 @@ class Database:
             connection_string(self.settings), timeout=self.settings["DB_TIMEOUT"], autocommit=False
         )
         try:
-            connection.timeout = 15
+            connection.timeout = self.settings["DB_QUERY_TIMEOUT"]
             connection.execute(SQL_OPTIONS)
             connection.execute(
                 "EXEC sys.sp_set_session_context @key=N'WebUserID',@value=?,@read_only=1;",

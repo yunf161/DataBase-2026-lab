@@ -20,7 +20,7 @@ def load_settings(overrides=None):
         raise RuntimeError("SECRET_KEY 至少32个字符，请使用准备工具生成本地配置。")
     return {
         "DB_SERVER": r".\SQLEXPRESS", "DB_DRIVER": "ODBC Driver 18 for SQL Server",
-        "DB_TIMEOUT": 5, "DEFAULT_CASHIER_NO": "E003",
+        "DB_TIMEOUT": 5, "DB_QUERY_TIMEOUT": 15, "DEFAULT_CASHIER_NO": "E003",
         "LOG_PATH": str(ROOT / "instance/logs/application.jsonl"),
         "MAX_CONTENT_LENGTH": 128 * 1024,
         "SESSION_COOKIE_HTTPONLY": True, "SESSION_COOKIE_SAMESITE": "Lax",

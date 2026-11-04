@@ -102,6 +102,26 @@ def test_unavailable(error):
     assert (mapped.code, mapped.status) == ("DATABASE_UNAVAILABLE", 503)
 
 
+def test_column_permission_denied_230_is_forbidden_like_229():
+    denied, column_denied = database_error(sql_error(229)), database_error(sql_error(230))
+    assert (column_denied.code, column_denied.status) == ("FORBIDDEN", 403)
+    assert column_denied.message == denied.message
+
+
+@pytest.mark.parametrize("state", ["HYT00", "HYT01"])
+def test_query_timeout_is_transaction_conflict(state):
+    text = f"[{state}] [Microsoft][ODBC Driver 18 for SQL Server]Query timeout expired (0) (SQLExecDirectW)"
+    error = database_error(pyodbc.OperationalError(state, text))
+    assert (error.code, error.status, error.message) == ("TRANSACTION_FAILED", 409, CONFLICT)
+
+
+@pytest.mark.parametrize("state", ["HYT00", "HYT01"])
+def test_connection_timeout_is_unavailable(state):
+    text = f"[{state}] [Microsoft][ODBC Driver 18 for SQL Server]Login timeout expired (0) (SQLDriverConnect)"
+    error = database_error(pyodbc.OperationalError(state, text))
+    assert (error.code, error.status) == ("DATABASE_UNAVAILABLE", 503)
+
+
 def test_unknown_error_is_internal():
     error = database_error(sql_error(99999))
     assert (error.code, error.status) == ("INTERNAL_ERROR", 500)

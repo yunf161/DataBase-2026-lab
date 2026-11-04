@@ -1,4 +1,4 @@
-param([int]$Port=5070)
+﻿param([int]$Port=5070)
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path -Parent $PSScriptRoot
 $python=Join-Path $repoRoot '.venv\Scripts\python.exe'

@@ -36,3 +36,8 @@
 `BaselineInventory`、`BaselineInventoryLog` 只用于数据库副本上的迁移对照；
 `MigrationHistory` 记录迁移代码与执行时间。它们不属于小卖部业务实体，不计入 10 张业务表。
 
+## 第七至九周应用层增量
+
+Web 应用另建 `app` 架构（`app.AppUser`、`app.SaleOwner` 及视图、过程），不改变上述十张业务表，
+字段说明见[应用层数据字典](../week7-application/data-dictionary.md)。
+

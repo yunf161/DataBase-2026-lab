@@ -1,4 +1,4 @@
-# 在独立数据库中运行 SQL 验证；结束时只删除本脚本创建的数据库。
+﻿# 在独立数据库中运行 SQL 验证；结束时只删除本脚本创建的数据库。
 param(
     [string]$ServerInstance = 'localhost'
 )

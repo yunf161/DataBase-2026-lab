@@ -1,0 +1,7 @@
+# command: .\.venv\Scripts\python.exe -m tools.prepare_week7 --server "."
+# exit code: 0
+已创建迁移后的第七周独立应用数据库：CampusStoreDB_W7_Development
+使用驱动：ODBC Driver 18 for SQL Server
+本地配置已写入 instance/settings.json；该目录不提交版本库。
+演示账号：admin / staff / customer / customer2，密码均为 Campus2026!
+启动：.venv\Scripts\python.exe -m app

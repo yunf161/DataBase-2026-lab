@@ -1,0 +1,38 @@
+# command: sqlcmd -S . -E -No -b -f 65001 -W -s " | " -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql
+# run time: 2026-11-04 14:47:31  exit code: 0
+序号 类别 检查项 预期值 实际值 结果 说明
+-- -- --- --- --- -- --
+1 库存 库存等于最新流水 AfterQuantity 6 个商品一致 6 个商品一致 通过 有流水的商品，Inventory.Quantity 必须等于 LogID 最大那条流水的 AfterQuantity
+2 库存 流水所属商品均有库存行 0 条孤立流水 0 条孤立流水 通过 逐条核对 InventoryLog.ProductID 在 Inventory 中存在
+3 订单金额 TotalAmount 等于明细合计 3 张已完成订单一致 3 张已完成订单一致 通过 与 SUM(SaleItem.LineAmount) 逐单比较，不能由订单间差额相互抵消
+4 订单金额 PayableAmount 等于合计减优惠 3 张已完成订单一致 3 张已完成订单一致 通过 应付金额为计算列，同时核对优惠不超过合计
+5 订单金额 已完成订单优惠不超过合计、应付不为负 0 张违规 0 张违规 通过 对应 CK_SaleOrder_Amount 的结果核对
+6 销量统计 销量合计与已完成订单明细一致 数量 15 数量 15 通过 预期值由 SaleItem 与已完成 SaleOrder 直接汇总；实际值来自 v_product_sales
+7 销量统计 销售额合计与已完成订单明细一致 金额 44.50 金额 44.50 通过 同上，按 LineAmount 汇总
+8 销量统计 逐商品销量与销售额一致 6 个商品一致 6 个商品一致 通过 逐商品比较，草稿和已取消订单不得计入
+9 完整性 全库外键与检查约束无违规行 0 行违规 0 行违规 通过 DBCC CHECKCONSTRAINTS WITH ALL_CONSTRAINTS，只读取数据
+10 完整性 外键均启用且受信任 17 个外键有效 17 个外键有效 通过 sys.foreign_keys 的 is_disabled 与 is_not_trusted
+11 完整性 流水来源与业务类型匹配 11 条流水来源正确 11 条流水来源正确 通过 采购类只引用采购单，销售类只引用销售单，盘点类不引用单据
+12 完整性 销售出库流水只来自已完成销售单 5 条来自已完成订单 5 条来自已完成订单 通过 草稿、待受理和已取消订单不得产生库存流水
+13 完整性 采购入库流水只来自已入库采购单 6 条来自已入库订单 6 条来自已入库订单 通过 与销售对称的来源核对
+14 完整性 流水来源、方向和数量检查约束存在且受信任 3 个约束有效 3 个约束有效 通过 CK_InventoryLog_Source / Direction / Quantity
+15 权限 WebAuth：不是 db_owner 0（否） 0 通过 IS_MEMBER(N'db_owner')
+16 权限 WebAuth：不能直接改 Inventory.Quantity 0（无 UPDATE 权限） 0 通过 HAS_PERMS_BY_NAME(Inventory, UPDATE, Quantity)；库存只能经受控过程修改
+17 权限 WebAuth：仅认证读取 AppUser（设计如此） 1（可读，错误 0） 1（错误 0） 通过 登录认证需要读取密码哈希；该身份没有任何业务写权限
+18 权限 WebAdmin：不是 db_owner 0（否） 0 通过 IS_MEMBER(N'db_owner')
+19 权限 WebAdmin：不能直接改 Inventory.Quantity 0（无 UPDATE 权限） 0 通过 HAS_PERMS_BY_NAME(Inventory, UPDATE, Quantity)；库存只能经受控过程修改
+20 权限 WebAdmin：不能读 AppUser 0（无 SELECT 权限） 0 通过 表级与 PasswordHash 列级 SELECT 均为 0
+21 权限 WebAdmin：实际读取 AppUser 被拒绝 错误 229 错误 229 通过 真实执行 SELECT COUNT(*)，只统计行数，不返回任何账号数据
+22 权限 WebStaff：不是 db_owner 0（否） 0 通过 IS_MEMBER(N'db_owner')
+23 权限 WebStaff：不能直接改 Inventory.Quantity 0（无 UPDATE 权限） 0 通过 HAS_PERMS_BY_NAME(Inventory, UPDATE, Quantity)；库存只能经受控过程修改
+24 权限 WebStaff：不能读 AppUser 0（无 SELECT 权限） 0 通过 表级与 PasswordHash 列级 SELECT 均为 0
+25 权限 WebStaff：实际读取 AppUser 被拒绝 错误 229 错误 229 通过 真实执行 SELECT COUNT(*)，只统计行数，不返回任何账号数据
+26 权限 WebCustomer：不是 db_owner 0（否） 0 通过 IS_MEMBER(N'db_owner')
+27 权限 WebCustomer：不能直接改 Inventory.Quantity 0（无 UPDATE 权限） 0 通过 HAS_PERMS_BY_NAME(Inventory, UPDATE, Quantity)；库存只能经受控过程修改
+28 权限 WebCustomer：不能读 AppUser 0（无 SELECT 权限） 0 通过 表级与 PasswordHash 列级 SELECT 均为 0
+29 权限 WebCustomer：实际读取 AppUser 被拒绝 错误 229 错误 229 通过 真实执行 SELECT COUNT(*)，只统计行数，不返回任何账号数据
+30 权限 db_owner 成员中没有 Web* 用户或角色 0 个 0 个 通过 sys.database_role_members
+数据库 检查项 通过 失败
+--- --- -- --
+CampusStoreDB_W7_Development 30 30 0
+最终回归全部通过（只读）

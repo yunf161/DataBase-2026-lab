@@ -1,0 +1,58 @@
+{
+  "results": [
+    {
+      "test": "登录失败友好提示",
+      "result": "passed",
+      "expected": "401，页面显示统一提示",
+      "actual": "用户名或密码不正确。"
+    },
+    {
+      "test": "管理员通过界面完成商品增改删",
+      "result": "passed",
+      "actual": "6.80 → 7.20，商品保持在售，零库存商品删除成功"
+    },
+    {
+      "test": "删除有历史记录商品被拒绝",
+      "result": "passed",
+      "actual": "409，前端显示友好业务提示与参考编号"
+    },
+    {
+      "test": "管理员库存查询",
+      "result": "passed",
+      "actual": "6件商品的库存与预警状态"
+    },
+    {
+      "test": "店员界面与权限",
+      "result": "passed",
+      "actual": "可查库存和订单，无商品维护入口"
+    },
+    {
+      "test": "顾客直接请求库存接口被拒绝",
+      "result": "passed",
+      "actual": "FORBIDDEN",
+      "status": 403
+    },
+    {
+      "test": "顾客草稿完整界面流程",
+      "result": "passed",
+      "actual": "创建、2件可乐7.00、加水9.00、保存备注/支付、移除明细、取消"
+    },
+    {
+      "test": "另一顾客无法访问订单",
+      "result": "passed",
+      "status": 404,
+      "actual": "NOT_FOUND"
+    },
+    {
+      "test": "390px手机布局",
+      "result": "passed",
+      "actual": "页面无整体横向溢出，表格卡片内横向滚动，手机可退出登录"
+    },
+    {
+      "test": "浏览器脚本运行",
+      "result": "passed",
+      "actual": "无未捕获JavaScript异常"
+    }
+  ],
+  "javascript_errors": []
+}

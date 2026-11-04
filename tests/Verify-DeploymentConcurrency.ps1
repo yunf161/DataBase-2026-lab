@@ -1,4 +1,4 @@
-# 自动回归专项检查，由同目录 Verify-CampusStore.ps1 调用。
+﻿# 自动回归专项检查，由同目录 Verify-CampusStore.ps1 调用。
 param([string]$ServerInstance='localhost',[Parameter(Mandatory=$true)][string]$DatabaseName)
 $ErrorActionPreference='Stop'
 if ($DatabaseName -notmatch '^CampusStoreDB_Verify_[0-9a-f]{12}$') {

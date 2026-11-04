@@ -1,0 +1,11 @@
+# command: .\.venv\Scripts\python.exe -m tools.doctor --server "."
+# exit code: 0
+[通过] Python 版本：3.13.12
+[通过] Python 解释器：D:\class\grade3\database\repos\.venv\Scripts\python.exe
+[通过] 依赖版本：共 19 个包，与 requirements-lock.txt 一致
+[通过] ODBC 驱动：ODBC Driver 18 for SQL Server
+[通过] SQL Server 连接：LYF（版本 17.0.1000.7）
+[通过] 建库权限：当前账号可以创建数据库
+[通过] 开发库：CampusStoreDB_W7_Development 已存在
+[通过] instance/settings.json：数据库：CampusStoreDB_W7_Development
+预检完成：全部通过。

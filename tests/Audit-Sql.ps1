@@ -1,4 +1,4 @@
-# 专项验证共用连接函数；调用方必须校验随机数据库名。
+﻿# 专项验证共用连接函数；调用方必须校验随机数据库名。
 function Open-TestConnection([string]$ServerInstance,[string]$DatabaseName) {
     $b=[System.Data.SqlClient.SqlConnectionStringBuilder]::new()
     $b['Data Source']=$ServerInstance

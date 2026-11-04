@@ -1,0 +1,10 @@
+{
+  "package_imports": true,
+  "frozen_baseline_and_migration": true,
+  "login": 200,
+  "products": 200,
+  "product_count": 6,
+  "draft": 201,
+  "draft_amount": "7.00",
+  "database_cleaned": true
+}

@@ -1,0 +1,158 @@
+{
+  "run_at": "2026-11-04 15:46:12",
+  "package": {
+    "file": "v1.0-final.zip",
+    "bytes": 3625581,
+    "sha256": "14c2acf299d6eb2a196f0bd3e00692030cdbe4b2eebd756a667556599b4450ef",
+    "note": "被测 zip。最终交付的 zip 与它的差别只有 results/package-smoke.json（本文件）和重新生成的 SHA256SUMS.json"
+  },
+  "interpreter": "Python 3.13.12",
+  "server": ".",
+  "database": "CampusStoreDB_W7_Test_5bb93ab8861f",
+  "port": 54660,
+  "doctor_before_prepare_failed_items": [
+    "[失败] instance/settings.json：文件不存在"
+  ],
+  "doctor_after_prepare_passed_checks": 8,
+  "steps": [
+    {
+      "step": "1 建虚拟环境",
+      "readme_command": "python -m venv .venv",
+      "replacements": [
+        "python → 指定的真实解释器：Python 3.13.12"
+      ],
+      "exit_code": 0,
+      "seconds": 3.5,
+      "output_tail": [],
+      "ok": true
+    },
+    {
+      "step": "2 安装依赖",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m pip install -r requirements-lock.txt",
+      "replacements": [],
+      "exit_code": 0,
+      "seconds": 9.5,
+      "output_tail": [
+        "  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)",
+        "Collecting waitress==3.0.2 (from -r requirements-lock.txt (line 18))",
+        "  Using cached waitress-3.0.2-py3-none-any.whl.metadata (5.8 kB)",
+        "Collecting Werkzeug==3.1.9 (from -r requirements-lock.txt (line 19))",
+        "  Using cached werkzeug-3.1.9-py3-none-any.whl.metadata (4.1 kB)",
+        "Using cached blinker-1.9.0-py3-none-any.whl (8.5 kB)",
+        "Using cached click-8.5.0-py3-none-any.whl (125 kB)",
+        "Using cached colorama-0.4.6-py2.py3-none-any.whl (25 kB)",
+        "Using cached flask-3.1.3-py3-none-any.whl (103 kB)",
+        "Using cached greenlet-3.5.6-cp313-cp313-win_amd64.whl (324 kB)",
+        "Using cached iniconfig-2.3.1-py3-none-any.whl (7.6 kB)",
+        "Using cached itsdangerous-2.2.0-py3-none-any.whl (16 kB)",
+        "Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)",
+        "Using cached markupsafe-3.0.4-cp313-cp313-win_amd64.whl (14 kB)",
+        "Using cached packaging-26.3-py3-none-any.whl (129 kB)",
+        "Using cached playwright-1.64.0-py3-none-win_amd64.whl (38.7 MB)",
+        "Using cached pyee-14.0.0-py3-none-any.whl (15 kB)",
+        "Using cached pluggy-1.7.0-py3-none-any.whl (27 kB)",
+        "Using cached pygments-2.21.0-py3-none-any.whl (1.3 MB)",
+        "Using cached pyodbc-5.3.0-cp313-cp313-win_amd64.whl (70 kB)",
+        "Using cached pytest-9.1.1-py3-none-any.whl (386 kB)",
+        "Using cached typing_extensions-4.16.0-py3-none-any.whl (45 kB)",
+        "Using cached waitress-3.0.2-py3-none-any.whl (56 kB)",
+        "Using cached werkzeug-3.1.9-py3-none-any.whl (228 kB)",
+        "Installing collected packages: waitress, typing_extensions, pyodbc, Pygments, pluggy, packaging, MarkupSafe, itsdangerous, iniconfig, greenlet, colorama, click, blinker, Werkzeug, pytest, pyee, Jinja2, playwright, Flask",
+        "",
+        "Successfully installed Flask-3.1.3 Jinja2-3.1.6 MarkupSafe-3.0.4 Pygments-2.21.0 Werkzeug-3.1.9 blinker-1.9.0 click-8.5.0 colorama-0.4.6 greenlet-3.5.6 iniconfig-2.3.1 itsdangerous-2.2.0 packaging-26.3 playwright-1.64.0 pluggy-1.7.0 pyee-14.0.0 pyodbc-5.3.0 pytest-9.1.1 typing_extensions-4.16.0 waitress-3.0.2",
+        "",
+        "[notice] A new release of pip is available: 25.3 -> 26.3",
+        "[notice] To update, run: <TEMP>\\.venv\\Scripts\\python.exe -m pip install --upgrade pip"
+      ],
+      "ok": true
+    },
+    {
+      "step": "3 环境预检（建库之前，预期缺 instance/settings.json）",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m tools.doctor --server \".\"",
+      "replacements": [
+        "--server 使用 ."
+      ],
+      "exit_code": 1,
+      "seconds": 0.5,
+      "output_tail": [
+        "[通过] Python 版本：3.13.12",
+        "[通过] Python 解释器：<TEMP>\\.venv\\Scripts\\python.exe",
+        "[通过] 依赖版本：共 19 个包，与 requirements-lock.txt 一致",
+        "[通过] ODBC 驱动：ODBC Driver 18 for SQL Server",
+        "[通过] SQL Server 连接：LYF（版本 17.0.1000.7）",
+        "[通过] 建库权限：当前账号可以创建数据库",
+        "[通过] 开发库：CampusStoreDB_W7_Development 已存在",
+        "[失败] instance/settings.json：文件不存在",
+        "    建议：运行 tools.prepare_week7 生成 instance/settings.json。",
+        "预检完成：1 项失败。"
+      ],
+      "ok": true
+    },
+    {
+      "step": "4 准备数据库",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m tools.prepare_week7 --server \".\" --database CampusStoreDB_W7_Test_5bb93ab8861f",
+      "replacements": [
+        "追加 --database CampusStoreDB_W7_Test_5bb93ab8861f（随机测试库，结束后清理）"
+      ],
+      "exit_code": 0,
+      "seconds": 2.1,
+      "output_tail": [
+        "已创建迁移后的第七周独立应用数据库：CampusStoreDB_W7_Test_5bb93ab8861f",
+        "使用驱动：ODBC Driver 18 for SQL Server",
+        "本地配置已写入 instance/settings.json；该目录不提交版本库。",
+        "演示账号：admin / staff / customer / customer2，密码均为 Campus2026!",
+        "启动：.venv\\Scripts\\python.exe -m app"
+      ],
+      "ok": true
+    },
+    {
+      "step": "5 环境预检（建库之后，预期全部通过）",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m tools.doctor --server \".\"",
+      "replacements": [
+        "--server 使用 ."
+      ],
+      "exit_code": 0,
+      "seconds": 0.3,
+      "output_tail": [
+        "[通过] Python 版本：3.13.12",
+        "[通过] Python 解释器：<TEMP>\\.venv\\Scripts\\python.exe",
+        "[通过] 依赖版本：共 19 个包，与 requirements-lock.txt 一致",
+        "[通过] ODBC 驱动：ODBC Driver 18 for SQL Server",
+        "[通过] SQL Server 连接：LYF（版本 17.0.1000.7）",
+        "[通过] 建库权限：当前账号可以创建数据库",
+        "[通过] 开发库：CampusStoreDB_W7_Test_5bb93ab8861f 已存在",
+        "[通过] instance/settings.json：数据库：CampusStoreDB_W7_Test_5bb93ab8861f",
+        "预检完成：全部通过。"
+      ],
+      "ok": true
+    },
+    {
+      "step": "6 启动并用 admin 登录",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m app --port 5070",
+      "replacements": [
+        "端口 5070 → 54660"
+      ],
+      "ok": true,
+      "detail": {
+        "url": "http://127.0.0.1:54660",
+        "started": true,
+        "login_status": 200,
+        "ok": true,
+        "role": "ADMIN",
+        "message": "登录成功。",
+        "products_status": 200,
+        "products_total": 6
+      }
+    },
+    {
+      "step": "7 清理",
+      "ok": true,
+      "detail": {
+        "database": "CampusStoreDB_W7_Test_5bb93ab8861f",
+        "database_dropped": true,
+        "temp_directory_removed": true
+      }
+    }
+  ],
+  "passed": true
+}

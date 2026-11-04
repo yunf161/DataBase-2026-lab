@@ -1,0 +1,300 @@
+{
+  "exit_status": 0,
+  "results": [
+    {
+      "test": "tests/week7/test_application.py::test_public_page_is_served_without_database",
+      "result": "passed",
+      "duration": 0.089
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unauthenticated_requests_are_rejected[GET-/products]",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unauthenticated_requests_are_rejected[GET-/inventory]",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unauthenticated_requests_are_rejected[GET-/orders]",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unauthenticated_requests_are_rejected[POST-/orders]",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[admin-ADMIN]",
+      "result": "passed",
+      "duration": 0.212
+    },
+    {
+      "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[staff-STAFF]",
+      "result": "passed",
+      "duration": 0.205
+    },
+    {
+      "test": "tests/week7/test_application.py::test_roles_come_from_authenticated_account[customer-CUSTOMER]",
+      "result": "passed",
+      "duration": 0.24
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[admin]",
+      "result": "passed",
+      "duration": 0.142
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[does-not-exist]",
+      "result": "passed",
+      "duration": 0.228
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_login_does_not_reveal_account_or_accept_injection[' OR 1=1--]",
+      "result": "passed",
+      "duration": 0.228
+    },
+    {
+      "test": "tests/week7/test_application.py::test_login_requires_csrf",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_write_requires_current_csrf_token",
+      "result": "passed",
+      "duration": 0.333
+    },
+    {
+      "test": "tests/week7/test_application.py::test_logout_invalidates_access",
+      "result": "passed",
+      "duration": 0.261
+    },
+    {
+      "test": "tests/week7/test_application.py::test_read_response_cannot_restore_a_logged_out_cookie",
+      "result": "passed",
+      "duration": 0.306
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unsigned_session_cookie_is_rejected",
+      "result": "passed",
+      "duration": 0.001
+    },
+    {
+      "test": "tests/week7/test_application.py::test_malformed_json_has_uniform_response",
+      "result": "passed",
+      "duration": 0.002
+    },
+    {
+      "test": "tests/week7/test_application.py::test_product_crud_keeps_inventory_consistent",
+      "result": "passed",
+      "duration": 0.486
+    },
+    {
+      "test": "tests/week7/test_application.py::test_product_maintenance_requires_admin[staff]",
+      "result": "passed",
+      "duration": 0.3
+    },
+    {
+      "test": "tests/week7/test_application.py::test_product_maintenance_requires_admin[customer]",
+      "result": "passed",
+      "duration": 0.313
+    },
+    {
+      "test": "tests/week7/test_application.py::test_product_duplicate_is_a_friendly_conflict",
+      "result": "passed",
+      "duration": 0.351
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price--1]",
+      "result": "passed",
+      "duration": 0.356
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-NaN]",
+      "result": "passed",
+      "duration": 0.25
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-1.234]",
+      "result": "passed",
+      "duration": 0.247
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sale_price-True]",
+      "result": "passed",
+      "duration": 0.248
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[category_id-True]",
+      "result": "passed",
+      "duration": 0.247
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[status-4]",
+      "result": "passed",
+      "duration": 0.244
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[sku-bad' OR 1=1--]",
+      "result": "passed",
+      "duration": 0.254
+    },
+    {
+      "test": "tests/week7/test_application.py::test_bad_product_input_is_rejected[product_name-]",
+      "result": "passed",
+      "duration": 0.248
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_category_uses_database_constraint",
+      "result": "passed",
+      "duration": 0.282
+    },
+    {
+      "test": "tests/week7/test_application.py::test_product_with_history_cannot_be_deleted",
+      "result": "passed",
+      "duration": 0.295
+    },
+    {
+      "test": "tests/week7/test_application.py::test_search_is_parameterized_and_wildcards_are_literal",
+      "result": "passed",
+      "duration": 0.733
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query0]",
+      "result": "passed",
+      "duration": 0.262
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query1]",
+      "result": "passed",
+      "duration": 0.271
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query2]",
+      "result": "passed",
+      "duration": 0.258
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_list_parameters_are_rejected[query3]",
+      "result": "passed",
+      "duration": 0.257
+    },
+    {
+      "test": "tests/week7/test_application.py::test_customer_cannot_access_inventory_or_inactive_catalog",
+      "result": "passed",
+      "duration": 0.757
+    },
+    {
+      "test": "tests/week7/test_application.py::test_inventory_threshold_does_not_change_quantity",
+      "result": "passed",
+      "duration": 0.79
+    },
+    {
+      "test": "tests/week7/test_application.py::test_customer_draft_ownership_and_price",
+      "result": "passed",
+      "duration": 0.948
+    },
+    {
+      "test": "tests/week7/test_application.py::test_draft_items_add_update_delete_cancel",
+      "result": "passed",
+      "duration": 1.349
+    },
+    {
+      "test": "tests/week7/test_application.py::test_customer_cannot_override_price_owner_employee_or_status",
+      "result": "passed",
+      "duration": 0.699
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[None]",
+      "result": "passed",
+      "duration": 0.24
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[payment1]",
+      "result": "passed",
+      "duration": 0.265
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[payment2]",
+      "result": "passed",
+      "duration": 0.247
+    },
+    {
+      "test": "tests/week7/test_application.py::test_invalid_payment_types_are_input_errors[False]",
+      "result": "passed",
+      "duration": 0.246
+    },
+    {
+      "test": "tests/week7/test_application.py::test_order_creation_rolls_back_all_partial_writes",
+      "result": "passed",
+      "duration": 0.469
+    },
+    {
+      "test": "tests/week7/test_application.py::test_duplicate_order_lines_roll_back_header_and_first_line",
+      "result": "passed",
+      "duration": 0.339
+    },
+    {
+      "test": "tests/week7/test_application.py::test_completed_orders_reject_mutations",
+      "result": "passed",
+      "duration": 0.629
+    },
+    {
+      "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[ADMIN-admin-WebAdmin]",
+      "result": "passed",
+      "duration": 0.283
+    },
+    {
+      "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[STAFF-staff-WebStaff]",
+      "result": "passed",
+      "duration": 0.291
+    },
+    {
+      "test": "tests/week7/test_application.py::test_database_execution_identity_has_no_owner_or_sensitive_table_access[CUSTOMER-customer-WebCustomer]",
+      "result": "passed",
+      "duration": 0.281
+    },
+    {
+      "test": "tests/week7/test_application.py::test_database_view_enforces_ownership_without_api_filter",
+      "result": "passed",
+      "duration": 0.699
+    },
+    {
+      "test": "tests/week7/test_application.py::test_disabled_account_is_rechecked_for_existing_session",
+      "result": "passed",
+      "duration": 0.274
+    },
+    {
+      "test": "tests/week7/test_application.py::test_sql_connection_failure_is_friendly_and_logged",
+      "result": "passed",
+      "duration": 1.265
+    },
+    {
+      "test": "tests/week7/test_application.py::test_unknown_endpoint_and_invalid_method_share_error_format",
+      "result": "passed",
+      "duration": 0.364
+    },
+    {
+      "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[GET-/orders/9223372036854775808]",
+      "result": "passed",
+      "duration": 0.268
+    },
+    {
+      "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[DELETE-/products/0]",
+      "result": "passed",
+      "duration": 0.273
+    },
+    {
+      "test": "tests/week7/test_application.py::test_path_identifiers_are_bounded_before_database_access[PATCH-/orders/1/items/9999999999999999999999999999]",
+      "result": "passed",
+      "duration": 0.253
+    },
+    {
+      "test": "tests/week7/test_application.py::test_request_log_has_trace_role_code_and_result",
+      "result": "passed",
+      "duration": 0.267
+    }
+  ]
+}

@@ -1,22 +1,25 @@
-# 第七周：Web应用、登录与基础CRUD
+# 第七至九周：Web应用、下单结算与库存调整
 
-本周交付可运行的Flask + SQL Server Web程序。管理员维护商品及库存预警；
-店员查询库存和销售订单、管理草稿；顾客浏览在售商品并创建、查看和修改自己的草稿。
-登录、参数化查询、统一异常、数据库最小权限、订单归属和真实集成验证已接通。
+本目录是第二阶段应用部分的文档。Flask + SQL Server Web程序，管理员维护商品、库存和盘点调整；
+店员受理并结算顾客提交的订单；顾客浏览在售商品、加入购物车、提交并查看自己的订单。
+登录、参数化查询、统一异常、数据库最小权限、订单归属和真实集成验证均已接通。
 应用使用第六周迁移后的数据结构，原正式库及第1—6周冻结提交保持原样。
+项目总览、运行方法和测试结果以[根目录README](../../README.md)为准，本页保留第七周的运行细节。
 
-## 本周范围
+## 范围
 
-已实现登录/退出、三角色界面、商品增改查及安全删除、库存查询/预警阈值维护、
-订单查询、草稿创建、明细增改删、支付方式/备注/店员优惠维护、草稿取消。
-草稿不扣库存，界面不会把它展示为已完成销售。第八周接采购入库、销售结算及受控盘点调整，
-第九周补齐整个第二阶段流程和交付。已有采购/结算过程保留，没有在页面重写库存扣减。
+第七周：登录/退出、三角色界面、商品增改查及安全删除、库存查询/预警阈值维护、订单查询、草稿创建、明细增改删、
+支付方式/备注/店员优惠维护、草稿取消。
+第八至九周：顾客购物车和提交订单（`app.SubmitSale`，写入 `app.SaleOwner.SubmittedAt`）、店员/管理员结算
+（`app.SettleSale`，调用既有 `dbo.CompleteSale` 扣库存并写流水）、管理员库存调整和库存流水查看、待受理筛选、
+环境预检（`tools.doctor`）和旧开发库升级（`tools.upgrade_week9`）。
+草稿和待受理订单不扣库存，界面不会把它们展示为已完成销售。采购入库仍使用已有的 `dbo.ConfirmPurchase`，没有采购界面。
 
 ## 环境与首次运行
 
-实际验证环境为Windows x64、Python 3.14.2、SQL Server Express、
-ODBC Driver 18、Flask 3.1.3、pyodbc 5.3.0。
-数据库实例以SSMS实际连接名为准，本机是 `.\SQLEXPRESS`。
+第七周当时的验证环境为Windows x64、Python 3.14.2、SQL Server Express、ODBC Driver 18、Flask 3.1.3、pyodbc 5.3.0；
+最终验证环境（Windows、SQL Server 2025 Developer 默认实例、Python 3.13.12、ODBC Driver 18）见[验证记录](verification.md)。
+数据库实例以SSMS实际连接名为准：Express通常是 `.\SQLEXPRESS`，默认实例写 `"."`。
 准备工具使用的Windows账号需有建库权限；应用连接账号需能连接新库并模拟四个受限用户。
 
 在项目根目录执行：
@@ -36,7 +39,7 @@ python -m venv .venv
 可用 `--driver` 指定，所选驱动写入 `instance/settings.json` 的 `DB_DRIVER`。
 
 打开 <http://127.0.0.1:5070>。之后启动只需要最后一行，也可运行
-`.\tools\Start-Week7.ps1 -Port 5070`。
+`powershell -NoProfile -ExecutionPolicy Bypass -File tools\Start-Week7.ps1 -Port 5070`（不受脚本执行策略影响）。
 准备工具建立 `CampusStoreDB_W7_Development`：从冻结v0.1建立随机W6副本，
 执行原baseline.sql和migration.sql，再将新副本改为W7名称并部署应用增量。
 它不迁移正式CampusStoreDB，不覆盖已有目标库，不重跑固定名称01/03到正式库。
@@ -108,11 +111,13 @@ WebAuth、WebAdmin、WebStaff、WebCustomer均不是db_owner，业务身份不�
 测试库结束清理，开发库保留供课堂演示。验证数、逐项结果、原始输出和截图见[验证记录](verification.md)。
 
 - [操作手册](user-manual.md)
+- [架构、状态流转、权限与事务边界](architecture.md)
 - [API输入输出与权限](api.md)
+- [数据字典：app 架构](data-dictionary.md)
 - [第七周报告素材](report-material.md)
 - [三人分工填写样例](teamwork-template.md)
 
-AI使用记录按此前组内安排另行整理，本次未修改既有AI记录。
+AI使用记录见仓库根目录的 `ai_log/`。
 
 ## 实现参考
 

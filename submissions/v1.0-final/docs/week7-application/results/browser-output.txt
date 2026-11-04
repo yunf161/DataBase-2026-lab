@@ -1,0 +1,1 @@
+{"browser_checks": 10, "result": "passed"}

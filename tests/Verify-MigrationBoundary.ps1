@@ -1,4 +1,4 @@
-param([string]$ServerInstance='localhost',[Parameter(Mandatory=$true)][string]$DatabaseName,
+﻿param([string]$ServerInstance='localhost',[Parameter(Mandatory=$true)][string]$DatabaseName,
       [ValidateSet('Before','After')][string]$Phase='Before')
 $ErrorActionPreference='Stop'
 if ($DatabaseName -notmatch '^CampusStoreDB_W6_[0-9a-f]{12}$') { throw '迁移边界测试禁止连接正式库' }

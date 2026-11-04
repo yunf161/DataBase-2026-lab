@@ -1,4 +1,4 @@
-param([string]$ServerInstance='localhost',[Parameter(Mandatory=$true)][string]$DatabaseName,
+﻿param([string]$ServerInstance='localhost',[Parameter(Mandatory=$true)][string]$DatabaseName,
       [ValidateSet('Negative','Week6')][string]$Mode)
 $ErrorActionPreference='Stop'
 if ($DatabaseName -notmatch '^CampusStoreDB_(Verify|W6)_[0-9a-f]{12}$') { throw '清理故障测试禁止连接正式库' }

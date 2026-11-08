@@ -137,8 +137,8 @@
             <Array as="points" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="label-R10" value="R10 当前库存 业务1..1 / 1..1*" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
-          <mxGeometry x="911" y="773" width="299" height="28" as="geometry" />
+        <mxCell id="label-R10" value="R10 0..1/1..1*" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=15;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="969" y="598" width="182" height="28" as="geometry" />
         </mxCell>
         <mxCell id="R11" value="" edge="1" parent="1" source="Product" target="InventoryLog" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;html=1;fontSize=13;labelBackgroundColor=#ffffff;strokeColor=#43627a;">
           <mxGeometry relative="1" as="geometry">

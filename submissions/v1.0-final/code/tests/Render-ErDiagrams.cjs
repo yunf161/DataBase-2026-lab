@@ -4,7 +4,11 @@ const path = require('path');
 const sharp = require('sharp');
 const root = path.resolve(__dirname, '..');
 (async () => {
-  for (const [directory, stem] of [['week5-er', 'week5-er'], ['week6-normalization', 'week6-er']]) {
+  for (const [directory, stem] of [
+    ['week5-er', 'week5-er'],
+    ['week6-normalization', 'week6-er'],
+    ['week7-application', 'app-er'],
+  ]) {
     const base = path.join(root, 'docs', directory, stem);
     await sharp(fs.readFileSync(base + '.svg')).png().toFile(base + '.png');
     console.log('Rendered ' + base + '.png');

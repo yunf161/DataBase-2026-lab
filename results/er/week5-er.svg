@@ -100,8 +100,8 @@
 <text x="1840" y="810" class="edge-label" text-anchor="middle">R08 销售包含 0..N / 1..1</text>
 <rect x="1177" y="826" width="247" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
 <text x="1300" y="845" class="edge-label" text-anchor="middle">R09 被售出 0..N / 1..1</text>
-<rect x="911" y="776" width="299" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
-<text x="1060" y="795" class="edge-label" text-anchor="middle">R10 当前库存 业务1..1 / 1..1*</text>
+<rect x="969" y="601" width="182" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
+<text x="1060" y="620" class="edge-label" text-anchor="middle">R10 0..1/1..1*</text>
 <rect x="1560" y="386" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>
 <text x="1690" y="405" class="edge-label" text-anchor="middle">R11 库存变化 0..N / 1..1</text>
 <rect x="1940" y="6" width="260" height="25" rx="5" fill="#f8fbfd" opacity="0.96"/>

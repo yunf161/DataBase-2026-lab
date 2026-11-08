@@ -1,12 +1,12 @@
 # 结果目录说明
 
-本目录收录第二阶段（第 5—9 周）的实际运行结果。所有数字和截图来自 2026-11-04 在本机的真实运行（Windows、SQL Server 2025 Developer 默认实例、Python 3.13.12、ODBC Driver 18），没有手工编写的测试结果。找不到来源的内容在文档中标为“待补充”。
+本目录收录第二阶段（第 5—9 周）的实际运行结果。应用、迁移、数据库回归数字和浏览器截图来自 2026-11-04 的真实运行（Windows、SQL Server 2025 Developer 默认实例、Python 3.13.12、ODBC Driver 18）；更新后的交付包于 2026-11-08 在 SQL Server Express、Python 3.12 上重新做空环境烟测，见 `package-smoke.json`。没有手工编写的测试结果；找不到来源的内容标为“待补充”。
 
 ## 目录内容
 
 | 路径 | 内容 | 来源 |
 | --- | --- | --- |
-| [er/](er) | 第 5 周 v0.1 ER 图、第 6 周 v1.0 ER 图，各有 draw.io 源文件、SVG 和 PNG | 复制自 `docs/week5-er/`、`docs/week6-normalization/` |
+| [er/](er) | 第 5 周 v0.1、第 6 周 v1.0 核心业务 ER 图，以及最终应用层 ER 补充图，各有 draw.io 源文件、SVG 和 PNG | 复制自 `docs/week5-er/`、`docs/week6-normalization/`、`docs/week7-application/` |
 | [normalization/](normalization) | 函数依赖清单、范式与异常分析、目标结构与无损/依赖保持证明 | 复制自 `docs/week6-normalization/`，只调整了相对链接 |
 | [migration/](migration) | 迁移前后关键结果 [key-results.md](migration/key-results.md)；两个验证脚本的完整输出 | `tests\Verify-Week6Migration.ps1`、`tests\Verify-CampusStore.ps1` |
 | [app-test/](app-test) | 应用集成测试（324 项）、浏览器验收（27 项）、23 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |

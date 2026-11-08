@@ -276,7 +276,9 @@ sequenceDiagram
 | 采购单 → 库存流水（R14，第 6 周新增） | 0..N / 0..1 | `InventoryLog.PurchaseID` 可空外键 |
 | 销售单 → 库存流水（R15，第 6 周新增） | 0..N / 0..1 | `InventoryLog.SaleID` 可空外键 |
 
-第 5 周曾拟议“会员”实体（R13），第 6 周因“不保存顾客身份”的业务边界取消，没有增加空壳表。应用层另有 `app.AppUser`、`app.SaleOwner` 两张表（含 `SubmittedAt`），不改变核心十表，见[应用层数据字典](docs/week7-application/data-dictionary.md)。
+第 5 周曾拟议“会员”实体（R13），第 6 周按当时“不保存顾客身份”的业务边界取消，没有增加空壳表。第 7—9 周为网页登录和订单归属新增 `app.AppUser`、`app.SaleOwner`（含 `SubmittedAt`），不改变核心十表；最终关系见[应用层 ER 补充图](docs/week7-application/app-er.md)和[应用层数据字典](docs/week7-application/data-dictionary.md)。
+
+![最终应用层 ER 补充图](results/er/app-er.png)
 
 ### 7.2 依赖分析
 
@@ -409,14 +411,14 @@ sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W6_Group1 -i sql\week6\regressio
 
 所有测试都在真实 SQL Server 上运行，不用 SQLite 替代，每次使用随机命名的测试库并在结束时清理。
 
-| 命令 | 内容 | 本次结果（2026-11-04） |
+| 命令 | 内容 | 本次结果（时间见原始记录） |
 | --- | --- | --- |
 | `.\.venv\Scripts\python.exe -m tools.doctor --server "."` | 环境预检 | 8 项全部通过（[doctor.txt](results/doctor.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-Week6Migration.ps1 -ServerInstance "."` | 第 6 周迁移 | 退出码 0，21 + 8 + 3 + 1 项通过（[输出](results/migration/verify-week6-migration.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-CampusStore.ps1 -ServerInstance "."` | 第 1—4 周主流程与反例 | 退出码 0（[输出](results/migration/verify-campusstore.txt)） |
 | `sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 最终只读回归 | 30 项通过、0 项失败（[final-regression.txt](results/final-regression.txt)） |
 | `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **324 项集成测试通过、27 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
-| `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server "."` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
+| `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server ".\SQLEXPRESS"` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 2026-11-08 在 SQL Server Express 上全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
 
 单独运行集成测试：
 

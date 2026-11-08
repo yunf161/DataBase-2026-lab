@@ -1,5 +1,7 @@
 # 数据字典：app 架构（第七至九周增量）
 
+最终应用层实体、联系基数和参与约束见[应用层 ER 补充图](app-er.md)。
+
 十张核心业务表的字段见[第二周关系模式](../week2-schema.md)和[v1.0 数据字典](../week6-normalization/data-dictionary.md)，
 应用增量没有修改它们。`app` 架构由 [sql/week7/application.sql](../../code/sql/week7/application.sql) 创建，
 第九周增量 [sql/week9/application_v2.sql](../../code/sql/week9/application_v2.sql) 只在 `app.SaleOwner` 上增加 `SubmittedAt` 并重建视图和过程。

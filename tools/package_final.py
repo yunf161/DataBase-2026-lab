@@ -25,7 +25,8 @@ DOC_DIRS = ["results", "docs", "report", "ai_log"]
 # 复制自第 1—4 周和第 6 周的原始 AI 记录：只替换本机路径，不改写其中的相对链接（它们原本指向旧提交包的内部结构）。
 KEEP_LINKS = ("ai_log/week1-4/", "ai_log/week6/")
 SKIP_DIR_NAMES = {"__pycache__", ".venv", "instance", ".vs", ".pytest_cache", ".git"}
-SKIP_FILES = {".github/copilot-instructions.md"}
+# 本机个人草稿保留在工作区，正式 AI 记录统一从 ai_log/ 收录。
+SKIP_FILES = {".github/copilot-instructions.md", "docs/AI使用记录.md"}
 SKIP_SUFFIXES = {".pyc"}
 TEXT_SUFFIXES = {".md", ".txt", ".json", ".jsonl", ".xml", ".csv", ".svg", ".drawio", ".sql", ".py", ".ps1",
                  ".cjs", ".ini", ".html", ".css", ".js"}
@@ -116,6 +117,9 @@ def rewrite_links(text, source_relative, mapping, dropped):
 def build(output):
     mapping = dict(collect())
     problems, dropped, code_hits = [], [], []
+    # 已有交付包中内容相同的文件保留原换行字节，避免不同 Windows Git 配置制造整文件差异。
+    previous = {path.relative_to(output).as_posix(): path.read_bytes()
+                for path in output.rglob("*") if path.is_file()} if output.exists() else {}
     if output.exists():
         shutil.rmtree(output)
     for source_relative, location in mapping.items():
@@ -140,6 +144,16 @@ def build(output):
                             first_break = text.index("\n")
                             text = text[:first_break + 1] + NOTICE + text[first_break + 1:]
                     data = text.encode("utf-8")
+        old = previous.get(location)
+        if old is not None and suffix in TEXT_SUFFIXES:
+            # 内容改动时仍沿用包内原有换行风格；只有换行差异时复用原字节。
+            linefeeds, crlfs = old.count(b"\n"), old.count(b"\r\n")
+            if linefeeds and linefeeds == crlfs:
+                data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+            elif linefeeds and not crlfs:
+                data = data.replace(b"\r\n", b"\n")
+            if old.replace(b"\r\n", b"\n") == data.replace(b"\r\n", b"\n"):
+                data = old
         destination = output / location
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(data)

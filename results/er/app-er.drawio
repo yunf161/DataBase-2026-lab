@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="Final app ER" id="app-er">
+    <mxGraphModel dx="1600" dy="900" grid="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="校园小卖部最终应用层 ER 补充图" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=28;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="70" y="20" width="1100" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" value="与第六周十张核心业务表 ER 图配套；黄色实体由第七至九周应用新增" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="70" y="70" width="1370" height="35" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" value="PK 主码；AK 候选码；FK 外码。联系标签按 source→target / 反向读取。&lt;br&gt;* 顾客账号不关联员工；管理员/店员账号必须关联一名员工。员工可没有应用账号。&lt;br&gt;** 旧销售单可没有归属行；通过应用创建的新销售单由过程写入归属。账号不是会员实体。" vertex="1" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=17;fontColor=#183047;whiteSpace=wrap;">
+          <mxGeometry x="80" y="790" width="1440" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="Employee" value="&lt;b&gt;员工 Employee&lt;/b&gt;&lt;br&gt;PK EmployeeID&lt;br&gt;AK EmployeeNo&lt;br&gt;RoleName / Status" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=16;fontSize=17;strokeColor=#35536b;fillColor=#ffffff;">
+          <mxGeometry x="100" y="130" width="360" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="AppUser" value="&lt;b&gt;应用账号 app.AppUser&lt;/b&gt;&lt;br&gt;PK UserID；AK Username&lt;br&gt;FK EmployeeID（可空、非空唯一）&lt;br&gt;RoleName / Status&lt;br&gt;PasswordHash / DisplayName" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=16;fontSize=17;strokeColor=#35536b;fillColor=#fff2cc;">
+          <mxGeometry x="1080" y="130" width="360" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="SaleOrder" value="&lt;b&gt;销售单 dbo.SaleOrder&lt;/b&gt;&lt;br&gt;PK SaleID；AK SaleNo&lt;br&gt;FK EmployeeID&lt;br&gt;Status / TotalAmount" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=16;fontSize=17;strokeColor=#35536b;fillColor=#ffffff;">
+          <mxGeometry x="100" y="500" width="360" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="SaleOwner" value="&lt;b&gt;订单归属 app.SaleOwner&lt;/b&gt;&lt;br&gt;PK+FK SaleID&lt;br&gt;FK UserID&lt;br&gt;SubmittedAt（可空）&lt;br&gt;CreatedAt" vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=middle;spacingLeft=16;fontSize=17;strokeColor=#35536b;fillColor=#fff2cc;">
+          <mxGeometry x="1080" y="500" width="360" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="R07" value="" edge="1" parent="1" source="Employee" target="SaleOrder" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43627a;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-R07" value="R07 经办销售 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="130" y="413" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A01" value="" edge="1" parent="1" source="Employee" target="AppUser" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43627a;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-A01" value="A01 员工账号 0..1 / 0..1*" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="620" y="193" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A02" value="" edge="1" parent="1" source="AppUser" target="SaleOwner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43627a;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-A02" value="A02 创建订单 0..N / 1..1" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="1110" y="413" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="A03" value="" edge="1" parent="1" source="SaleOrder" target="SaleOwner" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#43627a;strokeWidth=2;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="label-A03" value="A03 归属记录 0..1 / 1..1**" vertex="1" parent="1" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=#f8fbfd;strokeColor=none;whiteSpace=wrap;">
+          <mxGeometry x="620" y="563" width="300" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

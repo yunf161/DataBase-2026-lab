@@ -1,15 +1,15 @@
 {
-  "run_at": "2026-11-09 13:52:39",
+  "run_at": "2026-11-09 17:50:19",
   "package": {
     "file": "v1.0-final.zip",
-    "bytes": 6241812,
-    "sha256": "a06ee1504a678cc714f895cbd842d757ed2ae278f96740b15d2108652d7b690a",
+    "bytes": 8638994,
+    "sha256": "af705eb911ad73293387b154eb051d0f96fb792115f37931579bc2744ef5b5a1",
     "note": "被测 zip。最终交付的 zip 与它的差别只有 results/package-smoke.json（本文件）和重新生成的 SHA256SUMS.json"
   },
   "interpreter": "Python 3.13.12",
   "server": ".",
-  "database": "CampusStoreDB_W7_Test_cbd236542055",
-  "port": 64105,
+  "database": "CampusStoreDB_W7_Test_d82bed2300c1",
+  "port": 51405,
   "doctor_before_prepare_failed_items": [
     "[失败] instance/settings.json：文件不存在"
   ],
@@ -22,7 +22,7 @@
         "python → 指定的真实解释器：Python 3.13.12"
       ],
       "exit_code": 0,
-      "seconds": 3.5,
+      "seconds": 3.3,
       "output_tail": [],
       "ok": true
     },
@@ -31,7 +31,7 @@
       "readme_command": ".\\.venv\\Scripts\\python.exe -m pip install -r requirements-lock.txt",
       "replacements": [],
       "exit_code": 0,
-      "seconds": 8.8,
+      "seconds": 5.7,
       "output_tail": [
         "  Using cached typing_extensions-4.16.0-py3-none-any.whl.metadata (3.3 kB)",
         "Collecting waitress==3.0.2 (from -r requirements-lock.txt (line 18))",
@@ -90,14 +90,14 @@
     },
     {
       "step": "4 准备数据库",
-      "readme_command": ".\\.venv\\Scripts\\python.exe -m tools.prepare_week7 --server \".\" --database CampusStoreDB_W7_Test_cbd236542055",
+      "readme_command": ".\\.venv\\Scripts\\python.exe -m tools.prepare_week7 --server \".\" --database CampusStoreDB_W7_Test_d82bed2300c1",
       "replacements": [
-        "追加 --database CampusStoreDB_W7_Test_cbd236542055（随机测试库，结束后清理）"
+        "追加 --database CampusStoreDB_W7_Test_d82bed2300c1（随机测试库，结束后清理）"
       ],
       "exit_code": 0,
-      "seconds": 2.7,
+      "seconds": 2.3,
       "output_tail": [
-        "已创建迁移后的独立应用数据库：CampusStoreDB_W7_Test_cbd236542055",
+        "已创建迁移后的独立应用数据库：CampusStoreDB_W7_Test_d82bed2300c1",
         "使用驱动：ODBC Driver 18 for SQL Server",
         "本地配置已写入 instance/settings.json；该目录不提交版本库。",
         "演示账号：admin / staff / customer / customer2，密码均为 Campus2026!",
@@ -112,7 +112,7 @@
         "--server 使用 ."
       ],
       "exit_code": 0,
-      "seconds": 0.4,
+      "seconds": 0.3,
       "output_tail": [
         "[通过] Python 版本：3.13.12",
         "[通过] Python 解释器：<TEMP>\\.venv\\Scripts\\python.exe",
@@ -120,8 +120,8 @@
         "[通过] ODBC 驱动：ODBC Driver 18 for SQL Server",
         "[通过] SQL Server 连接：LYF（版本 17.0.1000.7）",
         "[通过] 建库权限：当前账号可以创建数据库",
-        "[通过] 开发库：CampusStoreDB_W7_Test_cbd236542055 已存在",
-        "[通过] instance/settings.json：数据库：CampusStoreDB_W7_Test_cbd236542055",
+        "[通过] 开发库：CampusStoreDB_W7_Test_d82bed2300c1 已存在",
+        "[通过] instance/settings.json：数据库：CampusStoreDB_W7_Test_d82bed2300c1",
         "预检完成：全部通过。"
       ],
       "ok": true
@@ -130,11 +130,11 @@
       "step": "6 启动并用 admin 登录",
       "readme_command": ".\\.venv\\Scripts\\python.exe -m app --port 5070",
       "replacements": [
-        "端口 5070 → 64105"
+        "端口 5070 → 51405"
       ],
       "ok": true,
       "detail": {
-        "url": "http://127.0.0.1:64105",
+        "url": "http://127.0.0.1:51405",
         "started": true,
         "login_status": 200,
         "ok": true,
@@ -148,7 +148,7 @@
       "step": "7 清理",
       "ok": true,
       "detail": {
-        "database": "CampusStoreDB_W7_Test_cbd236542055",
+        "database": "CampusStoreDB_W7_Test_d82bed2300c1",
         "database_dropped": true,
         "temp_directory_removed": true
       }

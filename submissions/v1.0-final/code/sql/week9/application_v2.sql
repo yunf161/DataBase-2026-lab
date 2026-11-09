@@ -23,9 +23,15 @@ SELECT so.SaleID AS sale_id,so.SaleNo AS sale_no,so.Status AS status,
  COALESCE((SELECT SUM(si.LineAmount) FROM dbo.SaleItem si WHERE si.SaleID=so.SaleID),0) AS draft_amount,
  so.Remark AS remark,so.CreatedAt AS created_at,own.UserID AS owner_user_id,
  own.SubmittedAt AS submitted_at,
- CASE WHEN ou.RoleName='CUSTOMER' THEN 1 ELSE 0 END AS is_customer_order
+ CASE WHEN ou.RoleName='CUSTOMER' THEN 1 ELSE 0 END AS is_customer_order,
+ -- SaleTime 建单时有默认值，结算时改写为结算时间，所以只在已完成时作为结算时间返回。
+ CASE WHEN so.Status='COMPLETED' THEN so.SaleTime END AS settled_at,
+ -- 经办员工只给员工身份看，顾客只看到结算时间。
+ CASE WHEN USER_NAME() IN (N'WebAdmin',N'WebStaff') THEN e.EmployeeNo END AS employee_no,
+ CASE WHEN USER_NAME() IN (N'WebAdmin',N'WebStaff') THEN e.EmployeeName END AS employee_name
 FROM dbo.SaleOrder so LEFT JOIN app.SaleOwner own ON own.SaleID=so.SaleID
 LEFT JOIN app.AppUser ou ON ou.UserID=own.UserID
+LEFT JOIN dbo.Employee e ON e.EmployeeID=so.EmployeeID
 WHERE USER_NAME() IN (N'WebAdmin',N'WebStaff')
  OR own.UserID=TRY_CONVERT(bigint,SESSION_CONTEXT(N'WebUserID'));
 GO
@@ -35,6 +41,36 @@ SELECT LogID AS log_id,ProductID AS product_id,SKU AS sku,ProductName AS product
  AfterQuantity AS after_quantity,BusinessNo AS business_no,EmployeeNo AS employee_no,
  Remark AS remark,CreatedAt AS created_at
 FROM dbo.v_inventory_log_detail;
+GO
+-- 采购单补充经办员工（视图原定义在 sql/week8，列追加在末尾）。
+CREATE OR ALTER VIEW app.v_PurchaseOrders AS
+SELECT po.PurchaseID AS purchase_id,po.PurchaseNo AS purchase_no,
+       po.SupplierID AS supplier_id,s.SupplierName AS supplier_name,
+       po.EmployeeID AS employee_id,po.Status AS status,
+       po.TotalAmount AS total_amount,po.OrderTime AS order_time,
+       po.ReceivedTime AS received_time,
+       COALESCE((SELECT SUM(pi.LineAmount) FROM dbo.PurchaseItem pi
+                 WHERE pi.PurchaseID=po.PurchaseID),0) AS draft_amount,
+       e.EmployeeNo AS employee_no,e.EmployeeName AS employee_name
+FROM dbo.PurchaseOrder po JOIN dbo.Supplier s ON s.SupplierID=po.SupplierID
+LEFT JOIN dbo.Employee e ON e.EmployeeID=po.EmployeeID;
+GO
+-- 第一阶段的统计视图经应用层只读视图开放给网页，统计口径不变。
+CREATE OR ALTER VIEW app.v_DailySales AS
+SELECT SaleDate AS sale_date,OrderCount AS order_count,OriginalAmount AS original_amount,
+ DiscountAmount AS discount_amount,SalesAmount AS sales_amount
+FROM dbo.v_daily_sales;
+GO
+CREATE OR ALTER VIEW app.v_ProductSales AS
+SELECT ps.ProductID AS product_id,ps.SKU AS sku,ps.ProductName AS product_name,c.CategoryName AS category_name,
+ ps.SoldQuantity AS sold_quantity,ps.SalesAmount AS sales_amount
+FROM dbo.v_product_sales ps JOIN dbo.Product p ON p.ProductID=ps.ProductID
+JOIN dbo.Category c ON c.CategoryID=p.CategoryID;
+GO
+CREATE OR ALTER VIEW app.v_SupplierPurchases AS
+SELECT SupplierID AS supplier_id,SupplierCode AS supplier_code,SupplierName AS supplier_name,
+ ReceivedOrderCount AS received_count,PurchaseAmount AS purchase_amount
+FROM dbo.v_supplier_purchases;
 GO
 -- 分类可以分层：member_id 是 category_id 自身及其全部子孙分类，触发器已保证分类不成环。
 CREATE OR ALTER VIEW app.v_CategoryScope AS
@@ -204,4 +240,7 @@ GRANT EXECUTE ON app.SettleSale TO WebAdminRole,WebStaffRole;
 GRANT EXECUTE ON app.AdjustInventory TO WebAdminRole;
 GRANT SELECT ON app.v_InventoryLog TO WebAdminRole;
 GRANT SELECT ON app.v_CategoryScope TO WebAdminRole,WebStaffRole,WebCustomerRole;
+GRANT SELECT ON app.v_DailySales TO WebAdminRole,WebStaffRole;
+GRANT SELECT ON app.v_ProductSales TO WebAdminRole,WebStaffRole;
+GRANT SELECT ON app.v_SupplierPurchases TO WebAdminRole;
 PRINT N'第九周应用增量已部署';

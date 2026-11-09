@@ -462,10 +462,12 @@ PERMISSIONS = [
     ("staff", "SELECT * FROM app.v_InventoryLog;", "none"), ("customer", "SELECT * FROM app.v_InventoryLog;", "none"),
     ("admin", "EXEC dbo.CompleteSale ?", "sale"), ("staff", "EXEC dbo.CompleteSale ?", "sale"),
     ("customer", "EXEC dbo.CompleteSale ?", "sale"),
+    ("customer", "SELECT * FROM app.v_DailySales;", "none"), ("customer", "SELECT * FROM app.v_ProductSales;", "none"),
+    ("staff", "SELECT * FROM app.v_SupplierPurchases;", "none"), ("customer", "SELECT * FROM app.v_SupplierPurchases;", "none"),
 ]
 
 
-@pytest.mark.parametrize("who,sql,kind", PERMISSIONS, ids=[f"{w}-{s.split()[1]}" for w, s, _ in PERMISSIONS])
+@pytest.mark.parametrize("who,sql,kind", PERMISSIONS, ids=[f"{w}-{s.split()[3 if s.startswith('SELECT') else 1].rstrip(';')}" for w, s, _ in PERMISSIONS])
 def test_permission_matrix_is_denied(env, who, sql, kind):
     product_id = env.product(5)
     sale = env.order("customer", [(product_id, 1)], submit=True)

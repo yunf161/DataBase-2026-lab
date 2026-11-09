@@ -12,6 +12,9 @@ from playwright.sync_api import Error as PlaywrightError, expect, sync_playwrigh
 from app.config import ROOT
 from tools.prepare_week7 import DEMO_PASSWORD, administrative_connection
 
+# 本机测试库偶尔有数秒的数据库停顿（如数据文件扩容），断言等待上限放宽到 15 秒；功能错误仍会失败。
+expect.set_options(timeout=15_000)
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -602,6 +605,38 @@ def main():
                 expect(other_role.locator("#purchases-nav")).to_be_hidden()
                 assert other_role.context.request.get(args.url + "/api/purchases").status == 403
             findings.append({"test": "管理员采购入库", "result": "passed", "actual": "草稿不加库存；确认后可乐+5，流水显示采购入库；店员和顾客无入口，接口403"})
+
+        with scenario("经营统计与订单经办信息"):
+            boss = new_page("admin")
+            boss.locator('[data-view="reports"]').click()
+            expect(boss.locator("#page-title")).to_have_text("经营统计")
+            expect(boss.locator("#search")).to_be_hidden()
+            expect(boss.locator("#table-head")).to_contain_text("实收")
+            expect(boss.locator("#table-body tr").first).to_contain_text("¥")
+            boss.locator("#status-filter").select_option("products")
+            boss.get_by_role("button", name="查询", exact=True).click()
+            expect(boss.locator("#table-head")).to_contain_text("销量")
+            expect(sku_row(boss, "P0001")).to_have_count(1)
+            shot(boss, "24-reports.png")
+            boss.locator("#status-filter").select_option("suppliers")
+            boss.get_by_role("button", name="查询", exact=True).click()
+            expect(boss.locator("#table-body")).to_contain_text("校园供货商")
+            clerk_view = new_page("staff")
+            clerk_view.locator('[data-view="reports"]').click()
+            expect(clerk_view.locator('#status-filter option[value="suppliers"]')).to_have_count(0)
+            assert "supplier_purchases" not in clerk_view.context.request.get(args.url + "/api/reports").json()["data"]
+            shopper_view = new_page("customer")
+            expect(shopper_view.locator("#reports-nav")).to_be_hidden()
+            assert shopper_view.context.request.get(args.url + "/api/reports").status == 403
+            clerk_view.locator('[data-view="orders"]').click()
+            clerk_view.locator("#status-filter").select_option("COMPLETED")
+            clerk_view.get_by_role("button", name="查询", exact=True).click()
+            expect(clerk_view.locator("#table-body tr").first).to_contain_text("已完成")
+            clerk_view.locator("#table-body tr").first.get_by_role("button", name="查看明细", exact=True).click()
+            expect(clerk_view.locator(".order-handled")).to_contain_text("经办员工")
+            expect(clerk_view.locator(".order-handled")).to_contain_text("结算时间")
+            shot(clerk_view, "25-order-handler.png")
+            findings.append({"test": "经营统计与订单经办信息", "result": "passed", "actual": "管理员看到每日销售、商品销量和供应商采购；店员无供应商统计；顾客无入口且接口403；店员订单详情显示经办员工和结算时间"})
 
         with scenario("商品超过100件时订单详情仍可选择全部商品"):
             clerk = new_page("staff")

@@ -12,7 +12,7 @@ from tools.prepare_week7 import DEMO_PASSWORD, administrative_connection
 LEAKS = ("SQL", "ODBC", "dbo.", "Traceback")
 ORDER_KEYS = {"sale_id", "sale_no", "status", "employee_id", "payment_method", "discount_amount",
               "total_amount", "payable_amount", "draft_amount", "remark", "created_at", "owner_user_id",
-              "submitted_at", "is_customer_order", "items"}
+              "submitted_at", "is_customer_order", "settled_at", "employee_no", "employee_name", "items"}
 ITEM_KEYS = {"item_id", "sale_id", "product_id", "sku", "product_name", "quantity", "unit_price", "line_amount"}
 LOG_KEYS = {"log_id", "product_id", "sku", "product_name", "change_type", "change_quantity", "before_quantity",
             "after_quantity", "business_no", "employee_no", "remark", "created_at"}
@@ -554,6 +554,57 @@ def test_disabled_category_stays_hidden_from_customers_in_the_filter(login, stoc
     finally:
         connection.execute("UPDATE dbo.Category SET Status=1 WHERE CategoryID=?;", category)
         connection.close()
+
+
+# ---------- GET /reports 与经办信息 ----------
+
+def test_reports_are_for_staff_and_admin_only(client, login):
+    failure(client.get("/api/reports"), 401, "AUTH_REQUIRED")
+    failure(login("customer").get("/reports"), 403, "FORBIDDEN")
+    assert set(result(login("staff").get("/reports"))) == {"daily_sales", "product_sales"}
+    assert set(result(login("admin").get("/reports"))) == {"daily_sales", "product_sales", "supplier_purchases"}
+
+
+def test_reports_match_completed_sales_and_received_purchases(login, new_customer, stocked, settings):
+    admin, staff, customer = login("admin"), login("staff"), new_customer()
+    product_id = stocked(10, "3.00")
+    sku = scalar(settings, "SELECT SKU FROM dbo.Product WHERE ProductID=?;", product_id)
+    result(staff.send("POST", f"/orders/{submitted(customer, product_id, 2)}/settle", {}))
+    cancelled = submitted(customer, product_id, 1)
+    result(customer.send("POST", f"/orders/{cancelled}/cancel"))
+    report = result(admin.get("/reports"))
+    row = next(r for r in report["product_sales"] if r["sku"] == sku)
+    assert (row["sold_quantity"], row["sales_amount"]) == (2, "6.00")
+    today = scalar(settings, "SELECT CONVERT(varchar(10),CONVERT(date,SYSDATETIME()),23);")
+    day = next(r for r in report["daily_sales"] if r["sale_date"] == today)
+    completed = " FROM dbo.SaleOrder WHERE Status='COMPLETED' AND CONVERT(date,SaleTime)=CONVERT(date,SYSDATETIME());"
+    assert day["order_count"] == scalar(settings, "SELECT COUNT(*)" + completed)
+    assert day["sales_amount"] == format(scalar(settings, "SELECT SUM(PayableAmount)" + completed), ".2f")
+    for supplier in report["supplier_purchases"]:
+        assert supplier["received_count"] == scalar(
+            settings, "SELECT COUNT(*) FROM dbo.PurchaseOrder WHERE Status='RECEIVED' AND SupplierID=?;", supplier["supplier_id"])
+
+
+def test_settled_order_shows_handler_to_staff_but_not_customer(login, new_customer, stocked):
+    admin, customer = login("admin"), new_customer()
+    sale_id = submitted(customer, stocked(5), 1)
+    draft = result(admin.get(f"/orders/{sale_id}"))
+    assert draft["settled_at"] is None and draft["employee_no"] == "E003"
+    result(admin.send("POST", f"/orders/{sale_id}/settle", {}))
+    done = result(admin.get(f"/orders/{sale_id}"))
+    assert done["employee_no"] == "E001" and done["employee_name"] and done["settled_at"]
+    mine = result(customer.get(f"/orders/{sale_id}"))
+    assert mine["settled_at"] == done["settled_at"]
+    assert mine["employee_no"] is None and mine["employee_name"] is None
+
+
+def test_purchase_shows_handler_and_received_time(login, stocked):
+    admin = login("admin")
+    order = result(admin.send("POST", "/purchases", {"supplier_id": 1, "items": [
+        {"product_id": stocked(0), "quantity": 2, "unit_cost": "1.00"}]}), 201)
+    assert order["received_time"] is None and order["employee_no"] == "E001" and order["employee_name"]
+    received = result(admin.send("POST", f"/purchases/{order['purchase_id']}/confirm"))
+    assert received["received_time"] is not None
 
 
 # ---------- PATCH /orders/<id> 顾客改备注的回归 ----------

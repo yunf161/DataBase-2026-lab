@@ -171,10 +171,10 @@ Flask 3.1.3、pyodbc 5.3.0、waitress 3.0.2、Werkzeug 3.1.9、pytest 9.1.1、Pl
 | 第 1—4 周主流程 | `tests\Verify-CampusStore.ps1 -ServerInstance "."` | 退出码 0；末行“隔离数据库 … 的结构、业务与演示数据验证通过” | [输出](../../results/migration/verify-campusstore.txt) |
 | 环境预检 | `python -m tools.doctor --server "."`（建开发库之后） | 8 项全部通过 | [doctor.txt](../../results/doctor.txt) |
 | 最终只读回归 | `sqlcmd … -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 30 项通过、0 项失败 | [final-regression.txt](../../results/final-regression.txt) |
-| 集成测试 + 浏览器验收 | `python -m tools.verify_week7 --server "."` | **324 项集成测试通过；27 项浏览器验收通过；0 个未捕获 JavaScript 异常；23 张截图** | [app-test/](../../results/app-test) |
+| 集成测试 + 浏览器验收 | `python -m tools.verify_week7 --server "."` | **332 项集成测试通过；28 项浏览器验收通过；0 个未捕获 JavaScript 异常；25 张截图** | [app-test/](../../results/app-test) |
 | 空环境复现 | `python -m tools.smoke_package --server "."` | 把交付包 zip 解压到临时目录，按包内 README 建虚拟环境、安装依赖、预检、建库、启动、admin 登录 200 并查到 6 件商品，测试库和临时目录已清理（pip 使用了本机缓存的安装包，没有重新下载）| [package-smoke.json](../../results/package-smoke.json) |
 
-集成测试 324 项的构成：`test_api_v2.py` 118、`test_application.py` 67、`test_database_v2.py` 56、`test_error_mapping.py` 61、`test_environment.py` 14、`week8/test_business_flows.py` 8。
+集成测试 332 项的构成：`test_api_v2.py` 122、`test_application.py` 67、`test_database_v2.py` 60、`test_error_mapping.py` 61、`test_environment.py` 14、`week8/test_business_flows.py` 8。
 比第七周的 59 项多出来的是第八至九周新增的提交、结算、购物车、库存调整、错误映射和环境预检测试。
 
 `final_regression.sql` 的 30 项依次核对：库存等于最新流水的 `AfterQuantity`（6 个商品）、流水所属商品存在、已完成订单 `TotalAmount` 等于明细合计且

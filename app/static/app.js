@@ -56,8 +56,8 @@ async function busy(button, action, errorId = "page-error") {
   $(errorId).hidden = true;
   try { await action(); } catch (error) { showError(errorId, error); }
   finally {
-    if (button.id === "previous-page") button.disabled = ["inventory", "purchases"].includes(state.view) || state.page <= 1;
-    else if (button.id === "next-page") button.disabled = ["inventory", "purchases"].includes(state.view) || state.page * state.pageSize >= state.total;
+    if (button.id === "previous-page") button.disabled = ["inventory", "purchases", "reports"].includes(state.view) || state.page <= 1;
+    else if (button.id === "next-page") button.disabled = ["inventory", "purchases", "reports"].includes(state.view) || state.page * state.pageSize >= state.total;
     else button.disabled = false;
   }
 }
@@ -77,6 +77,7 @@ async function enterWorkspace() {
   $("avatar").textContent = state.user.display_name.slice(0, 1);
   $("inventory-nav").hidden = state.user.role === "CUSTOMER";
   $("purchases-nav").hidden = state.user.role !== "ADMIN";
+  $("reports-nav").hidden = state.user.role === "CUSTOMER";
   $("products-nav-label").textContent = state.user.role === "ADMIN" ? "商品管理" : "商品货架";
   $("orders-nav-label").textContent = state.user.role === "CUSTOMER" ? "我的订单" : "销售订单";
   try {
@@ -98,25 +99,29 @@ async function activate(view) {
     products: [state.user.role === "ADMIN" ? "商品管理" : "商品货架", "PRODUCTS & SHELVES", customer ? "挑选校园里的日常好物，随时查看自己的订单。" : "每一件日常好物，都值得被好好打理。", "搜索商品名称或编号"],
     inventory: ["库存查询", "STOCK & SUPPLIES", "及时关注货架余量，让每一份需要都有着落。", "搜索商品名称或编号"],
     orders: [customer ? "我的订单" : "销售订单", "ORDERS & DAILY BUSINESS", customer ? "属于你的每一笔订单，都有清晰的来处。" : "查看订单与明细，受理顾客提交的订单并完成结算。", "搜索订单编号"],
-    purchases: ["采购入库", "PURCHASES & SUPPLIES", "建立采购草稿，核对商品后确认入库。", "搜索采购编号或供应商"]
+    purchases: ["采购入库", "PURCHASES & SUPPLIES", "建立采购草稿，核对商品后确认入库。", "搜索采购编号或供应商"],
+    reports: ["经营统计", "SALES & REPORTS", "汇总已完成的销售和已入库的采购，数据只读。", ""]
   }[view];
   $("page-title").textContent = config[0]; $("breadcrumb-title").textContent = config[0];
   $("page-eyebrow").textContent = config[1]; $("page-description").textContent = config[2];
   $("search").placeholder = config[3]; $("search").value = "";
+  $("search").closest(".search-wrap").hidden = view === "reports";
   $("heading-action").hidden = view === "orders" ? customer : view !== "purchases" && !(view === "products" && state.user.role === "ADMIN");
   $("heading-action").textContent = view === "orders" ? "＋ 新建草稿" : view === "purchases" ? "＋ 新建采购" : "＋ 新增商品";
   const filters = view === "products" ? (customer ? [["1", "在售商品"]] : [["all", "全部状态"], ["1", "在售"], ["0", "已停用"]]) :
     view === "orders" ? [["", "全部状态"], ...(customer ? [] : [["pending", "待受理"]]), ["DRAFT", "草稿"], ["COMPLETED", "已完成"], ["CANCELLED", "已取消"]] :
+    view === "reports" ? [["daily", "每日销售"], ["products", "商品销量"], ...(state.user.role === "ADMIN" ? [["suppliers", "供应商采购"]] : [])] :
     view === "purchases" ? [["", "全部状态"], ["DRAFT", "草稿"], ["RECEIVED", "已入库"], ["CANCELLED", "已取消"]] :
     [["", "全部库存"], ["NORMAL", "库存正常"], ["LOW_STOCK", "低于预警"], ["OUT_OF_STOCK", "暂无库存"]];
   $("status-filter").innerHTML = filters.map(([value, label]) => '<option value="' + value + '">' + label + "</option>").join("");
   $("category-filter").innerHTML = '<option value="">全部分类</option>' + categoryOptions();
   $("category-filter").hidden = view !== "products";
-  $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "purchases" ? "采购草稿不增加库存；确认入库后同步生成库存流水。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
+  $("page-tip").textContent = view === "orders" ? "库存在店员确认收款并结算时才扣减；已完成订单保持历史记录。" : view === "purchases" ? "采购草稿不增加库存；确认入库后同步生成库存流水。" : view === "reports" ? "只统计已完成的销售和已入库的采购；草稿和已取消的单据不计入。" : view === "inventory" ? "库存数量随采购和销售变化，预警下限可由管理员维护。" : "及时维护商品信息，让每一次选购都更安心。";
   await loadList();
 }
 async function loadList() {
   if (state.view === "purchases") return loadPurchases();
+  if (state.view === "reports") return loadReports();
   const params = new URLSearchParams({q: $("search").value, page: state.page, page_size: state.pageSize});
   if (state.view === "orders" && $("status-filter").value === "pending") params.set("pending", "1");
   else params.set(state.view === "inventory" ? "stock_status" : "status", $("status-filter").value);
@@ -146,6 +151,36 @@ async function loadList() {
   $("page-number").textContent = state.page;
   $("previous-page").disabled = state.view === "inventory" || state.page <= 1;
   $("next-page").disabled = state.view === "inventory" || state.page * state.pageSize >= state.total;
+}
+const total = (rows, key) => rows.reduce((sum, row) => sum + Number(row[key] || 0), 0);
+async function loadReports() {
+  const data = await api("/reports");
+  const kind = $("status-filter").value || "daily";
+  const daily = data.daily_sales, products = data.product_sales, suppliers = data.supplier_purchases || [];
+  const [heads, rows, cards] = {
+    daily: [["日期", "完成订单", "原价合计", "优惠", "实收"],
+      daily.map((r) => [escapeHTML(String(r.sale_date).slice(0, 10)), r.order_count, "¥ " + price(r.original_amount), "¥ " + price(r.discount_amount), "¥ " + price(r.sales_amount)]),
+      [["统计天数", daily.length, "天"], ["完成订单", total(daily, "order_count"), "笔"], ["实收合计", price(total(daily, "sales_amount")), "元"]]],
+    products: [["商品", "商品编号", "分类", "销量", "销售额"],
+      products.map((r) => [escapeHTML(r.product_name), escapeHTML(r.sku), escapeHTML(r.category_name), r.sold_quantity, "¥ " + price(r.sales_amount)]),
+      [["有销量的商品", products.filter((r) => Number(r.sold_quantity) > 0).length, "件"], ["总销量", total(products, "sold_quantity"), "件"], ["销售额", price(total(products, "sales_amount")), "元"]]],
+    suppliers: [["供应商", "供应商编号", "已入库采购单", "采购金额"],
+      suppliers.map((r) => [escapeHTML(r.supplier_name), escapeHTML(r.supplier_code), r.received_count, "¥ " + price(r.purchase_amount)]),
+      [["供应商", suppliers.length, "家"], ["已入库采购单", total(suppliers, "received_count"), "笔"], ["采购金额", price(total(suppliers, "purchase_amount")), "元"]]]
+  }[kind];
+  state.rows = rows; state.total = rows.length;
+  $("table-head").innerHTML = "<tr>" + heads.map((item) => "<th>" + item + "</th>").join("") + "</tr>";
+  $("table-body").innerHTML = rows.length ? rows.map((cells) => "<tr>" + cells.map((cell) => "<td>" + cell + "</td>").join("") + "</tr>").join("") :
+    '<tr><td class="empty" colspan="' + heads.length + '"><strong>暂时没有统计数据</strong>完成销售或采购入库后会出现在这里。</td></tr>';
+  summary(cards);
+  $("table-count").textContent = "共 " + rows.length + " 条记录" + (kind === "daily" ? " · 最近 30 个有销售的日期" : "");
+  $("page-number").textContent = "1";
+  $("previous-page").disabled = true; $("next-page").disabled = true;
+}
+const shortTime = (value) => String(value).replace("T", " ").slice(0, 16);
+function handledLine(employeeNo, employeeName, timeLabel, time) {
+  const parts = [employeeName ? "经办员工：" + employeeNo + " " + employeeName : "", time ? timeLabel + "：" + shortTime(time) : ""].filter(Boolean);
+  return parts.length ? '<p class="helper order-handled">' + escapeHTML(parts.join(" · ")) + "</p>" : "";
 }
 async function loadPurchases() {
   const all = await api("/purchases");
@@ -238,7 +273,7 @@ async function orderDetail(saleId, latest = null, notice = "") {
     '<tr><td colspan="5" class="empty">' + (customer ? "购物车" : "草稿") + "暂时没有明细，请添加商品。</td></tr>";
   const selectedProducts = new Set(order.items.map((item) => item.product_id));
   const available = catalog.filter((product) => !selectedProducts.has(product.product_id));
-  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(orderStatus(order), draft ? "amber" : order.status === "COMPLETED" ? "green" : "gray") + '</div><div class="order-message">' + message + '</div>' + (notice ? '<div class="order-message order-notice" role="status">' + escapeHTML(notice) + "</div>" : "") + '<div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="order-sums"><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p><p class="order-discount">优惠<strong>- ¥ ' + price(order.discount_amount) + '</strong></p><p class="order-payable">应付<strong>' + (payable(order) === null ? "—" : "¥ " + price(payable(order))) + "</strong></p></div>" +
+  openEditor("订单明细", '<div class="order-meta"><span>' + escapeHTML(order.sale_no) + "</span>" + badge(orderStatus(order), draft ? "amber" : order.status === "COMPLETED" ? "green" : "gray") + '</div>' + handledLine(order.employee_no, order.employee_name, "结算时间", order.settled_at) + '<div class="order-message">' + message + '</div>' + (notice ? '<div class="order-message order-notice" role="status">' + escapeHTML(notice) + "</div>" : "") + '<div class="order-items"><table><thead><tr><th>商品</th><th>成交单价</th><th>数量</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><div class="order-sums"><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p><p class="order-discount">优惠<strong>- ¥ ' + price(order.discount_amount) + '</strong></p><p class="order-payable">应付<strong>' + (payable(order) === null ? "—" : "¥ " + price(payable(order))) + "</strong></p></div>" +
     (editable ? '<form id="add-line-form" class="add-item-form"><div><label for="line-product">添加商品</label><select id="line-product" required><option value="">请选择商品</option>' + available.map((product) => '<option value="' + product.product_id + '">' + escapeHTML(product.product_name) + " · ¥" + price(product.sale_price) + "</option>").join("") + '</select></div><div><label for="line-quantity">数量</label><input id="line-quantity" type="number" min="1" max="1000000" value="1" required></div><button type="submit" class="secondary">' + (customer ? "加入购物车" : "加入草稿") + '</button></form><form id="order-info-form"><div class="form-grid"><div><label for="order-payment">支付方式</label><select id="order-payment">' + paymentOptions(order.payment_method) + '</select></div><div><label for="order-discount">优惠金额（元）</label><input id="order-discount" type="number" min="0" step=".01" value="' + price(order.discount_amount) + '"' + (customer ? " disabled" : "") + '></div><div class="span-two"><label for="order-remark">备注</label><textarea id="order-remark" maxlength="255" rows="2">' + escapeHTML(order.remark || "") + '</textarea>    </div></div><div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">' + (customer ? "取消订单" : "取消这份草稿") + '</button><button type="submit" class="primary">' + (customer ? "保存信息" : "保存草稿信息") + "</button>" + (customer ? '<button id="submit-order" type="button" class="primary">提交订单</button>' : waiting ? "" : '<button id="settle-order" type="button" class="primary">确认收款并结算</button>') + '</div></form>' :
         '<p class="helper">备注：' + escapeHTML(order.remark || "暂无") + "</p>" + (submitted ? '<div class="dialog-actions"><button id="cancel-draft" type="button" class="secondary">取消订单</button></div>' : "")), true);
       if (submitted) $("cancel-draft").onclick = (event) => cancelDraft(event.currentTarget, saleId);
@@ -294,7 +329,7 @@ async function purchaseDetail(purchaseId) {
   state.detail = order;
   const editable = order.status === "DRAFT";
   const lines = order.items.length ? order.items.map((item) => '<tr><td>' + escapeHTML(item.product_name) + '</td><td>' + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '采购数量" type="number" min="1" max="1000000" value="' + item.quantity + '" data-purchase-quantity="' + item.item_id + '">' : item.quantity) + '</td><td>' + (editable ? '<input aria-label="' + escapeHTML(item.product_name) + '进价" type="number" min="0" max="99999999.99" step=".01" value="' + price(item.unit_cost) + '" data-purchase-cost="' + item.item_id + '">' : '¥ ' + price(item.unit_cost)) + '</td><td>¥ ' + price(item.line_amount) + '</td><td>' + (editable ? actionButton("save-purchase-line", item.item_id, "更新") + actionButton("remove-purchase-line", item.item_id, "移除", true) : "—") + '</td></tr>').join("") : '<tr><td colspan="5" class="empty">尚无采购明细，请先添加商品。</td></tr>';
-  openEditor("采购明细", '<div class="order-meta"><span>' + escapeHTML(order.purchase_no) + ' · ' + escapeHTML(order.supplier_name) + '</span>' + badge(statusNames[order.status], editable ? "amber" : "green") + '</div><div class="order-items"><table><thead><tr><th>商品</th><th>数量</th><th>进价</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p>' + (editable ? '<div class="add-item-form"><div><label for="purchase-search">搜索可采购商品</label><input id="purchase-search" maxlength="100" placeholder="输入商品名称或编号"></div><button id="search-purchase-product" type="button" class="secondary">搜索商品</button></div><p id="purchase-search-count" class="helper">' + (catalog.total > catalog.items.length ? "当前显示前100件，请输入名称或编号搜索其他商品。" : "可按商品名称或编号缩小选择范围。") + '</p><form id="add-purchase-line" class="add-item-form"><div><label for="purchase-product">添加商品</label><select id="purchase-product" required>' + purchaseProductOptions(catalog.items) + '</select></div><div><label for="purchase-quantity">数量</label><input id="purchase-quantity" type="number" min="1" max="1000000" value="1" required></div><div><label for="purchase-cost">进价（元）</label><input id="purchase-cost" type="number" min="0" max="99999999.99" step=".01" required></div><button type="submit" class="secondary">加入采购单</button></form><div class="dialog-actions"><button id="cancel-purchase" type="button" class="secondary">取消采购单</button><button id="confirm-purchase" type="button" class="primary">确认入库</button></div>' : '<p class="helper">该采购单已结束，明细保留供查询。</p>'), true);
+  openEditor("采购明细", '<div class="order-meta"><span>' + escapeHTML(order.purchase_no) + ' · ' + escapeHTML(order.supplier_name) + '</span>' + badge(statusNames[order.status], editable ? "amber" : "green") + '</div>' + handledLine(order.employee_no, order.employee_name, "入库时间", order.received_time) + '<div class="order-items"><table><thead><tr><th>商品</th><th>数量</th><th>进价</th><th>小计</th><th>操作</th></tr></thead><tbody>' + lines + '</tbody></table></div><p class="order-total">明细合计<strong>¥ ' + price(order.draft_amount) + '</strong></p>' + (editable ? '<div class="add-item-form"><div><label for="purchase-search">搜索可采购商品</label><input id="purchase-search" maxlength="100" placeholder="输入商品名称或编号"></div><button id="search-purchase-product" type="button" class="secondary">搜索商品</button></div><p id="purchase-search-count" class="helper">' + (catalog.total > catalog.items.length ? "当前显示前100件，请输入名称或编号搜索其他商品。" : "可按商品名称或编号缩小选择范围。") + '</p><form id="add-purchase-line" class="add-item-form"><div><label for="purchase-product">添加商品</label><select id="purchase-product" required>' + purchaseProductOptions(catalog.items) + '</select></div><div><label for="purchase-quantity">数量</label><input id="purchase-quantity" type="number" min="1" max="1000000" value="1" required></div><div><label for="purchase-cost">进价（元）</label><input id="purchase-cost" type="number" min="0" max="99999999.99" step=".01" required></div><button type="submit" class="secondary">加入采购单</button></form><div class="dialog-actions"><button id="cancel-purchase" type="button" class="secondary">取消采购单</button><button id="confirm-purchase" type="button" class="primary">确认入库</button></div>' : '<p class="helper">该采购单已结束，明细保留供查询。</p>'), true);
   if (!editable) return;
   $("search-purchase-product").onclick = (event) => busy(event.target, async () => {
     const q = $("purchase-search").value.trim();

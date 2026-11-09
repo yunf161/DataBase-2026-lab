@@ -362,6 +362,15 @@ class StoreService:
             self.draft(connection, sale_id)
             self.repository.cancel_order(connection, sale_id)
 
+    def reports(self, user):
+        require_role(user, "ADMIN", "STAFF")
+        with self.repository.transaction(user) as connection:
+            result = {"daily_sales": self.repository.daily_sales(connection),
+                      "product_sales": self.repository.product_sales(connection)}
+            if user["role"] == "ADMIN":
+                result["supplier_purchases"] = self.repository.supplier_purchases(connection)
+            return result
+
     def suppliers(self, user):
         require_role(user, "ADMIN")
         with self.repository.transaction(user) as connection:

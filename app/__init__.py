@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import traceback
 import uuid
 from datetime import date, datetime, timezone
@@ -52,6 +53,7 @@ def create_app(overrides=None):
     @app.before_request
     def request_context():
         g.request_id = uuid.uuid4().hex
+        g.started = time.perf_counter()
         g.user = None
         g.response_code = "OK"
         if request.path.startswith("/api/"):
@@ -119,7 +121,8 @@ def create_app(overrides=None):
                 "request_id": g.get("request_id"), "operation": request.endpoint or "unknown",
                 "method": request.method, "user_id": user.get("user_id"),
                 "role": user.get("role", "ANONYMOUS"), "error_code": g.get("response_code"),
-                "status": response.status_code, "result": "success" if response.status_code < 400 else "failure",
+                "status": response.status_code,
+                "duration_ms": round((time.perf_counter() - g.get("started", time.perf_counter())) * 1000), "result": "success" if response.status_code < 400 else "failure",
             }, ensure_ascii=False))
         return response
 

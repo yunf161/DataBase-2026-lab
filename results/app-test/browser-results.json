@@ -57,7 +57,7 @@
       "test": "店员在待受理筛选中结算",
       "result": "passed",
       "actual": "请求带pending=1且不带status；优惠1.00、支付宝；状态已完成，应付10.00",
-      "request": "http://127.0.0.1:57259/api/orders?q=&page=1&page_size=10&pending=1"
+      "request": "http://127.0.0.1:59373/api/orders?q=&page=1&page_size=10&pending=1"
     },
     {
       "test": "顾客看到已完成订单和应付金额",
@@ -128,6 +128,11 @@
       "test": "管理员采购入库",
       "result": "passed",
       "actual": "草稿不加库存；确认后可乐+5，流水显示采购入库；店员和顾客无入口，接口403"
+    },
+    {
+      "test": "经营统计与订单经办信息",
+      "result": "passed",
+      "actual": "管理员看到每日销售、商品销量和供应商采购；店员无供应商统计；顾客无入口且接口403；店员订单详情显示经办员工和结算时间"
     },
     {
       "test": "商品超过100件时可选商品完整",

@@ -194,6 +194,12 @@ def add_to_cart():
     return reply(store().add_to_cart(g.user, body()), "商品已加入购物车。")
 
 
+@api.get("/reports")
+@signed_in
+def reports():
+    return reply(store().reports(g.user))
+
+
 @api.get("/suppliers")
 @signed_in
 def suppliers():

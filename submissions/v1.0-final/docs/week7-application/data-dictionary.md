@@ -52,6 +52,9 @@
 | app.v_Suppliers | 管理员 | 启用的供应商（第八周） |
 | app.v_PurchaseOrders | 管理员 | 采购单及明细合计（第八周） |
 | app.v_PurchaseItems | 管理员 | 采购明细（第八周） |
+| app.v_DailySales | 管理员、店员 | 每日已完成销售汇总，封装第一阶段的 `dbo.v_daily_sales`（第九周） |
+| app.v_ProductSales | 管理员、店员 | 商品销量与销售额，封装 `dbo.v_product_sales` 并补分类名（第九周） |
+| app.v_SupplierPurchases | 管理员 | 供应商已入库采购汇总，封装 `dbo.v_supplier_purchases`（第九周） |
 
 ## 过程
 

@@ -27,8 +27,8 @@
 | 角色 | 能做什么 |
 | --- | --- |
 | 顾客 | 浏览在售商品（可按名称、编号和分类查询），加入购物车，修改并提交订单，查看自己的订单（待受理、已完成、已取消），取消订单 |
-| 店员 | 查看商品、库存和全店订单，受理顾客已提交的订单并结算，自己开单并结算 |
-| 管理员 | 店员的全部操作，另外维护商品（新增、编辑、停用、安全删除）、设置库存预警、盘点调整库存（必填原因）、查看库存流水、采购入库（选供应商建采购单、维护明细、确认入库或取消） |
+| 店员 | 查看商品、库存和全店订单，受理顾客已提交的订单并结算，自己开单并结算，查看经营统计（每日销售、商品销量） |
+| 管理员 | 店员的全部操作，另外维护商品（新增、编辑、停用、安全删除）、设置库存预警、盘点调整库存（必填原因）、查看库存流水、采购入库（选供应商建采购单、维护明细、确认入库或取消）、经营统计中的供应商采购汇总 |
 
 订单流转：**购物车 → 待受理（顾客已提交）→ 已完成 / 已取消**。库存只在结算（已完成）时扣减，并同时写库存流水。应用层包含登录与会话、CSRF 保护、参数化查询、统一错误响应和 JSON 审计日志，业务 SQL 在不含 db_owner 的受限数据库身份下执行。
 
@@ -37,7 +37,7 @@
 - 第 5 周：为 10 张表建立 ER 模型，梳理联系基数（见[第 7 节](#7-er-图依赖分析范式与分解方案)）。
 - 第 6 周：函数依赖与范式分析，受控反规范化取舍，把库存流水的文本 `BusinessNo` 迁移为订单外键，并做迁移回归（见[第 8 节](#8-迁移与回归)）。
 - 第 7 周：Flask 四层应用、登录、商品增改查、库存查询、订单草稿。
-- 第 8—9 周：采购入库与供应商查询、顾客提交与店员结算、库存盘点调整与流水、环境预检与旧库升级工具、界面和身份加固、最终回归与交付整理。
+- 第 8—9 周：采购入库与供应商查询、经营统计页、订单和采购单显示经办员工与结算/入库时间、顾客提交与店员结算、库存盘点调整与流水、环境预检与旧库升级工具、界面和身份加固、最终回归与交付整理。
 
 第 1—4 周（第一阶段）的基础交付保持原样，简述如下：
 
@@ -168,6 +168,9 @@ python -m venv .venv
 | 设置预警下限 | ✔ | ✘ | ✘ |
 | 盘点调整库存、查看库存流水 | ✔ | ✘ | ✘ |
 | 采购入库（供应商查询、采购单、确认入库、取消） | ✔ | ✘ | ✘ |
+| 经营统计：每日销售、商品销量 | ✔ | ✔ | ✘ |
+| 经营统计：供应商采购汇总 | ✔ | ✘ | ✘ |
+| 订单详情中的经办员工 | ✔ | ✔ | ✘（只看到结算时间） |
 | 直接修改 `Inventory.Quantity` | ✘ | ✘ | ✘ |
 | 查看订单 | 全店 | 全店 | 仅本人 |
 | 加入购物车、改明细、取消 | ✔ | ✔ | 仅本人订单 |
@@ -182,6 +185,10 @@ python -m venv .venv
 ![顾客提交后待受理](results/app-test/09-customer-cart-submitted.png)
 
 ### 店员：受理并结算
+
+订单详情会显示经办员工和结算时间。左侧“经营统计”可切换“每日销售”和“商品销量”，数据来自第一阶段的统计视图 `v_daily_sales`、`v_product_sales`，只计入已完成的销售；管理员还能看到“供应商采购”汇总（`v_supplier_purchases`）。
+
+![经营统计](results/app-test/24-reports.png)
 
 在“销售订单”选“待受理”，打开订单，核对支付方式、登记优惠，点“确认收款并结算”。同一事务内扣减库存、写库存流水、订单变为已完成；任何商品库存不足时整单回滚，订单仍是待受理。
 
@@ -417,7 +424,7 @@ sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W6_Group1 -i sql\week6\regressio
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-Week6Migration.ps1 -ServerInstance "."` | 第 6 周迁移 | 退出码 0，21 + 8 + 3 + 1 项通过（[输出](results/migration/verify-week6-migration.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-CampusStore.ps1 -ServerInstance "."` | 第 1—4 周主流程与反例 | 退出码 0（[输出](results/migration/verify-campusstore.txt)） |
 | `sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 最终只读回归 | 30 项通过、0 项失败（[final-regression.txt](results/final-regression.txt)） |
-| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **324 项集成测试通过、27 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
+| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **332 项集成测试通过、28 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
 | `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server ".\SQLEXPRESS"` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 2026-11-08 在 SQL Server Express 上全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
 
 单独运行集成测试：

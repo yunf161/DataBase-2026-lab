@@ -9,13 +9,13 @@
 | [er/](er) | 第 5 周 v0.1、第 6 周 v1.0 核心业务 ER 图，以及最终应用层 ER 补充图，各有 draw.io 源文件、SVG 和 PNG | 复制自 `docs/week5-er/`、`docs/week6-normalization/`、`docs/week7-application/` |
 | [normalization/](normalization) | 函数依赖清单、范式与异常分析、目标结构与无损/依赖保持证明 | 复制自 `docs/week6-normalization/`，只调整了相对链接 |
 | [migration/](migration) | 迁移前后关键结果 [key-results.md](migration/key-results.md)；两个验证脚本的完整输出 | `tests\Verify-Week6Migration.ps1`、`tests\Verify-CampusStore.ps1` |
-| [app-test/](app-test) | 应用集成测试（324 项）、浏览器验收（27 项）、23 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
+| [app-test/](app-test) | 应用集成测试（332 项）、浏览器验收（28 项）、25 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
 | [doctor.txt](doctor.txt) | 环境预检输出：8 项全部通过 | `python -m tools.doctor --server "."` |
 | [prepare-week7.txt](prepare-week7.txt) | 建开发库 `CampusStoreDB_W7_Development` 的输出 | `python -m tools.prepare_week7 --server "."` |
 | [final-regression.txt](final-regression.txt) | 开发库上的 30 项只读回归：库存与流水、订单金额、销量统计、外键与流水来源、受限角色权限 | `sql/week9/final_regression.sql` |
 | [package-smoke.json](package-smoke.json) | 把交付包解压到临时目录后的空环境复现结果 | `tools/smoke_package.py` |
 
-`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 324 项通过、浏览器 27 项通过、0 个未捕获 JavaScript 异常、测试库已清理。
+`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 332 项通过、浏览器 28 项通过、0 个未捕获 JavaScript 异常、测试库已清理。
 
 ## 不同角色的完整业务流程与截图
 
@@ -34,6 +34,8 @@
 | | 手机宽度（390px）下浏览、提交、查看订单详情 | [08](app-test/08-mobile-customer.png)、[16](app-test/16-mobile-order-detail.png) |
 | 店员 staff | 查看商品、库存和销售订单，无商品维护入口 | [05](app-test/05-staff-orders.png) |
 | | 在“待受理”中确认收款并结算 | [10](app-test/10-staff-settle.png) |
+| | 已完成订单显示经办员工和结算时间 | [25](app-test/25-order-handler.png) |
+| | 经营统计：每日销售、商品销量（管理员另有供应商采购） | [24](app-test/24-reports.png) |
 | | 库存不足时结算被拒绝，订单保持待受理 | [13](app-test/13-insufficient-stock.png) |
 | | 结算后库存页数量减少，无调整和流水按钮 | [12](app-test/12-staff-inventory-after-sale.png) |
 | 管理员 admin | 商品增改查，保存后立即可见 | [02](app-test/02-admin-products.png) |

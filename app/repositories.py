@@ -152,6 +152,21 @@ class StoreRepository:
                        "ORDER BY log_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;", product_id, offset, limit)
         return {"items": data, "total": total}
 
+    def daily_sales(self, connection):
+        return records(connection, """
+            SELECT TOP (30) sale_date,order_count,original_amount,discount_amount,sales_amount
+            FROM app.v_DailySales ORDER BY sale_date DESC;""")
+
+    def product_sales(self, connection):
+        return records(connection, """
+            SELECT product_id,sku,product_name,category_name,sold_quantity,sales_amount
+            FROM app.v_ProductSales ORDER BY sold_quantity DESC,sales_amount DESC,product_id;""")
+
+    def supplier_purchases(self, connection):
+        return records(connection, """
+            SELECT supplier_id,supplier_code,supplier_name,received_count,purchase_amount
+            FROM app.v_SupplierPurchases ORDER BY purchase_amount DESC,supplier_id;""")
+
     def suppliers(self, connection):
         return records(connection, "SELECT supplier_id,supplier_code,supplier_name FROM app.v_Suppliers ORDER BY supplier_id;")
 

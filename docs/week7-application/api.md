@@ -36,6 +36,7 @@
 | DELETE /purchases/id/items/item_id | 空对象 | 仅管理员，移除明细 |
 | POST /purchases/id/confirm | 空对象 | 仅管理员，确认入库：增加库存并写流水；无明细409 |
 | POST /purchases/id/cancel | 空对象 | 仅管理员，取消草稿 |
+| GET /reports | 无 | 管理员、店员；返回daily_sales（最近30个有销售的日期）、product_sales（按销量倒序）；管理员另有supplier_purchases；顾客403 |
 
 商品PUT提交完整业务字段，订单PATCH提交需修改字段。
 SKU/条码允许字母、数字、下划线及短横线；名称支持中文/普通文本。

@@ -1,6 +1,6 @@
 # 结果目录说明
 
-本目录收录第二阶段（第 5—9 周）的实际运行结果。应用、迁移、数据库回归数字和浏览器截图来自 2026-11-04 的真实运行（Windows、SQL Server 2025 Developer 默认实例、Python 3.13.12、ODBC Driver 18）；更新后的交付包于 2026-11-08 在 SQL Server Express、Python 3.12 上重新做空环境烟测，见 `package-smoke.json`。没有手工编写的测试结果；找不到来源的内容标为“待补充”。
+本目录收录第二阶段（第 5—9 周）与第三阶段（第 10—12 周）的实际运行结果。第 10—12 周数据库验证和应用全量回归于 2026-11-25 在 Windows、SQL Server 2025 Developer 默认实例上重新执行；早期迁移和交付包烟测的环境与日期保留在各自结果文件中。没有手工编写的测试结果。
 
 ## 目录内容
 
@@ -9,13 +9,14 @@
 | [er/](er) | 第 5 周 v0.1、第 6 周 v1.0 核心业务 ER 图，以及最终应用层 ER 补充图，各有 draw.io 源文件、SVG 和 PNG | 复制自 `docs/week5-er/`、`docs/week6-normalization/`、`docs/week7-application/` |
 | [normalization/](normalization) | 函数依赖清单、范式与异常分析、目标结构与无损/依赖保持证明 | 复制自 `docs/week6-normalization/`，只调整了相对链接 |
 | [migration/](migration) | 迁移前后关键结果 [key-results.md](migration/key-results.md)；两个验证脚本的完整输出 | `tests\Verify-Week6Migration.ps1`、`tests\Verify-CampusStore.ps1` |
-| [app-test/](app-test) | 应用集成测试（332 项）、浏览器验收（28 项）、25 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
+| [app-test/](app-test) | 应用集成测试（343 项）、浏览器验收（29 项）、26 张截图、JUnit 与 JSON 明细 | `python -m tools.verify_week7 --server "."` |
 | [doctor.txt](doctor.txt) | 环境预检输出：8 项全部通过 | `python -m tools.doctor --server "."` |
 | [prepare-week7.txt](prepare-week7.txt) | 建开发库 `CampusStoreDB_W7_Development` 的输出 | `python -m tools.prepare_week7 --server "."` |
 | [final-regression.txt](final-regression.txt) | 开发库上的 30 项只读回归：库存与流水、订单金额、销量统计、外键与流水来源、受限角色权限 | `sql/week9/final_regression.sql` |
+| [week10-12/](week10-12) | 第 10—12 周数据库验证：过程与函数（test_week10.txt）、触发器与窗口核对（test_week11.txt）、窗口查询结果（window_query.txt）、递归查询（recursive_query.txt）、事务验证（test_week12.txt），汇总 summary.json | `python -m tools.verify_week12 --server "."` |
 | [package-smoke.json](package-smoke.json) | 把交付包解压到临时目录后的空环境复现结果 | `tools/smoke_package.py` |
 
-`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 332 项通过、浏览器 28 项通过、0 个未捕获 JavaScript 异常、测试库已清理。
+`app-test/` 中的 `integration-results.json`、`integration-junit.xml`、`integration-output.txt` 是 pytest 的逐项记录，`browser-results.json` 是浏览器验收的逐项预期与实际，`summary.json` 汇总为：集成 343 项通过、浏览器 29 项通过、0 个未捕获 JavaScript 异常、测试库已清理。390px 验收额外断言了折扣标签/规则、报表日期控件和补货按钮不越界。
 
 ## 不同角色的完整业务流程与截图
 
@@ -42,6 +43,7 @@
 | | 删除有历史记录的商品被拒绝，显示友好提示 | [03](app-test/03-friendly-business-error.png) |
 | | 库存查询与预警状态 | [04](app-test/04-admin-inventory.png) |
 | | 新建采购单并确认入库，库存增加 | [23](app-test/23-purchase-received.png) |
+| | 按库存预警生成补货草稿，草稿不改库存 | [26](app-test/26-restock-draft.png) |
 | | 调整库存（必填原因）并查看库存流水 | [14](app-test/14-admin-adjust-and-logs.png) |
 | | 手机宽度下查看库存流水 | [17](app-test/17-mobile-inventory-logs.png) |
 | | 编辑已停用分类下的商品，分类保持不变 | [21](app-test/21-disabled-category-edit.png) |

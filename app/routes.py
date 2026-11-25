@@ -197,7 +197,7 @@ def add_to_cart():
 @api.get("/reports")
 @signed_in
 def reports():
-    return reply(store().reports(g.user))
+    return reply(store().reports(g.user, request.args))
 
 
 @api.get("/suppliers")
@@ -216,6 +216,12 @@ def purchases():
 @signed_in
 def create_purchase():
     return reply(store().create_purchase(g.user, body()), "采购草稿已创建，尚未入库。", 201)
+
+
+@api.post("/purchases/restock")
+@signed_in
+def create_restock():
+    return reply(store().create_restock(g.user, body()), "已按库存预警生成补货单，尚未入库。", 201)
 
 
 @api.get("/purchases/<int:purchase_id>")

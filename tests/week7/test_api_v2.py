@@ -12,7 +12,7 @@ from tools.prepare_week7 import DEMO_PASSWORD, administrative_connection
 LEAKS = ("SQL", "ODBC", "dbo.", "Traceback")
 ORDER_KEYS = {"sale_id", "sale_no", "status", "employee_id", "payment_method", "discount_amount",
               "total_amount", "payable_amount", "draft_amount", "remark", "created_at", "owner_user_id",
-              "submitted_at", "is_customer_order", "settled_at", "employee_no", "employee_name", "items"}
+              "submitted_at", "is_customer_order", "settled_at", "employee_no", "employee_name", "discount_rate", "items"}
 ITEM_KEYS = {"item_id", "sale_id", "product_id", "sku", "product_name", "quantity", "unit_price", "line_amount"}
 LOG_KEYS = {"log_id", "product_id", "sku", "product_name", "change_type", "change_quantity", "before_quantity",
             "after_quantity", "business_no", "employee_no", "remark", "created_at"}
@@ -172,15 +172,19 @@ def test_other_customer_cannot_submit_or_see_the_order(new_customer, stocked):
 
 # ---------- POST /orders/<id>/settle ----------
 
-def test_staff_settles_a_submitted_order_with_payment_and_discount(login, new_customer, stocked, settings):
+def test_staff_settles_a_submitted_order_with_payment_and_member_discount(login, new_customer, stocked, settings):
+    # 顾客账号下单是会员订单：dbo.fn_DiscountRate 给 95 折，13.00 × 5% = 0.65。
     admin, staff, customer, product_id = login("admin"), login("staff"), new_customer(), stocked(10)
     sale_id = submitted(customer, product_id, 2)
-    response = staff.send("POST", f"/orders/{sale_id}/settle", {"payment_method": "ALIPAY", "discount_amount": "1.50"})
+    preview = result(staff.get(f"/orders/{sale_id}"))
+    assert (preview["discount_rate"], preview["discount_amount"]) == ("0.0500", "0.65")
+    response = staff.send("POST", f"/orders/{sale_id}/settle", {"payment_method": "ALIPAY"})
     order = result(response)
     assert response.json["message"] == "订单已结算，库存已扣减。"
     assert set(order) == ORDER_KEYS
     assert order["status"] == "COMPLETED" and order["payment_method"] == "ALIPAY"
-    assert order["discount_amount"] == "1.50" and order["total_amount"] == "13.00" and order["payable_amount"] == "11.50"
+    assert order["discount_rate"] == "0.0500" and order["discount_amount"] == "0.65"
+    assert order["total_amount"] == "13.00" and order["payable_amount"] == "12.35"
     assert order["owner_user_id"] == customer.user["user_id"]
     assert scalar(settings, "SELECT EmployeeNo FROM dbo.Employee WHERE EmployeeID=?;", order["employee_id"]) == "E003"
     assert stock(settings, product_id) == 8
@@ -198,14 +202,24 @@ def test_admin_settles_a_staff_order_without_changes(login, stocked, settings):
                                                     "payment_method": "WECHAT"}), 201)["sale_id"]
     order = result(admin.send("POST", f"/orders/{sale_id}/settle", {}))
     assert order["status"] == "COMPLETED" and order["payment_method"] == "WECHAT" and order["discount_amount"] == "0.00"
+    assert order["discount_rate"] == "0.0000"
     assert stock(settings, product_id) == 7
 
 
-def test_settle_with_insufficient_stock_rolls_back_payment_and_discount(login, stocked, settings):
+def test_non_member_order_of_100_gets_five_percent_off(login, stocked):
+    # 店员开的散客订单不是会员订单；满 100 元减 5%：16 × 6.50 = 104.00，折扣 5.20，应付 98.80。
+    staff, product_id = login("staff"), stocked(20)
+    sale_id = result(staff.send("POST", "/orders", {"items": [{"product_id": product_id, "quantity": 16}]}), 201)["sale_id"]
+    order = result(staff.send("POST", f"/orders/{sale_id}/settle", {}))
+    assert (order["total_amount"], order["discount_rate"], order["discount_amount"], order["payable_amount"]) == (
+        "104.00", "0.0500", "5.20", "98.80")
+
+
+def test_settle_with_insufficient_stock_rolls_back_payment(login, stocked, settings):
     admin, staff, product_id = login("admin"), login("staff"), stocked(5)
     sale_id = result(staff.send("POST", "/orders", {"items": [{"product_id": product_id, "quantity": 4}]}), 201)["sale_id"]
     result(admin.send("PATCH", f"/inventory/{product_id}/quantity", {"new_quantity": 1, "reason": "盘点减少"}))
-    data = {"payment_method": "WECHAT", "discount_amount": "1.00"}
+    data = {"payment_method": "WECHAT"}
     assert "库存不足" in failure(staff.send("POST", f"/orders/{sale_id}/settle", data), 409, "BUSINESS_RULE")
     order = result(staff.get(f"/orders/{sale_id}"))
     assert (order["status"], order["payment_method"], order["discount_amount"]) == ("DRAFT", "CASH", "0.00")
@@ -213,24 +227,26 @@ def test_settle_with_insufficient_stock_rolls_back_payment_and_discount(login, s
     assert [row["change_type"] for row in logs(admin, product_id)["items"]] == ["STOCKTAKE_OUT", "STOCKTAKE_IN"]
     result(admin.send("PATCH", f"/inventory/{product_id}/quantity", {"new_quantity": 5, "reason": "补货"}))
     done = result(staff.send("POST", f"/orders/{sale_id}/settle", data))
-    assert (done["status"], done["payment_method"], done["payable_amount"]) == ("COMPLETED", "WECHAT", "25.00")
+    assert (done["status"], done["payment_method"], done["payable_amount"]) == ("COMPLETED", "WECHAT", "26.00")
     assert stock(settings, product_id) == 1
 
 
 def test_settle_of_unsubmitted_customer_order_is_rejected_and_rolled_back(login, new_customer, stocked):
     staff, customer = login("staff"), new_customer()
     sale_id = add(customer, stocked(10))["sale_id"]
-    failure(staff.send("POST", f"/orders/{sale_id}/settle", {"payment_method": "ALIPAY", "discount_amount": "1.00"}),
-            409, "BUSINESS_RULE")
+    failure(staff.send("POST", f"/orders/{sale_id}/settle", {"payment_method": "ALIPAY"}), 409, "BUSINESS_RULE")
     order = result(staff.get(f"/orders/{sale_id}"))
-    assert (order["status"], order["payment_method"], order["discount_amount"]) == ("DRAFT", "CASH", "0.00")
+    assert (order["status"], order["payment_method"]) == ("DRAFT", "CASH")
 
 
-def test_settle_rejects_discount_above_total_and_keeps_the_draft(login, stocked, settings):
+def test_manual_discount_is_no_longer_accepted(login, stocked, settings):
+    # 第十周起折扣只由数据库函数计算；接口拒绝人工填写的优惠金额，草稿和库存都不变。
     staff, product_id = login("staff"), stocked(10)
     sale_id = result(staff.send("POST", "/orders", {"items": [{"product_id": product_id, "quantity": 1}]}), 201)["sale_id"]
-    failure(staff.send("POST", f"/orders/{sale_id}/settle", {"discount_amount": "100.00"}), 409, "BUSINESS_RULE")
-    assert result(staff.get(f"/orders/{sale_id}"))["discount_amount"] == "0.00" and stock(settings, product_id) == 10
+    failure(staff.send("POST", f"/orders/{sale_id}/settle", {"discount_amount": "1.00"}), 400, "INVALID_INPUT")
+    failure(staff.send("PATCH", f"/orders/{sale_id}", {"discount_amount": "1.00"}), 400, "INVALID_INPUT")
+    order = result(staff.get(f"/orders/{sale_id}"))
+    assert (order["status"], order["discount_amount"]) == ("DRAFT", "0.00") and stock(settings, product_id) == 10
 
 
 @pytest.mark.parametrize("data", [
@@ -561,8 +577,32 @@ def test_disabled_category_stays_hidden_from_customers_in_the_filter(login, stoc
 def test_reports_are_for_staff_and_admin_only(client, login):
     failure(client.get("/api/reports"), 401, "AUTH_REQUIRED")
     failure(login("customer").get("/reports"), 403, "FORBIDDEN")
-    assert set(result(login("staff").get("/reports"))) == {"daily_sales", "product_sales"}
-    assert set(result(login("admin").get("/reports"))) == {"daily_sales", "product_sales", "supplier_purchases"}
+    keys = {"start_date", "end_date", "summary", "daily_sales", "product_sales"}
+    assert set(result(login("staff").get("/reports"))) == keys
+    assert set(result(login("admin").get("/reports"))) == keys | {"supplier_purchases"}
+
+
+@pytest.mark.parametrize("query", [
+    {"start": "2026-13-01"}, {"start": "abc"}, {"end": "2026/01/01"}, {"start": "2026-02-30"},
+    {"start": "2026-02-01", "end": "2026-01-01"}, {"start": "2024-01-01", "end": "2026-01-01"},
+])
+def test_reports_reject_bad_date_ranges(login, query):
+    failure(login("staff").get("/reports", query_string=query), 400, "INVALID_INPUT")
+
+
+def test_reports_use_window_functions_over_a_date_range(login, settings):
+    report = result(login("staff").get("/reports", query_string={"start": "2000-01-01", "end": "2000-01-10"}))
+    assert (report["start_date"], report["end_date"]) == ("2000-01-01", "2000-01-10")
+    assert len(report["daily_sales"]) == 10 and report["product_sales"] == []
+    assert report["summary"]["order_count"] == 0 and report["summary"]["sales_amount"] == "0.00"
+    assert {row["window_days"] for row in report["daily_sales"]} == {1, 2, 3}
+    today = scalar(settings, "SELECT CONVERT(varchar(10),CONVERT(date,SYSDATETIME()),23);")
+    recent = result(login("admin").get("/reports", query_string={"start": today, "end": today}))
+    completed = " FROM dbo.SaleOrder WHERE Status='COMPLETED' AND CONVERT(date,SaleTime)=CONVERT(date,SYSDATETIME());"
+    assert recent["summary"]["order_count"] == scalar(settings, "SELECT COUNT(*)" + completed)
+    assert recent["daily_sales"][0]["cumulative_amount"] == recent["daily_sales"][0]["sales_amount"]
+    ranks = [row["row_no"] for row in recent["product_sales"]]
+    assert ranks == list(range(1, len(ranks) + 1))
 
 
 def test_reports_match_completed_sales_and_received_purchases(login, new_customer, stocked, settings):
@@ -609,20 +649,18 @@ def test_purchase_shows_handler_and_received_time(login, stocked):
 
 # ---------- PATCH /orders/<id> 顾客改备注的回归 ----------
 
-def test_customer_can_edit_remark_and_payment_after_staff_sets_a_discount(login, new_customer, stocked):
+def test_customer_can_edit_remark_and_payment_and_sees_the_member_discount(login, new_customer, stocked):
     staff, customer = login("staff"), new_customer()
-    sale_id = add(customer, stocked(10))["sale_id"]
+    sale_id = add(customer, stocked(10, "20.00"), 2)["sale_id"]
     path = f"/orders/{sale_id}"
-    result(staff.send("PATCH", path, {"discount_amount": "1.00"}))
     edited = result(customer.send("PATCH", path, {"remark": "放前台"}))
-    assert (edited["remark"], edited["discount_amount"]) == ("放前台", "1.00")
+    assert (edited["remark"], edited["discount_rate"], edited["discount_amount"]) == ("放前台", "0.0500", "2.00")
     edited = result(customer.send("PATCH", path, {"payment_method": "ALIPAY"}))
-    assert (edited["payment_method"], edited["remark"], edited["discount_amount"]) == ("ALIPAY", "放前台", "1.00")
-    assert result(customer.send("PATCH", path, {"discount_amount": "1.00", "remark": "再改"}))["remark"] == "再改"
-    for discount in ("2.00", "0.00", "0", 0):
-        failure(customer.send("PATCH", path, {"discount_amount": discount, "remark": "越权"}), 403, "FORBIDDEN")
+    assert (edited["payment_method"], edited["remark"]) == ("ALIPAY", "放前台")
+    for who in (customer, staff):
+        failure(who.send("PATCH", path, {"discount_amount": "1.00", "remark": "越权"}), 400, "INVALID_INPUT")
     after = result(customer.get(path))
-    assert (after["remark"], after["discount_amount"]) == ("再改", "1.00")
+    assert (after["remark"], after["discount_amount"]) == ("放前台", "2.00")
 
 
 def test_customer_without_discount_can_still_edit_and_cannot_set_one(login, new_customer, stocked):
@@ -630,8 +668,32 @@ def test_customer_without_discount_can_still_edit_and_cannot_set_one(login, new_
     sale_id = add(customer, stocked(10))["sale_id"]
     path = f"/orders/{sale_id}"
     assert result(customer.send("PATCH", path, {"remark": "备注"}))["remark"] == "备注"
-    assert result(customer.send("PATCH", path, {"discount_amount": "0.00"}))["discount_amount"] == "0.00"
-    failure(customer.send("PATCH", path, {"discount_amount": "0.50"}), 403, "FORBIDDEN")
+    failure(customer.send("PATCH", path, {"discount_amount": "0.00"}), 400, "INVALID_INPUT")
     long_remark = "😀" * 128
     failure(customer.send("PATCH", path, {"remark": long_remark}), 400, "INVALID_INPUT")
     assert result(customer.send("PATCH", path, {"remark": "😀" * 127 + "字"}))["remark"] == "😀" * 127 + "字"
+
+
+# ---------- 第十至十二周：补货建议单 ----------
+
+def test_admin_creates_a_restock_draft_from_low_stock(login, stocked, settings):
+    # 新商品预警下限默认为 10，库存 2 低于下限；补货量由 dbo.fn_RestockQuantity 计算，补到 20 需要 18。
+    admin, product_id = login("admin"), stocked(2)
+    response = admin.send("POST", "/purchases/restock", {"supplier_id": 1})
+    order = result(response, 201)
+    item = next(i for i in order["items"] if i["product_id"] == product_id)
+    assert order["status"] == "DRAFT" and item["quantity"] == 18 and order["employee_no"] == "E001"
+    assert stock(settings, product_id) == 2
+    received = result(admin.send("POST", f"/purchases/{order['purchase_id']}/confirm"))
+    assert received["status"] == "RECEIVED" and stock(settings, product_id) == 20
+    failure(admin.send("POST", f"/purchases/{order['purchase_id']}/confirm"), 409, "BUSINESS_RULE")
+    assert stock(settings, product_id) == 20
+
+
+def test_restock_draft_is_admin_only_and_validates_supplier(login):
+    failure(login("staff").send("POST", "/purchases/restock", {"supplier_id": 1}), 403, "FORBIDDEN")
+    failure(login("customer").send("POST", "/purchases/restock", {"supplier_id": 1}), 403, "FORBIDDEN")
+    admin = login("admin")
+    failure(admin.send("POST", "/purchases/restock", {}), 400, "INVALID_INPUT")
+    failure(admin.send("POST", "/purchases/restock", {"supplier_id": "1"}), 400, "INVALID_INPUT")
+    failure(admin.send("POST", "/purchases/restock", {"supplier_id": 999999999}), 409, "BUSINESS_RULE")

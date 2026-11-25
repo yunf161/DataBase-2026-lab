@@ -1,0 +1,71 @@
+{
+  "run_at": "2026-11-25 15:31:45",
+  "server": ".",
+  "database": "CampusStoreDB_W7_Test_6894dcfba5f6",
+  "scripts": [
+    {
+      "name": "test_week10",
+      "script": "sql/week10/test_week10.sql",
+      "title": "第十周：存储过程与函数",
+      "error": null,
+      "failed_rows": 0,
+      "checks": {
+        "items": 44,
+        "passed": 44,
+        "failed": 0
+      },
+      "seconds": 1.1
+    },
+    {
+      "name": "test_week11",
+      "script": "sql/week11/test_week11.sql",
+      "title": "第十一周：触发器与窗口函数（核对）",
+      "error": null,
+      "failed_rows": 0,
+      "checks": {
+        "items": 23,
+        "passed": 23,
+        "failed": 0
+      },
+      "seconds": 0.6
+    },
+    {
+      "name": "window_query",
+      "script": "sql/week11/window_query.sql",
+      "title": "第十一周：三类窗口查询结果",
+      "error": null,
+      "failed_rows": 0,
+      "checks": null,
+      "seconds": 0.1
+    },
+    {
+      "name": "recursive_query",
+      "script": "sql/week12/recursive_query.sql",
+      "title": "第十二周：层级递归查询",
+      "error": null,
+      "failed_rows": 0,
+      "checks": {
+        "items": 5,
+        "passed": 5,
+        "failed": 0
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "test_week12",
+      "script": "sql/week12/test_week12.sql",
+      "title": "第十二周：订单完成与补货入库事务",
+      "error": null,
+      "failed_rows": 0,
+      "checks": {
+        "items": 18,
+        "passed": 18,
+        "failed": 0
+      },
+      "seconds": 0.4
+    }
+  ],
+  "passed": true,
+  "seconds": 4.7,
+  "test_database_cleaned": true
+}

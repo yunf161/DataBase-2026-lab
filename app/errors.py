@@ -48,6 +48,29 @@ ERROR_MAP.update({n: AppError("BUSINESS_RULE", "采购单状态已变化，请�
                   for n in (51200, 51210, 51222, 51410)})
 ERROR_MAP.update({n: AppError("BUSINESS_RULE", GENERIC_RULE, 409)
                   for n in (51801, 51802, 51805, 51806, 51807, 51810, 51220, 51221, 51401, 51402)})
+# 第十至十二周的过程、函数与触发器（sql/week10—week12）
+ERROR_MAP.update({n: AppError("INVALID_INPUT", "统计日期范围不正确，请检查开始和结束日期。", 400) for n in (51701, 51702, 51703)})
+ERROR_MAP.update({
+    51710: AppError("NOT_FOUND", "商品不存在或已删除，请刷新后重试。", 404),
+    51711: AppError("BUSINESS_RULE", "调整数量无效，请检查后重试。", 409),
+    51712: AppError("BUSINESS_RULE", "库存不足，调整后数量不能为负。", 409),
+    51713: AppError("BUSINESS_RULE", "操作员工无效或没有相应职责，请联系管理员。", 409),
+    51714: AppError("BUSINESS_RULE", "请填写调整原因。", 409),
+    51720: AppError("BUSINESS_RULE", "供应商不存在或已停用，请刷新后重试。", 409),
+    51721: AppError("BUSINESS_RULE", "当前没有低于预警下限、需要补货的商品。", 409),
+    51730: AppError("NOT_FOUND", "记录不存在或当前账号无法访问。", 404),
+    51731: AppError("BUSINESS_RULE", "订单已完成，不能重复结算。", 409),
+    51732: AppError("BUSINESS_RULE", "订单已取消，不能结算。", 409),
+    51733: AppError("BUSINESS_RULE", "购买数量必须大于零。", 409),
+    51734: AppError("BUSINESS_RULE", "折扣计算结果异常，订单未结算。", 409),
+    51740: AppError("NOT_FOUND", "采购单不存在。", 404),
+    51741: AppError("BUSINESS_RULE", "采购单已入库，不能重复入库。", 409),
+    51742: AppError("BUSINESS_RULE", "采购单已取消，不能入库。", 409),
+    51743: AppError("BUSINESS_RULE", "采购数量必须大于零。", 409),
+    51744: AppError("BUSINESS_RULE", "采购单含不存在或已停用的商品，请修改后重试。", 409),
+})
+ERROR_MAP.update({n: AppError("BUSINESS_RULE", "订单不满足完成条件，未结算，请刷新后检查。", 409)
+                  for n in (51750, 51751, 51752, 51753, 51754, 51755, 51756)})
 ERROR_MAP.update({n: AppError("CONSTRAINT_CONFLICT", "数据与现有记录或数量、金额限制冲突，请检查后重试。", 409)
                   for n in (547, 8115, 8152, 2628)})
 # 只接受后面紧跟 (SQLxxx)、"; ["（pyodbc 连接多条错误的格式）或文本结尾的括号数字，避免把用户数据中的数字当作错误号

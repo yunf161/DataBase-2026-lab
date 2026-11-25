@@ -13,6 +13,13 @@ FROM app.AppUser u LEFT JOIN dbo.Employee e ON e.EmployeeID=u.EmployeeID
 """
 
 
+def order_record(record):
+    """折扣率是 decimal(5,4)，与普通金额的两位小数不同；在订单边界显式保留四位。"""
+    if record is not None and record.get("discount_rate") is not None:
+        record["discount_rate"] = format(record["discount_rate"], ".4f")
+    return record
+
+
 class AuthRepository:
     def __init__(self, database):
         self.database = database
@@ -84,9 +91,9 @@ class StoreRepository:
         where = """ FROM app.v_OrderAccess WHERE sale_no LIKE ? AND (?='' OR status=?)
             AND (?=0 OR (status='DRAFT' AND submitted_at IS NOT NULL)) """
         total = one(connection, "SELECT COUNT(*) AS total" + where, pattern, status, status, int(pending))["total"]
-        data = records(connection, "SELECT *" + where +
-                       "ORDER BY sale_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;",
-                       pattern, status, status, int(pending), offset, limit)
+        data = [order_record(row) for row in records(connection, "SELECT *" + where +
+                "ORDER BY sale_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;",
+                pattern, status, status, int(pending), offset, limit)]
         return {"items": data, "total": total}
 
     def lock_cart(self, connection, user_id):
@@ -98,14 +105,14 @@ class StoreRepository:
         """, "cart:" + str(user_id))["result"] >= 0
 
     def current_draft(self, connection, user_id):
-        return one(connection, """
+        return order_record(one(connection, """
             SELECT TOP 1 * FROM app.v_OrderAccess
             WHERE owner_user_id=? AND status='DRAFT' AND submitted_at IS NULL
             ORDER BY sale_id DESC;
-        """, user_id)
+        """, user_id))
 
     def order(self, connection, sale_id):
-        order = one(connection, "SELECT * FROM app.v_OrderAccess WHERE sale_id=?;", sale_id)
+        order = order_record(one(connection, "SELECT * FROM app.v_OrderAccess WHERE sale_id=?;", sale_id))
         if order:
             order["items"] = records(connection,
                 "SELECT * FROM app.v_OrderItems WHERE sale_id=? ORDER BY item_id;", sale_id)
@@ -127,10 +134,8 @@ class StoreRepository:
     def delete_item(self, connection, sale_id, item_id):
         connection.execute("EXEC app.DeleteSaleItem @SaleID=?,@SaleItemID=?;", sale_id, item_id)
 
-    def update_order(self, connection, sale_id, payment, discount, remark):
-        connection.execute(
-            "EXEC app.UpdateSaleDraft @SaleID=?,@PaymentMethod=?,@DiscountAmount=?,@Remark=?;",
-            sale_id, payment, discount, remark)
+    def update_order(self, connection, sale_id, payment, remark):
+        connection.execute("EXEC app.UpdateSaleDraft @SaleID=?,@PaymentMethod=?,@Remark=?;", sale_id, payment, remark)
 
     def cancel_order(self, connection, sale_id):
         connection.execute("EXEC app.CancelSaleDraft @SaleID=?;", sale_id)
@@ -152,15 +157,21 @@ class StoreRepository:
                        "ORDER BY log_id DESC OFFSET ? ROWS FETCH NEXT ? ROWS ONLY;", product_id, offset, limit)
         return {"items": data, "total": total}
 
-    def daily_sales(self, connection):
-        return records(connection, """
-            SELECT TOP (30) sale_date,order_count,original_amount,discount_amount,sales_amount
-            FROM app.v_DailySales ORDER BY sale_date DESC;""")
+    def sales_summary(self, connection, start, end):
+        # 过程返回两个结果集（区间汇总、商品明细），这里只取第一个；商品明细由 product_sales 带排名查询。
+        return one(connection, "EXEC dbo.usp_SalesStatistics @StartDate=?,@EndDate=?;", start, end)
 
-    def product_sales(self, connection):
+    def daily_sales(self, connection, start, end):
         return records(connection, """
-            SELECT product_id,sku,product_name,category_name,sold_quantity,sales_amount
-            FROM app.v_ProductSales ORDER BY sold_quantity DESC,sales_amount DESC,product_id;""")
+            SELECT sale_date,order_count,original_amount,discount_amount,sales_amount,
+                   cumulative_amount,moving_avg_3d,window_days
+            FROM app.fn_DailySalesTrend(?,?) ORDER BY sale_date DESC;""", start, end)
+
+    def product_sales(self, connection, start, end):
+        return records(connection, """
+            SELECT product_id,sku,product_name,category_name,sold_quantity,sales_amount,order_count,
+                   sales_rank,dense_sales_rank,row_no
+            FROM app.fn_ProductSalesRank(?,?) ORDER BY row_no;""", start, end)
 
     def supplier_purchases(self, connection):
         return records(connection, """
@@ -187,6 +198,9 @@ class StoreRepository:
         return one(connection, """
             EXEC app.WritePurchaseItem @PurchaseID=?,@ProductID=?,@Quantity=?,@UnitCost=?,@PurchaseItemID=?;
         """, purchase_id, product_id, quantity, unit_cost, item_id)["item_id"]
+
+    def create_restock(self, connection, supplier_id):
+        return one(connection, "EXEC app.CreateRestockDraft @SupplierID=?;", supplier_id)["purchase_id"]
 
     def confirm_purchase(self, connection, purchase_id):
         connection.execute("EXEC app.ConfirmPurchase @PurchaseID=?;", purchase_id)

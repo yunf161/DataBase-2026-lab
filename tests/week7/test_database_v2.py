@@ -163,15 +163,20 @@ def test_customer_submit_then_admin_settles_multiple_lines(env):
         assert shown == [{"business_no": head.SaleNo}]
 
 
-def test_discount_is_applied_to_settled_total(env):
+def test_discount_is_computed_by_function_when_settled(env):
+    # 第十周：折扣由 dbo.fn_DiscountRate 计算并保存到订单；会员（顾客账号）25.00 × 5% = 1.25。
     first, second = env.product(10, "6.50"), env.product(10, "4.00")
-    sale = env.order("staff", [(first, 2), (second, 3)])
-    env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "WECHAT", Decimal("3.50"), None)
-    env.call("admin", "EXEC app.SettleSale ?", sale)
-    head = env.header(sale)
+    member = env.order("customer", [(first, 2), (second, 3)], payment="WECHAT", submit=True)
+    walk_in = env.order("staff", [(first, 2), (second, 3)])
+    env.call("admin", "EXEC app.SettleSale ?", member)
+    env.call("admin", "EXEC app.SettleSale ?", walk_in)
+    head = env.header(member)
     assert (head.Status, head.PaymentMethod) == ("COMPLETED", "WECHAT")
-    assert head.TotalAmount == Decimal("25.00") and head.DiscountAmount == Decimal("3.50")
-    assert head.PayableAmount == Decimal("21.50")
+    assert head.TotalAmount == Decimal("25.00") and head.DiscountAmount == Decimal("1.25")
+    assert head.PayableAmount == Decimal("23.75")
+    assert env.scalar("SELECT DiscountRate FROM dbo.SaleOrder WHERE SaleID=?;", member) == Decimal("0.0500")
+    assert env.header(walk_in).DiscountAmount == Decimal("0.00")
+    assert env.scalar("SELECT DiscountRate FROM dbo.SaleOrder WHERE SaleID=?;", walk_in) == Decimal("0.0000")
 
 
 def test_stock_boundary_exact_quantity_settles_and_one_more_fails(env):
@@ -330,10 +335,15 @@ def test_settle_rejects_empty_draft(env):
     assert_settle_rejected(env, "admin", env.order("staff", []), 51302)
 
 
-def test_settle_rejects_discount_above_total(env):
+def test_completed_discount_cannot_be_changed_afterwards(env):
     sale = env.order("staff", [(env.product(5), 1)])
-    env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("100.00"), None)
-    assert_settle_rejected(env, "admin", sale, 51303)
+    env.call("admin", "EXEC app.SettleSale ?", sale)
+    with pytest.raises(pyodbc.Error) as caught:
+        env.conn.execute("UPDATE dbo.SaleOrder SET DiscountRate=0.5 WHERE SaleID=?;", sale)
+    assert native(caught.value) == 51756
+    with pytest.raises(pyodbc.Error) as caught:
+        env.conn.execute("UPDATE dbo.SaleOrder SET DiscountAmount=1.00 WHERE SaleID=?;", sale)
+    assert native(caught.value) == 51322
 
 
 def test_settle_rejects_disabled_product(env):
@@ -408,11 +418,11 @@ def test_submitted_order_is_locked_for_customer_but_not_for_staff_or_cancel(env)
     assert env.fail("customer", "EXEC app.WriteSaleItem ?,?,?", sale, second, 1) == 51811
     assert env.fail("customer", "EXEC app.WriteSaleItem ?,?,?,?,?", sale, first, 3, None, item) == 51811
     assert env.fail("customer", "EXEC app.DeleteSaleItem ?,?", sale, item) == 51811
-    assert env.fail("customer", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("0.00"), "改备注") == 51811
+    assert env.fail("customer", "EXEC app.UpdateSaleDraft ?,?,?", sale, "CASH", "改备注") == 51811
     assert env.scalar("SELECT Quantity FROM dbo.SaleItem WHERE SaleItemID=?;", item) == 1
     assert env.scalar("SELECT COUNT(*) FROM dbo.SaleItem WHERE SaleID=?;", sale) == 1
     env.call("staff", "EXEC app.WriteSaleItem ?,?,?", sale, second, 2)
-    env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("1.00"), "店员备注")
+    env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?", sale, "CASH", "店员备注")
     assert env.scalar("SELECT COUNT(*) FROM dbo.SaleItem WHERE SaleID=?;", sale) == 2
     assert env.header(sale).Remark == "店员备注"
     other = env.order("customer", [(first, 1)], submit=True)
@@ -436,15 +446,14 @@ def test_completed_and_cancelled_orders_reject_submit_and_settle(env):
     assert env.stock(product_id) == 19
 
 
-def test_customer_may_resend_the_existing_discount_but_not_change_it(env):
+def test_draft_update_only_changes_payment_and_remark(env):
+    # app.UpdateSaleDraft 不再接收优惠金额参数；草稿的优惠保持 0，结算时由函数计算。
     sale = env.order("customer", [(env.product(5), 1)])
-    env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("1.00"), None)
-    env.call("customer", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("1.00"), "顾客备注")
+    env.call("customer", "EXEC app.UpdateSaleDraft ?,?,?", sale, "ALIPAY", "顾客备注")
     head = env.header(sale)
-    assert head.Remark == "顾客备注" and head.DiscountAmount == Decimal("1.00")
-    for discount in ("2.00", "0.00"):
-        assert env.fail("customer", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal(discount), "x") == 51810
-    assert env.header(sale).DiscountAmount == Decimal("1.00")
+    assert (head.Remark, head.PaymentMethod, head.DiscountAmount) == ("顾客备注", "ALIPAY", Decimal("0.00"))
+    with pytest.raises(pyodbc.Error):
+        env.call("staff", "EXEC app.UpdateSaleDraft ?,?,?,?", sale, "CASH", Decimal("1.00"), "x")
 
 
 def test_unsubmitted_customer_draft_cannot_be_settled(env):

@@ -1,11 +1,11 @@
-"""把已有的第七周开发库升级到第八、九周应用增量；只执行可重复的结构/过程脚本，不删除数据。"""
+"""把已有的第七周开发库升级到第八至十二周的增量（含第十至十二周的过程、函数、触发器和事务）；只执行可重复的脚本，不删除数据。"""
 import argparse
 import sys
 
 import pyodbc
 
 from app.config import DATABASE_NAME, ROOT
-from tools.prepare_week7 import administrative_connection, run_script
+from tools.prepare_week7 import INCREMENT_SCRIPTS, administrative_connection, run_script
 
 
 def upgrade_database(server, database, driver=None):
@@ -13,8 +13,8 @@ def upgrade_database(server, database, driver=None):
         raise ValueError("目标库名必须为 CampusStoreDB_W7_ 加字母、数字或下划线")
     connection = administrative_connection(server, database, driver)
     try:
-        run_script(connection, ROOT / "sql/week8/application.sql")
-        run_script(connection, ROOT / "sql/week9/application_v2.sql")
+        for script in INCREMENT_SCRIPTS:
+            run_script(connection, ROOT / script)
     finally:
         connection.close()
 
@@ -26,7 +26,7 @@ def main():
     parser.add_argument("--driver", help="ODBC 驱动名称；默认使用已安装的最高版本")
     args = parser.parse_args()
     upgrade_database(args.server, args.database, args.driver)
-    print("已升级第九周应用增量：" + args.database)
+    print("已升级第八至十二周增量：" + args.database)
 
 
 if __name__ == "__main__":

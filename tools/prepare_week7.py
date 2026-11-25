@@ -64,6 +64,20 @@ def run_script(connection, source, replace_database=None):
         cursor.close()
 
 
+# 第八至十二周的增量脚本，按依赖顺序执行；都可重复执行，tools/upgrade_week9.py 也用这份清单升级已有开发库。
+INCREMENT_SCRIPTS = [
+    "sql/week8/application.sql",
+    "sql/week9/application_v2.sql",
+    "sql/week10/function.sql",
+    "sql/week10/procedure.sql",
+    "sql/week11/trigger.sql",
+    "sql/week12/order_transaction.sql",
+    "sql/week12/restock_transaction.sql",
+    "sql/week12/recursive_query.sql",
+    "sql/week12/integration.sql",
+]
+
+
 def drop_owned_database(server, name, driver=None):
     if not (re.fullmatch(r"CampusStoreDB_W6_W7_[a-f0-9]{12}", name) or
             re.fullmatch(r"CampusStoreDB_W7_Test_[a-f0-9]{12}", name)):
@@ -123,8 +137,8 @@ def provision_database(server, target, password=DEMO_PASSWORD, *, apply_week9=Tr
         connection = administrative_connection(server, target, driver)
         run_script(connection, ROOT / "sql/week7/application.sql")
         if apply_week9:
-            run_script(connection, ROOT / "sql/week8/application.sql")
-            run_script(connection, ROOT / "sql/week9/application_v2.sql")
+            for script in INCREMENT_SCRIPTS:
+                run_script(connection, ROOT / script)
         seed_users(connection, password)
         print("已创建迁移后的独立应用数据库：" + target, flush=True)
         return {

@@ -225,7 +225,7 @@ def test_draft_items_add_update_delete_cancel(login):
     item = added["items"][0]
     changed = result(staff.send("PATCH", path + "/items/" + str(item["item_id"]), {"quantity": 3}))
     assert changed["draft_amount"] == "10.50"
-    result(staff.send("PATCH", path, {"payment_method": "WECHAT", "remark": "课后领取", "discount_amount": "0.50"}))
+    result(staff.send("PATCH", path, {"payment_method": "WECHAT", "remark": "课后领取"}))
     assert result(staff.get(path))["remark"] == "课后领取"
     result(staff.send("DELETE", path + "/items/" + str(item["item_id"])))
     assert result(staff.get(path))["items"] == []
@@ -240,7 +240,7 @@ def test_customer_cannot_override_price_owner_employee_or_status(login):
     for key in ["owner_user_id", "employee_id", "status", "total_amount", "user_id"]:
         result(user.send("POST", "/orders", {key: 1}), 400, "INVALID_INPUT")
     order = draft(user)
-    result(user.send("PATCH", "/orders/" + str(order["sale_id"]), {"discount_amount": "1"}), 403, "FORBIDDEN")
+    result(user.send("PATCH", "/orders/" + str(order["sale_id"]), {"discount_amount": "1"}), 400, "INVALID_INPUT")
 
 
 @pytest.mark.parametrize("payment", [None, [], {}, False])

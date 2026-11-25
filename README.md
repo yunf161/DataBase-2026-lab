@@ -1,6 +1,6 @@
 # 校园小卖部进销存系统
 
-数据库课程项目：用 **SQL Server（T-SQL）** 建立校园小卖部进销存数据库，在第二阶段（第 5—9 周）完成规范化迁移，并在其上实现 **Flask + pyodbc** Web 应用。
+数据库课程项目：用 **SQL Server（T-SQL）** 建立校园小卖部进销存数据库，在第二阶段（第 5—9 周）完成规范化迁移，并在其上实现 **Flask + pyodbc** Web 应用；第三阶段（第 10—12 周）把补货、订单完成、库存调整、折扣和统计写成存储过程、函数和触发器，网页改为调用它们（见[第 11 节](#11-第三阶段第-1012-周数据库编程与事务)）。
 最初的[要求文档](要求.md)以 MySQL 为例，本项目按已选定的 SQL Server 实现，不能在 MySQL 客户端中运行。
 
 > 本文所有命令都在**仓库根目录**运行（交付包 `v1.0-final` 中，仓库根目录对应 `code/` 目录，请先 `cd code`）。命令使用 Windows PowerShell 写法。
@@ -17,6 +17,7 @@
 8. [迁移与回归](#8-迁移与回归)
 9. [测试与结果](#9-测试与结果)
 10. [已知限制](#10-已知限制)
+11. [第三阶段（第 10—12 周）：数据库编程与事务](#11-第三阶段第-1012-周数据库编程与事务)
 
 ## 1. 项目简介与最终功能
 
@@ -186,11 +187,11 @@ python -m venv .venv
 
 ### 店员：受理并结算
 
-订单详情会显示经办员工和结算时间。左侧“经营统计”可切换“每日销售”和“商品销量”，数据来自第一阶段的统计视图 `v_daily_sales`、`v_product_sales`，只计入已完成的销售；管理员还能看到“供应商采购”汇总（`v_supplier_purchases`）。
+订单详情会显示经办员工和结算时间。左侧“经营统计”可选开始、结束日期（默认最近 30 天，都包含当天），切换“每日销售”（含累计实收和近 3 天移动平均）和“商品销量”（含排名），数据来自第十周的销售统计过程和销售汇总函数，只计入已完成的销售；管理员还能看到“供应商采购”汇总（`v_supplier_purchases`）。
 
 ![经营统计](results/app-test/24-reports.png)
 
-在“销售订单”选“待受理”，打开订单，核对支付方式、登记优惠，点“确认收款并结算”。同一事务内扣减库存、写库存流水、订单变为已完成；任何商品库存不足时整单回滚，订单仍是待受理。
+在“销售订单”选“待受理”，打开订单，核对支付方式，点“确认收款并结算”。折扣不再手填，由数据库函数按规则计算：会员（网上顾客账号下单）95 折，满 100 元再减 5%。同一事务内扣减库存、写库存流水、订单变为已完成；任何商品库存不足时整单回滚，订单仍是待受理。
 
 ![店员结算订单](results/app-test/10-staff-settle.png)
 
@@ -202,7 +203,7 @@ python -m venv .venv
 
 ![管理员调整库存并查看流水](results/app-test/14-admin-adjust-and-logs.png)
 
-在“采购入库”点“新建采购”，选供应商后逐项添加商品、数量和进价。采购草稿不增加库存；点“确认入库”后，库存增加并写采购入库流水。
+在“采购入库”点“新建采购”，选供应商后逐项添加商品、数量和进价；也可以点“按库存生成补货单”，把低于预警下限的商品补到下限的 2 倍，生成后仍可修改。采购草稿不增加库存；点“确认入库”后，库存增加并写采购入库流水。
 
 ![管理员确认采购入库](results/app-test/23-purchase-received.png)
 
@@ -244,13 +245,13 @@ sequenceDiagram
     P->>R: POST /api/orders/{id}/settle + X-CSRF-Token
     R->>R: 核对账号状态；校验 CSRF；路径编号范围
     R->>S: settle_order(user, id, body)
-    S->>S: 角色必须是 ADMIN/STAFF；字段白名单；支付方式、优惠金额校验
+    S->>S: 角色必须是 ADMIN/STAFF；字段白名单（只接受支付方式）
     S->>D: 开启事务（EXECUTE AS WebStaff）
     D->>Q: 读订单（app.v_OrderAccess），必须是 DRAFT
-    D->>Q: EXEC app.UpdateSaleDraft（可选：支付方式、优惠）
+    D->>Q: EXEC app.UpdateSaleDraft（可选：支付方式）
     D->>Q: EXEC app.SettleSale
     Q->>Q: 锁订单；顾客订单必须已提交；商品和分类须启用；记录结算员工
-    Q->>Q: dbo.CompleteSale：重算金额、库存不足则报错、扣库存、写 SALE_OUT 流水、状态改 COMPLETED
+    Q->>Q: dbo.usp_CompleteOrder：按商品汇总、带库存条件扣减（受影响行数不足即库存不足）、写 SALE_OUT 流水、函数算折扣、状态改 COMPLETED
     D->>Q: 重新读取订单
     D-->>S: 全部成功才提交
     S-->>R: 已完成订单（含应付金额）
@@ -424,7 +425,8 @@ sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W6_Group1 -i sql\week6\regressio
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-Week6Migration.ps1 -ServerInstance "."` | 第 6 周迁移 | 退出码 0，21 + 8 + 3 + 1 项通过（[输出](results/migration/verify-week6-migration.txt)） |
 | `powershell -NoProfile -ExecutionPolicy Bypass -File tests\Verify-CampusStore.ps1 -ServerInstance "."` | 第 1—4 周主流程与反例 | 退出码 0（[输出](results/migration/verify-campusstore.txt)） |
 | `sqlcmd -S . -E -No -b -f 65001 -d CampusStoreDB_W7_Development -i sql\week9\final_regression.sql` | 最终只读回归 | 30 项通过、0 项失败（[final-regression.txt](results/final-regression.txt)） |
-| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **332 项集成测试通过、28 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
+| `.\.venv\Scripts\python.exe -m tools.verify_week7 --server "."` | 应用集成测试 + 浏览器验收 | **343 项集成测试通过、29 项浏览器验收通过**、0 个未捕获 JavaScript 异常（[app-test/](results/app-test)） |
+| `.\.venv\Scripts\python.exe -m tools.verify_week12 --server "."` | 第 10—12 周数据库编程与事务 | 过程/函数 **44/44**、触发器/窗口核对 **23/23**、递归 **5/5**、事务 **18/18** 通过，随机测试库已清理（[week10-12/](results/week10-12)） |
 | `.\.venv\Scripts\python.exe -m tools.package_final`、`-m tools.smoke_package --server ".\SQLEXPRESS"` | 生成交付包；把 zip 解压到临时目录，按包内 README 空环境复现 | 2026-11-08 在 SQL Server Express 上全部步骤通过，admin 登录 200，测试库和临时目录已清理（[package-smoke.json](results/package-smoke.json)） |
 
 单独运行集成测试：
@@ -452,6 +454,21 @@ $env:CAMPUS_TEST_SERVER = "."
 - **演示账号**：`admin`、`staff`、`customer`、`customer2` 和统一密码 `Campus2026!` 只用于本地课程演示，不能用于正式环境。服务只监听 `127.0.0.1`，没有 HTTPS，`SESSION_COOKIE_SECURE` 默认关闭。
 - **脚本与环境**：`tools.doctor` 要在安装依赖之后才能运行。最终验证只在 SQL Server 2025 Developer 默认实例 + Python 3.13.12 上完成，Express 与 Python 3.14 是第 7 周的验证结果，没有在最终版重跑。
 - **最终回归的数据范围**：`final_regression.sql` 在开发库上运行，该库只有 v0.1 的演示数据（3 张已完成订单、11 条流水）；应用测试产生的订单在已清理的随机测试库里，没有在开发库上积累。
+
+## 11. 第三阶段（第 10—12 周）：数据库编程与事务
+
+设计说明、对象清单、递归逻辑、事务边界和调用关系见 [docs/week10-12/README.md](docs/week10-12/README.md)。
+
+| 周 | 内容 | 脚本 |
+| --- | --- | --- |
+| 10 | 销售统计过程、库存调整过程、补货选择过程；补货量函数、销售汇总表值函数、折扣函数 | `sql/week10/procedure.sql`、`function.sql`、`test_week10.sql` |
+| 11 | 库存审计触发器、订单完成规则触发器；排名、累计值、移动平均窗口查询 | `sql/week11/trigger.sql`、`window_query.sql`、`test_week11.sql` |
+| 12 | 分类层级递归查询；订单完成事务、补货入库事务；网页整合 | `sql/week12/recursive_query.sql`、`order_transaction.sql`、`restock_transaction.sql`、`integration.sql`、`test_week12.sql` |
+
+- **只有一处扣库存**：网页结算和第一阶段的 `dbo.CompleteSale` 都调用 `dbo.usp_CompleteOrder`；网页入库和 `dbo.ConfirmPurchase` 都调用 `dbo.usp_ReceiveRestock`。触发器只记录和检查。
+- **事务边界**：过程负责整个业务的检查、修改和回滚；在网页请求中调用时只建保存点，最终提交由网页层做一次。
+- **验证**：`.\.venv\Scripts\python.exe -m tools.verify_week12 --server "."` 新建测试库运行全部脚本；2026-11-25 实测为 44 + 23 + 5 + 18 项全部通过，结果保存在 [results/week10-12/](results/week10-12)。
+- **已有开发库升级**：`.\.venv\Scripts\python.exe -m tools.upgrade_week9 --server "." --database CampusStoreDB_W7_Development`（会执行第八至十二周的全部增量脚本，不删数据）。
 
 ## 文档索引
 

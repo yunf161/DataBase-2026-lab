@@ -1,5 +1,6 @@
 """业务层：身份、输入、业务规则和一整次操作的事务边界。"""
 import re
+from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -68,6 +69,15 @@ def money(value, name, maximum="99999999.99"):
         return amount.quantize(Decimal(".01"))
     except (InvalidOperation, ValueError):
         raise AppError("INVALID_INPUT", name + "必须是不小于零、最多两位小数的有效金额。") from None
+
+
+def query_date(value, name):
+    if not isinstance(value, str) or not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+        raise AppError("INVALID_INPUT", name + "格式不正确，应为 YYYY-MM-DD。")
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        raise AppError("INVALID_INPUT", name + "不是有效日期。") from None
 
 
 def search_pattern(value):
@@ -276,27 +286,24 @@ class StoreService:
                 self.repository.write_item(connection, sale_id, product_id, quantity, price)
             return self.repository.order(connection, sale_id)
 
-    def draft_values(self, user, order, data):
-        if "payment_method" in data:
-            payment = data["payment_method"]
-            if not isinstance(payment, str) or payment not in PAYMENTS:
-                raise AppError("INVALID_INPUT", "请选择有效支付方式。")
-        else:
-            payment = order["payment_method"]
-        discount = order["discount_amount"]
-        if "discount_amount" in data:
-            discount = money(data["discount_amount"], "优惠金额", "9999999999.99")
-            if user["role"] == "CUSTOMER" and discount != order["discount_amount"]:
-                raise AppError("FORBIDDEN", "顾客不能设置订单优惠。", 403)
-        return payment, discount
+    @staticmethod
+    def payment_value(order, data):
+        if "payment_method" not in data:
+            return order["payment_method"]
+        payment = data["payment_method"]
+        if not isinstance(payment, str) or payment not in PAYMENTS:
+            raise AppError("INVALID_INPUT", "请选择有效支付方式。")
+        return payment
 
     def update_order(self, user, sale_id, data):
+        # 折扣由数据库函数 dbo.fn_DiscountRate 按会员身份和订单金额计算，不接受人工填写的优惠金额。
         require_role(user, "ADMIN", "STAFF", "CUSTOMER")
+        fields(data, {"payment_method", "remark"})
         with self.repository.transaction(user) as connection:
             order = self.draft(connection, sale_id)
-            payment, discount = self.draft_values(user, order, data)
+            payment = self.payment_value(order, data)
             remark = text(data.get("remark", order["remark"]), "备注", 255)
-            self.repository.update_order(connection, sale_id, payment, discount, remark)
+            self.repository.update_order(connection, sale_id, payment, remark)
             return self.repository.order(connection, sale_id)
 
     def submit_order(self, user, sale_id):
@@ -308,12 +315,12 @@ class StoreService:
 
     def settle_order(self, user, sale_id, data):
         require_role(user, "ADMIN", "STAFF")
-        fields(data, {"payment_method", "discount_amount"})
+        fields(data, {"payment_method"})
         with self.repository.transaction(user) as connection:
             order = self.draft(connection, sale_id)
             if data:
-                payment, discount = self.draft_values(user, order, data)
-                self.repository.update_order(connection, sale_id, payment, discount, order["remark"])
+                self.repository.update_order(connection, sale_id, self.payment_value(order, data), order["remark"])
+            # 扣库存、写流水、计算折扣、完成订单都在 dbo.usp_CompleteOrder 一个事务里完成。
             self.repository.settle_sale(connection, sale_id)
             return self.repository.order(connection, sale_id)
 
@@ -362,11 +369,20 @@ class StoreService:
             self.draft(connection, sale_id)
             self.repository.cancel_order(connection, sale_id)
 
-    def reports(self, user):
+    def reports(self, user, query):
+        # 默认统计最近 30 天（含今天）；开始、结束日期都包含当天，最多一年。
         require_role(user, "ADMIN", "STAFF")
+        end = query_date(query["end"], "结束日期") if query.get("end") else date.today()
+        start = query_date(query["start"], "开始日期") if query.get("start") else end - timedelta(days=29)
+        if start > end:
+            raise AppError("INVALID_INPUT", "开始日期不能晚于结束日期。")
+        if (end - start).days > 365:
+            raise AppError("INVALID_INPUT", "统计范围最多一年。")
         with self.repository.transaction(user) as connection:
-            result = {"daily_sales": self.repository.daily_sales(connection),
-                      "product_sales": self.repository.product_sales(connection)}
+            result = {"start_date": start.isoformat(), "end_date": end.isoformat(),
+                      "summary": self.repository.sales_summary(connection, start, end),
+                      "daily_sales": self.repository.daily_sales(connection, start, end),
+                      "product_sales": self.repository.product_sales(connection, start, end)}
             if user["role"] == "ADMIN":
                 result["supplier_purchases"] = self.repository.supplier_purchases(connection)
             return result
@@ -408,6 +424,15 @@ class StoreService:
             purchase_id = self.repository.create_purchase(connection, supplier_id)
             for product_id, quantity, unit_cost in clean_items:
                 self.repository.write_purchase_item(connection, purchase_id, product_id, quantity, unit_cost)
+            return self.repository.purchase(connection, purchase_id)
+
+    def create_restock(self, user, data):
+        # 补货量由 dbo.fn_RestockQuantity 计算，补货单由 dbo.usp_CreateRestockOrder 生成（采购草稿，不改库存）。
+        require_role(user, "ADMIN")
+        fields(data, {"supplier_id"}, {"supplier_id"})
+        supplier_id = integer(data["supplier_id"], "供应商")
+        with self.repository.transaction(user) as connection:
+            purchase_id = self.repository.create_restock(connection, supplier_id)
             return self.repository.purchase(connection, purchase_id)
 
     def confirm_purchase(self, user, purchase_id):

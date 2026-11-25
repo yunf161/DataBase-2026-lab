@@ -215,7 +215,9 @@ def main():
             expect(cart_row).to_have_count(1)
             cart_row.get_by_role("button", name="查看明细", exact=True).click()
             expect(page.locator("#editor")).to_be_visible()
-            expect(page.locator("#order-discount")).to_be_disabled()
+            # 第十周起优惠由数据库函数计算，界面没有手填优惠的输入框，只显示折扣规则。
+            expect(page.locator("#order-discount")).to_have_count(0)
+            expect(page.locator(".discount-rule")).to_contain_text("会员")
             quantity = page.locator("[data-quantity]").first
             quantity.fill("2")
             page.get_by_role("button", name="更新", exact=True).click()
@@ -291,29 +293,30 @@ def main():
         assert "status=" not in url, url
         staff.locator("#table-body tr").filter(has_text=sale_no).get_by_role("button", name="查看明细", exact=True).click()
         expect(staff.locator("#settle-order")).to_be_visible()
-        staff.locator("#order-discount").fill("1.00")
         staff.locator("#order-payment").select_option("ALIPAY")
         staff.locator("#settle-order").click()
         expect(staff.locator("#confirmation")).to_be_visible()
         staff.locator("#confirm-accept").click()
         expect(staff.locator(".order-meta")).to_contain_text("已完成")
-        expect(staff.locator(".order-payable")).to_contain_text("10.00")
-        expect(staff.locator(".order-discount")).to_contain_text("1.00")
+        # 顾客订单是会员订单：11.00 × 5% = 0.55，应付 10.45。
+        expect(staff.locator(".order-payable")).to_contain_text("10.45")
+        expect(staff.locator(".order-discount")).to_contain_text("0.55")
+        expect(staff.locator(".order-discount")).to_contain_text("减 5%")
         expect(staff.locator("#settle-order")).to_have_count(0)
         shot(staff, "10-staff-settle.png")
         staff.locator("#close-editor").click()
         go(staff, "orders", "销售订单", "/api/orders?")
         settled = staff.locator("#table-body tr").filter(has_text=sale_no)
         expect(settled).to_contain_text("已完成")
-        expect(settled.locator("td").nth(4)).to_contain_text("10.00")
-        findings.append({"test": "店员在待受理筛选中结算", "result": "passed", "actual": "请求带pending=1且不带status；优惠1.00、支付宝；状态已完成，应付10.00", "request": url})
+        expect(settled.locator("td").nth(4)).to_contain_text("10.45")
+        findings.append({"test": "店员在待受理筛选中结算", "result": "passed", "actual": "请求带pending=1且不带status；支付宝；会员折扣减5%即0.55；状态已完成，应付10.45", "request": url})
 
         go(customer, "orders", "我的订单", "/api/orders?")
         mine = customer.locator("#table-body tr").filter(has_text=sale_no)
         expect(mine).to_contain_text("已完成")
-        expect(mine.locator("td").nth(4)).to_contain_text("10.00")
+        expect(mine.locator("td").nth(4)).to_contain_text("10.45")
         shot(customer, "11-customer-completed.png")
-        findings.append({"test": "顾客看到已完成订单和应付金额", "result": "passed", "actual": "已完成，应付10.00"})
+        findings.append({"test": "顾客看到已完成订单和应付金额", "result": "passed", "actual": "已完成，应付10.45"})
 
         open_inventory(staff)
         expect(sku_row(staff, "P0001").locator("td").nth(3)).to_have_text(str(before["P0001"]["quantity"] - 2))
@@ -415,7 +418,7 @@ def main():
         assert phone.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
         box = phone.locator("#editor").bounding_box()
         assert box["x"] >= 0 and box["x"] + box["width"] <= 390, box
-        for selector in ("#submit-order", "#cancel-draft", ".order-payable"):
+        for selector in ("#submit-order", "#cancel-draft", ".order-discount", ".order-payable", ".discount-rule"):
             expect(phone.locator(selector)).to_be_visible()
         phone.locator("#submit-order").click()
         expect(phone.locator("#editor")).to_contain_text("待店员受理")
@@ -433,7 +436,19 @@ def main():
         expect(admin_phone.locator(".log-pager")).to_contain_text("第 2 页")
         assert admin_phone.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
         shot(admin_phone, "17-mobile-inventory-logs.png")
-        findings.append({"test": "390px下订单详情和库存流水", "result": "passed", "actual": "页面无整体横向溢出，弹窗在视口内；手机上可提交订单、翻页流水"})
+        admin_phone.locator("#close-editor").click()
+        admin_phone.locator('[data-view="reports"]').click()
+        for selector in ("#report-start", "#report-end"):
+            expect(admin_phone.locator(selector)).to_be_visible()
+            box = admin_phone.locator(selector).bounding_box()
+            assert box["x"] >= 0 and box["x"] + box["width"] <= 390, box
+        admin_phone.locator('[data-view="purchases"]').click()
+        admin_phone.locator("#heading-action").click()
+        expect(admin_phone.locator("#restock-purchase")).to_be_visible()
+        box = admin_phone.locator("#restock-purchase").bounding_box()
+        assert box["x"] >= 0 and box["x"] + box["width"] <= 390, box
+        assert admin_phone.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        findings.append({"test": "390px下订单详情和库存流水", "result": "passed", "actual": "页面无整体横向溢出，弹窗在视口内；折扣标签与规则、报表日期控件、补货按钮均可见"})
 
         toast_hit = ("() => { const b = document.getElementById('toast').getBoundingClientRect();"
                      " const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return e ? e.id : null; }")
@@ -612,11 +627,19 @@ def main():
             expect(boss.locator("#page-title")).to_have_text("经营统计")
             expect(boss.locator("#search")).to_be_hidden()
             expect(boss.locator("#table-head")).to_contain_text("实收")
+            expect(boss.locator("#table-head")).to_contain_text("累计实收")
+            expect(boss.locator("#table-head")).to_contain_text("近 3 天平均")
+            expect(boss.locator("#report-start")).to_be_visible()
+            expect(boss.locator("#report-end")).to_be_visible()
+            # 默认最近 30 天，每天一行（没有销售的日子为 0）
+            expect(boss.locator("#table-body tr")).to_have_count(30)
             expect(boss.locator("#table-body tr").first).to_contain_text("¥")
             boss.locator("#status-filter").select_option("products")
             boss.get_by_role("button", name="查询", exact=True).click()
             expect(boss.locator("#table-head")).to_contain_text("销量")
+            expect(boss.locator("#table-head")).to_contain_text("排名")
             expect(sku_row(boss, "P0001")).to_have_count(1)
+            expect(boss.locator("#table-body tr").first.locator("td").first).to_have_text("1")
             shot(boss, "24-reports.png")
             boss.locator("#status-filter").select_option("suppliers")
             boss.get_by_role("button", name="查询", exact=True).click()
@@ -637,6 +660,24 @@ def main():
             expect(clerk_view.locator(".order-handled")).to_contain_text("结算时间")
             shot(clerk_view, "25-order-handler.png")
             findings.append({"test": "经营统计与订单经办信息", "result": "passed", "actual": "管理员看到每日销售、商品销量和供应商采购；店员无供应商统计；顾客无入口且接口403；店员订单详情显示经办员工和结算时间"})
+
+        with scenario("按库存预警生成补货单"):
+            planner = new_page("admin")
+            planner.locator('[data-view="purchases"]').click()
+            expect(planner.locator("#page-title")).to_have_text("采购入库")
+            planner.locator("#heading-action").click()
+            planner.locator("#supplier-id").select_option(index=1)
+            planner.locator("#restock-purchase").click()
+            expect(planner.locator("#editor-title")).to_have_text("采购明细")
+            expect(planner.locator(".order-meta")).to_contain_text("草稿")
+            lines = planner.locator(".order-items tbody tr")
+            expect(lines.first).to_be_visible()
+            assert lines.count() >= 1
+            shot(planner, "26-restock-draft.png", toast="补货单已生成")
+            planner.locator("#close-editor").click()
+            planner.locator('[data-view="inventory"]').click()
+            expect(planner.locator("#page-title")).to_have_text("库存查询")
+            findings.append({"test": "按库存预警生成补货单", "result": "passed", "actual": "选择供应商后生成采购草稿，明细为低于预警下限的商品，补货量由数据库函数计算；草稿不改库存"})
 
         with scenario("商品超过100件时订单详情仍可选择全部商品"):
             clerk = new_page("staff")
